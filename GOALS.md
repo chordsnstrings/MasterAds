@@ -100,6 +100,9 @@ Source: SW §7.2, §8.2–8.3, Appendix B.
 
 **GATE G3:** In stub mode end-to-end: an event POSTed to `/v1/events` is relayed to all three adapters with byte-correct payloads (snapshot tests), retried on injected failure, dead-lettered after max attempts, and replayable by command. Relay status visible per event. CI green.
 
+
+> **G3 complete — 2026-06-10, commit 514f032.** End-to-end stub relay verified: ingest → 3 platforms, injected-failure retry, dead-letter + attention, window replay, kill-switch parking. Nothing deferred.
+
 ---
 
 ## G4 — Product intake and normalization
