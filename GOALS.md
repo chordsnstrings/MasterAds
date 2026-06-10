@@ -133,6 +133,9 @@ Source: SW §5.2–5.3, Appendix C; FLOW §4.5, §8.6.
 
 **GATE G5:** In stub mode: fixed product fixtures classify to expected specs (snapshot tests); low-confidence fixture triggers the disambiguation path; event-selection unit tests cover high-volume (terminal), thin-volume (fallback), and consolidation cases; a restricted product is blocked from launch until sign-off flag set. CI green.
 
+
+> **G5 complete — 2026-06-10, commit 6a03d03.** Snapshot-tested classification for 4 verticals; disambiguation path; 9 event-selection unit tests incl. consolidation; restricted blocked until sign-off; classification CostEvent asserted. Nothing deferred.
+
 ---
 
 ## G6 — Creative generation pipeline
