@@ -258,6 +258,9 @@ Source: FLOW doc in full; this is the hero flow and must match it to the letter,
 
 **GATE G12:** Playwright e2e: (a) paste-link happy path to You're-live in two screens; (b) describe-it path with disambiguation and hosted-form destination, then a form submission on the hosted page produces a canonical ConversionEvent (proving the measurement loop); (c) catalog CSV path; (d) restricted product reaches Submit-for-review and is blocked from live until sign-off. Microcopy snapshot tests match FLOW §12 strings. Screenshot tests at all three viewports. CI green.
 
+
+> **G12 complete — 2026-06-10, commit 4cceb9e.** Playwright (a) two-screen paste-link to You're-live; (b) disambiguation + hosted form whose submission lands as a canonical Lead with funnel proof; (c) 5-product CSV single launch; (d) restricted submit-for-review with in_review status and zero campaigns; microcopy verbatim; screenshots ×3 viewports. Nothing deferred.
+
 ---
 
 ## G13 — Hardening, observability, deploy readiness
