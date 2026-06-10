@@ -7,7 +7,7 @@
   "types": "src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests --fileParallelism=false"
   },
   "dependencies": {
     "@engine/contracts": "workspace:*",
@@ -18,6 +18,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@engine/adapters": "workspace:*",
     "@types/node": "^22.19.20",
     "typescript": "^5.6.3",
     "vitest": "^2.1.4"

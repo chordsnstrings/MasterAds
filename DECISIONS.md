@@ -20,3 +20,8 @@ One line per decision not specified by the docs: `YYYY-MM-DD — decision — re
 - 2026-06-10 — cheerio + csv-parse + SheetJS for URL/CSV/XLSX intake parsing — battle-tested parsers; regexing HTML would be fragile.
 - 2026-06-10 — Intake jobs persisted in DB and processed in-process via setImmediate — durable "reading…" status for the UI without a queue round-trip; file intake completes synchronously since content is already uploaded.
 - 2026-06-10 — Feed diff matches products by URL first, then case-insensitive title — feeds without stable SKUs still sync; new_product rows recorded but not auto-launched.
+- 2026-06-10 — Stub LLM driver embeds deterministic keyword classification producing the same JSON contract as live Claude — identical calling path in both modes; tests never need a key.
+- 2026-06-10 — Expected weekly terminal volume estimated from business model × price tier × mode heuristic table — needed by event selection pre-launch; re-evaluated from real volume in G10.
+- 2026-06-10 — Suggested daily budgets by price tier: AED 150/300/500/800 — FLOW §5.5 floor note references ~AED 150; scaled up with consideration depth.
+- 2026-06-10 — Playbook target platforms added as additive migration 0005 — ecommerce → meta+tiktok+google; lead-gen verticals → meta+google.
+- 2026-06-10 — Anthropic priced at $3/$15 per Mtok in the cost ledger — current claude-sonnet pricing; unit price stored on every row so re-pricing is data, not code.

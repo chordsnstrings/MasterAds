@@ -74,6 +74,10 @@ export const playbooks = pgTable("playbooks", {
   status: text("status", { enum: ["active", "draft", "deprecated"] })
     .notNull()
     .default("active"),
+  targetPlatforms: jsonb("target_platforms")
+    .$type<string[]>()
+    .notNull()
+    .default(["meta", "google", "tiktok"]),
   // Restricted-category playbooks cannot launch until a one-time human
   // compliance sign-off (SW §10.5, CLAUDE.md invariant 9).
   requiresSignoff: boolean("requires_signoff").notNull().default(false),

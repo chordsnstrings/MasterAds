@@ -1,21 +1,26 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
 import { closeDb, createDb, createRepos, type Db, type Repos } from "@engine/db";
+import { createLlmClient, type LlmClient } from "@engine/adapters";
+import { seedPlaybooks } from "@engine/core";
 import type { JobSender } from "@engine/core";
 import { eventsRoutes } from "./routes/events.js";
 import { internalRoutes } from "./routes/internal.js";
 import { intakeRoutes } from "./routes/intake.js";
+import { planRoutes } from "./routes/plan.js";
 
 declare module "fastify" {
   interface FastifyInstance {
     db: Db;
     repos: Repos;
     jobs: JobSender | null;
+    llm: LlmClient;
   }
 }
 
 export interface BuildAppOptions {
   db?: Db;
+  llm?: LlmClient;
   /** Queue producer for relay fan-out; null disables enqueue (unit tests). */
   jobs?: JobSender | null;
 }
@@ -35,12 +40,16 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
     app.addHook("onClose", async () => closeDb(db));
   }
   app.decorate("jobs", opts.jobs ?? null);
+  const repos = createRepos(db);
+  app.decorate("llm", opts.llm ?? createLlmClient({ repos }));
+  await seedPlaybooks(repos);
 
   app.get("/health", async () => ({ status: "ok", service: "api" }));
 
   await app.register(eventsRoutes);
   await app.register(internalRoutes);
   await app.register(intakeRoutes);
+  await app.register(planRoutes);
 
   return app;
 }

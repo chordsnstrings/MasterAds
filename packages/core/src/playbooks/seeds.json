@@ -1,0 +1,59 @@
+[
+  {
+    "vertical": "ecommerce_physical_goods",
+    "version": 1,
+    "objective": "purchases",
+    "funnelEvents": ["ViewContent", "AddToCart", "InitiateCheckout", "Purchase"],
+    "creativeAngles": ["lifestyle", "feature_focused", "value_convenience"],
+    "formatMix": ["1:1", "9:16", "16:9"],
+    "audienceStrategy": "broad_platform_ai",
+    "complianceConstraints": [],
+    "performancePriors": { "expected_cvr": 0.02 },
+    "targetPlatforms": ["meta", "tiktok", "google"],
+    "requiresSignoff": false
+  },
+  {
+    "vertical": "local_services_leadgen",
+    "version": 1,
+    "objective": "leads",
+    "funnelEvents": ["ViewContent", "Lead"],
+    "creativeAngles": ["trust_expertise", "before_after", "offer_led"],
+    "formatMix": ["1:1", "9:16"],
+    "audienceStrategy": "local_radius",
+    "complianceConstraints": [],
+    "performancePriors": { "expected_lead_rate": 0.05 },
+    "targetPlatforms": ["meta", "google"],
+    "requiresSignoff": false
+  },
+  {
+    "vertical": "property_leadgen",
+    "version": 1,
+    "objective": "leads",
+    "funnelEvents": ["ViewContent", "Lead"],
+    "creativeAngles": ["aspirational_lifestyle", "location_value", "virtual_tour"],
+    "formatMix": ["1:1", "9:16", "16:9"],
+    "audienceStrategy": "location_intent",
+    "complianceConstraints": ["fair_housing_neutral_targeting"],
+    "performancePriors": { "expected_lead_rate": 0.03 },
+    "targetPlatforms": ["meta", "google"],
+    "requiresSignoff": false
+  },
+  {
+    "vertical": "restricted_finance",
+    "version": 1,
+    "objective": "leads",
+    "funnelEvents": ["ViewContent", "Lead"],
+    "creativeAngles": ["clarity_trust", "benefit_led"],
+    "formatMix": ["1:1", "16:9"],
+    "audienceStrategy": "intent_keywords_constrained",
+    "complianceConstraints": [
+      "no_guaranteed_returns",
+      "required_risk_disclaimer",
+      "min_age_targeting_21",
+      "identity_verification_required"
+    ],
+    "performancePriors": { "expected_lead_rate": 0.02 },
+    "targetPlatforms": ["meta", "google"],
+    "requiresSignoff": true
+  }
+]

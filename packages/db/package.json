@@ -7,7 +7,7 @@
   "types": "src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run --passWithNoTests --fileParallelism=false",
     "migrate": "node --import tsx src/migrate.ts",
     "seed": "node --import tsx src/seed.ts",
     "kill-switch": "node --import tsx src/kill-switch-cli.ts"

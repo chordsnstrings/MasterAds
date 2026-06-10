@@ -125,11 +125,11 @@ Source: SW §5.1, FLOW §3–4, §7.
 
 Source: SW §5.2–5.3, Appendix C; FLOW §4.5, §8.6.
 
-- [ ] Classifier service producing the `CampaignSpec`: vertical, business model, terminal event, funnel stages, price tier, creative angle, **policy category** (standard | restricted). LLM-backed in live mode (Anthropic API), deterministic fixture-backed in stub mode so tests never need a key.
-- [ ] Confidence handling: below threshold → emit the single disambiguation question (product vs service) for the UI (FLOW §4.5); never guess silently on low confidence.
-- [ ] Playbook engine: playbooks as versioned data (DB rows seeded from JSON in-repo), selected by classification, filling the spec per SW §5.2. Seed **four playbooks**: e-commerce physical goods, local services lead-gen, property lead-gen, restricted-finance (template flagged `requires_signoff`).
-- [ ] **Volume-aware optimization-event selection** (SW §5.3, Appendix C): deepest event clearing the ~50/week learning threshold given expected volume; upstream fallback chain; consolidation grouping for thin products. Pure function, exhaustively unit-tested.
-- [ ] Restricted gate: a `restricted` spec cannot reach launch until its playbook's one-time sign-off flag is set (SW §10.5; FLOW §8.6 maps the UX).
+- [x] Classifier service producing the `CampaignSpec`: vertical, business model, terminal event, funnel stages, price tier, creative angle, **policy category** (standard | restricted). LLM-backed in live mode (Anthropic API), deterministic fixture-backed in stub mode so tests never need a key.
+- [x] Confidence handling: below threshold → emit the single disambiguation question (product vs service) for the UI (FLOW §4.5); never guess silently on low confidence.
+- [x] Playbook engine: playbooks as versioned data (DB rows seeded from JSON in-repo), selected by classification, filling the spec per SW §5.2. Seed **four playbooks**: e-commerce physical goods, local services lead-gen, property lead-gen, restricted-finance (template flagged `requires_signoff`).
+- [x] **Volume-aware optimization-event selection** (SW §5.3, Appendix C): deepest event clearing the ~50/week learning threshold given expected volume; upstream fallback chain; consolidation grouping for thin products. Pure function, exhaustively unit-tested.
+- [x] Restricted gate: a `restricted` spec cannot reach launch until its playbook's one-time sign-off flag is set (SW §10.5; FLOW §8.6 maps the UX).
 
 **GATE G5:** In stub mode: fixed product fixtures classify to expected specs (snapshot tests); low-confidence fixture triggers the disambiguation path; event-selection unit tests cover high-volume (terminal), thin-volume (fallback), and consolidation cases; a restricted product is blocked from launch until sign-off flag set. CI green.
 
