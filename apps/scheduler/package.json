@@ -1,0 +1,24 @@
+{
+  "name": "@engine/scheduler",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "start": "node --import tsx src/main.ts"
+  },
+  "dependencies": {
+    "@engine/adapters": "workspace:*",
+    "@engine/contracts": "workspace:*",
+    "@engine/core": "workspace:*",
+    "@engine/db": "workspace:*",
+    "pg-boss": "^10.1.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.20",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "autonomous-ad-engine",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "pnpm -r run typecheck",
+    "lint": "eslint .",
+    "lint:ui-strings": "node scripts/lint-ui-strings.mjs",
+    "test": "pnpm -r run test",
+    "check": "pnpm run typecheck && pnpm run lint && pnpm run lint:ui-strings && pnpm run test",
+    "build": "pnpm -r run build",
+    "migrate": "pnpm --filter @engine/db run migrate",
+    "seed": "pnpm --filter @engine/db run seed",
+    "e2e:full": "node scripts/e2e-full.mjs",
+    "kill-switch": "pnpm --filter @engine/db run kill-switch"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.14.0",
+    "eslint": "^9.14.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.13.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}

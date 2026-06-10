@@ -1,0 +1,224 @@
+# DigitalOcean App Platform spec — Autonomous Ad Engine (SW §13.2)
+# main -> production. A staging app uses the same spec with branch: staging.
+# Secrets are configured as encrypted env vars in the App Platform UI/API;
+# placeholders below mark every variable each component needs.
+name: ad-engine
+region: fra
+features:
+  - buildpack-stack=ubuntu-22
+
+jobs:
+  # Migrations run pre-deploy so schema and code ship together (forward-only).
+  - name: migrate
+    kind: PRE_DEPLOY
+    github:
+      repo: chordsnstrings/MasterAds
+      branch: main
+      deploy_on_push: true
+    build_command: corepack enable && pnpm install --frozen-lockfile
+    run_command: pnpm --filter @engine/db run migrate
+    environment_slug: node-js
+    instance_size_slug: basic-xxs
+    envs:
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        value: ${db.DATABASE_URL}
+
+services:
+  # The only public-facing component: ingestion endpoint, internal API, UI backend.
+  - name: api
+    github:
+      repo: chordsnstrings/MasterAds
+      branch: main
+      deploy_on_push: true
+    build_command: corepack enable && pnpm install --frozen-lockfile
+    run_command: pnpm --filter @engine/api run start
+    environment_slug: node-js
+    http_port: 3000
+    instance_size_slug: basic-xs
+    instance_count: 1
+    health_check:
+      http_path: /health
+    envs:
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        value: ${db.DATABASE_URL}
+      - key: NODE_ENV
+        scope: RUN_TIME
+        value: production
+      - key: PUBLIC_BASE_URL
+        scope: RUN_TIME
+        value: ${APP_URL}
+      - key: SITE_KEY_SALT
+        scope: RUN_TIME
+        type: SECRET
+        value: PLACEHOLDER
+      - key: META_MODE
+        scope: RUN_TIME
+        value: stub
+      - key: GOOGLE_MODE
+        scope: RUN_TIME
+        value: stub
+      - key: TIKTOK_MODE
+        scope: RUN_TIME
+        value: stub
+      - key: LLM_MODE
+        scope: RUN_TIME
+        value: stub
+      - key: CREATIVE_MODE
+        scope: RUN_TIME
+        value: stub
+      - key: BILLING_MODE
+        scope: RUN_TIME
+        value: stub
+      - key: ANTHROPIC_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: PLACEHOLDER
+
+static_sites:
+  # The supervision UI.
+  - name: web
+    github:
+      repo: chordsnstrings/MasterAds
+      branch: main
+      deploy_on_push: true
+    build_command: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @engine/web run build
+    output_dir: apps/web/dist
+    environment_slug: node-js
+    routes:
+      - path: /app
+
+workers:
+  # Fast/medium loop runners, queue consumers, conversion relay. No ingress.
+  - name: loops
+    github:
+      repo: chordsnstrings/MasterAds
+      branch: main
+      deploy_on_push: true
+    build_command: corepack enable && pnpm install --frozen-lockfile
+    run_command: pnpm --filter @engine/loops run start
+    environment_slug: node-js
+    instance_size_slug: basic-xs
+    instance_count: 1
+    envs:
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        value: ${db.DATABASE_URL}
+      - key: NODE_ENV
+        scope: RUN_TIME
+        value: production
+      - key: META_MODE
+        scope: RUN_TIME
+        value: stub
+      - key: GOOGLE_MODE
+        scope: RUN_TIME
+        value: stub
+      - key: TIKTOK_MODE
+        scope: RUN_TIME
+        value: stub
+      - key: LLM_MODE
+        scope: RUN_TIME
+        value: stub
+      - key: CREATIVE_MODE
+        scope: RUN_TIME
+        value: stub
+      - key: BILLING_MODE
+        scope: RUN_TIME
+        value: stub
+      - key: ANTHROPIC_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: PLACEHOLDER
+      - key: META_ACCESS_TOKEN
+        scope: RUN_TIME
+        type: SECRET
+        value: PLACEHOLDER
+      - key: META_AD_ACCOUNT_ID
+        scope: RUN_TIME
+        type: SECRET
+        value: PLACEHOLDER
+      - key: META_DATASET_ID
+        scope: RUN_TIME
+        type: SECRET
+        value: PLACEHOLDER
+      - key: GOOGLE_ADS_REFRESH_TOKEN
+        scope: RUN_TIME
+        type: SECRET
+        value: PLACEHOLDER
+      - key: GOOGLE_ADS_DEVELOPER_TOKEN
+        scope: RUN_TIME
+        type: SECRET
+        value: PLACEHOLDER
+      - key: GOOGLE_ADS_CUSTOMER_ID
+        scope: RUN_TIME
+        type: SECRET
+        value: PLACEHOLDER
+      - key: GOOGLE_OAUTH_CLIENT_ID
+        scope: RUN_TIME
+        type: SECRET
+        value: PLACEHOLDER
+      - key: GOOGLE_OAUTH_CLIENT_SECRET
+        scope: RUN_TIME
+        type: SECRET
+        value: PLACEHOLDER
+      - key: TIKTOK_ACCESS_TOKEN
+        scope: RUN_TIME
+        type: SECRET
+        value: PLACEHOLDER
+      - key: TIKTOK_ADVERTISER_ID
+        scope: RUN_TIME
+        type: SECRET
+        value: PLACEHOLDER
+      - key: TIKTOK_PIXEL_CODE
+        scope: RUN_TIME
+        type: SECRET
+        value: PLACEHOLDER
+      - key: CREATIVE_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: PLACEHOLDER
+
+  # Cron-style triggers: feed syncs, daily medium loop, report pulls, token refresh.
+  - name: scheduler
+    github:
+      repo: chordsnstrings/MasterAds
+      branch: main
+      deploy_on_push: true
+    build_command: corepack enable && pnpm install --frozen-lockfile
+    run_command: pnpm --filter @engine/scheduler run start
+    environment_slug: node-js
+    instance_size_slug: basic-xxs
+    instance_count: 1
+    envs:
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        value: ${db.DATABASE_URL}
+      - key: NODE_ENV
+        scope: RUN_TIME
+        value: production
+      - key: META_MODE
+        scope: RUN_TIME
+        value: stub
+      - key: GOOGLE_MODE
+        scope: RUN_TIME
+        value: stub
+      - key: TIKTOK_MODE
+        scope: RUN_TIME
+        value: stub
+      - key: LLM_MODE
+        scope: RUN_TIME
+        value: stub
+      - key: CREATIVE_MODE
+        scope: RUN_TIME
+        value: stub
+      - key: BILLING_MODE
+        scope: RUN_TIME
+        value: stub
+
+databases:
+  # Managed PostgreSQL; never exposed publicly.
+  - name: db
+    engine: PG
+    version: "16"
+    production: true
