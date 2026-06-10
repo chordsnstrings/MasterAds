@@ -344,6 +344,53 @@ export const clickIdCoverage = pgTable(
   (t) => [index("click_id_coverage_site_idx").on(t.sourceSite, t.platform, t.computedAt)],
 );
 
+// Intake jobs: async "reading…" status polled by the creation flow UI (G4).
+export const intakeJobs = pgTable("intake_jobs", {
+  id: text("id").primaryKey(),
+  kind: text("kind", { enum: ["url", "text", "file"] }).notNull(),
+  input: text("input").notNull(),
+  status: text("status", { enum: ["reading", "done", "unreadable"] })
+    .notNull()
+    .default("reading"),
+  result: jsonb("result").$type<Record<string, unknown>>(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Connected feeds re-pulled on a 4-6h cadence (SW §5.1).
+export const feedSources = pgTable("feed_sources", {
+  id: text("id").primaryKey(),
+  ref: text("ref").notNull(),
+  label: text("label"),
+  catalogGroupId: text("catalog_group_id").notNull(),
+  syncIntervalHours: integer("sync_interval_hours").notNull().default(4),
+  lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Typed change events from feed diffs (G4), consumed by G9 automations.
+export const productChangeEvents = pgTable(
+  "product_change_events",
+  {
+    id: text("id").primaryKey(),
+    productId: text("product_id").notNull(),
+    changeType: text("change_type", {
+      enum: ["price_change", "stock_out", "back_in_stock", "new_product"],
+    }).notNull(),
+    before: jsonb("before").$type<Record<string, unknown>>(),
+    after: jsonb("after").$type<Record<string, unknown>>(),
+    processed: boolean("processed").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("product_change_unprocessed_idx").on(t.processed, t.createdAt)],
+);
+
+export type IntakeJob = typeof intakeJobs.$inferSelect;
+export type FeedSource = typeof feedSources.$inferSelect;
+export type NewFeedSource = typeof feedSources.$inferInsert;
+export type ProductChangeEvent = typeof productChangeEvents.$inferSelect;
+export type NewProductChangeEvent = typeof productChangeEvents.$inferInsert;
+
 // Attention records (UX §7): what happened + one clear fix; raised by workers.
 export const attentionRecords = pgTable(
   "attention_records",

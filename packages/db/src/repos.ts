@@ -14,7 +14,10 @@ import {
   creatives,
   decisionOutcomes,
   decisions,
+  feedSources,
+  intakeJobs,
   playbooks,
+  productChangeEvents,
   products,
   siteKeys,
   systemSettings,
@@ -29,7 +32,12 @@ import {
   type CoverageSnapshot,
   type NewAttentionRecord,
   type NewCampaign,
+  type FeedSource,
+  type IntakeJob,
   type NewCoverageSnapshot,
+  type NewFeedSource,
+  type NewProductChangeEvent,
+  type ProductChangeEvent,
   type NewCampaignSpec,
   type NewConversionEvent,
   type NewCostEvent,
@@ -432,6 +440,77 @@ export function createRepos(db: Db) {
           else operatingCost = Number(r.total);
         }
         return { adSpend, operatingCost };
+      },
+    },
+
+    intakeJobs: {
+      async create(kind: IntakeJob["kind"], input: string): Promise<IntakeJob> {
+        const [r] = await db
+          .insert(intakeJobs)
+          .values({ id: newId("intake"), kind, input })
+          .returning();
+        if (!r) throw new Error("insert failed");
+        return r;
+      },
+      async complete(
+        id: string,
+        status: "done" | "unreadable",
+        result: Record<string, unknown>,
+      ): Promise<void> {
+        await db
+          .update(intakeJobs)
+          .set({ status, result, updatedAt: new Date() })
+          .where(eq(intakeJobs.id, id));
+      },
+      async get(id: string): Promise<IntakeJob | undefined> {
+        return (await db.select().from(intakeJobs).where(eq(intakeJobs.id, id)))[0];
+      },
+    },
+
+    feeds: {
+      async create(row: Omit<NewFeedSource, "id"> & { id?: string }): Promise<FeedSource> {
+        const id = row.id ?? newId("feed");
+        const [r] = await db.insert(feedSources).values({ ...row, id }).returning();
+        if (!r) throw new Error("insert failed");
+        return r;
+      },
+      async list(): Promise<FeedSource[]> {
+        return db.select().from(feedSources);
+      },
+      async due(now: Date): Promise<FeedSource[]> {
+        const all = await db.select().from(feedSources);
+        return all.filter(
+          (f) =>
+            !f.lastSyncedAt ||
+            now.getTime() - f.lastSyncedAt.getTime() >= f.syncIntervalHours * 3_600_000,
+        );
+      },
+      async markSynced(id: string, at: Date): Promise<void> {
+        await db.update(feedSources).set({ lastSyncedAt: at }).where(eq(feedSources.id, id));
+      },
+    },
+
+    productChanges: {
+      async insert(
+        row: Omit<NewProductChangeEvent, "id"> & { id?: string },
+      ): Promise<ProductChangeEvent> {
+        const id = row.id ?? newId("chg");
+        const [r] = await db.insert(productChangeEvents).values({ ...row, id }).returning();
+        if (!r) throw new Error("insert failed");
+        return r;
+      },
+      async listUnprocessed(): Promise<ProductChangeEvent[]> {
+        return db
+          .select()
+          .from(productChangeEvents)
+          .where(eq(productChangeEvents.processed, false))
+          .orderBy(productChangeEvents.createdAt);
+      },
+      async markProcessed(id: string): Promise<void> {
+        await db
+          .update(productChangeEvents)
+          .set({ processed: true })
+          .where(eq(productChangeEvents.id, id));
       },
     },
 

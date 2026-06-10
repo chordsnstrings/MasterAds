@@ -1,0 +1,25 @@
+SKU,Product Name,Price,Currency,Stock,Image URL,Link,Category,Description
+SKU-001,Demo Product 1,99.00,AED,5,https://demo.example/img/p1.jpg,https://demo.example/p/1,homeware,Description for product 1
+SKU-002,Demo Product 2,120.00,AED,0,https://demo.example/img/p2.jpg,https://demo.example/p/2,homeware,Description for product 2
+SKU-003,Demo Product 3,130.00,AED,5,https://demo.example/img/p3.jpg,https://demo.example/p/3,homeware,Description for product 3
+SKU-004,Demo Product 4,140.00,AED,5,https://demo.example/img/p4.jpg,https://demo.example/p/4,homeware,Description for product 4
+SKU-005,Demo Product 5,150.00,AED,5,https://demo.example/img/p5.jpg,https://demo.example/p/5,homeware,Description for product 5
+SKU-006,Demo Product 6,160.00,AED,5,https://demo.example/img/p6.jpg,https://demo.example/p/6,homeware,Description for product 6
+SKU-007,Demo Product 7,170.00,AED,5,https://demo.example/img/p7.jpg,https://demo.example/p/7,homeware,Description for product 7
+SKU-008,Demo Product 8,180.00,AED,5,https://demo.example/img/p8.jpg,https://demo.example/p/8,homeware,Description for product 8
+SKU-009,Demo Product 9,190.00,AED,5,https://demo.example/img/p9.jpg,https://demo.example/p/9,homeware,Description for product 9
+SKU-010,Demo Product 10,200.00,AED,5,https://demo.example/img/p10.jpg,https://demo.example/p/10,homeware,Description for product 10
+SKU-011,Demo Product 11,210.00,AED,5,https://demo.example/img/p11.jpg,https://demo.example/p/11,homeware,Description for product 11
+SKU-012,Demo Product 12,220.00,AED,5,https://demo.example/img/p12.jpg,https://demo.example/p/12,homeware,Description for product 12
+SKU-013,Demo Product 13,230.00,AED,5,https://demo.example/img/p13.jpg,https://demo.example/p/13,homeware,Description for product 13
+SKU-014,Demo Product 14,240.00,AED,5,https://demo.example/img/p14.jpg,https://demo.example/p/14,homeware,Description for product 14
+SKU-015,Demo Product 15,250.00,AED,5,https://demo.example/img/p15.jpg,https://demo.example/p/15,homeware,Description for product 15
+SKU-016,Demo Product 16,260.00,AED,5,https://demo.example/img/p16.jpg,https://demo.example/p/16,homeware,Description for product 16
+SKU-017,Demo Product 17,270.00,AED,5,https://demo.example/img/p17.jpg,https://demo.example/p/17,homeware,Description for product 17
+SKU-018,Demo Product 18,280.00,AED,5,https://demo.example/img/p18.jpg,https://demo.example/p/18,homeware,Description for product 18
+SKU-019,Demo Product 19,290.00,AED,5,https://demo.example/img/p19.jpg,https://demo.example/p/19,homeware,Description for product 19
+SKU-020,Demo Product 20,300.00,AED,5,https://demo.example/img/p20.jpg,https://demo.example/p/20,homeware,Description for product 20
+SKU-021,Demo Product 21,310.00,AED,5,https://demo.example/img/p21.jpg,https://demo.example/p/21,homeware,Description for product 21
+SKU-022,Demo Product 22,320.00,AED,5,https://demo.example/img/p22.jpg,https://demo.example/p/22,homeware,Description for product 22
+SKU-023,Demo Product 23,330.00,AED,5,https://demo.example/img/p23.jpg,https://demo.example/p/23,homeware,Description for product 23
+SKU-024,Demo Product 24,340.00,AED,5,https://demo.example/img/p24.jpg,https://demo.example/p/24,homeware,Description for product 24

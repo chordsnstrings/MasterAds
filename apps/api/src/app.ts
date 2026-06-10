@@ -4,6 +4,7 @@ import { closeDb, createDb, createRepos, type Db, type Repos } from "@engine/db"
 import type { JobSender } from "@engine/core";
 import { eventsRoutes } from "./routes/events.js";
 import { internalRoutes } from "./routes/internal.js";
+import { intakeRoutes } from "./routes/intake.js";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -39,6 +40,7 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
 
   await app.register(eventsRoutes);
   await app.register(internalRoutes);
+  await app.register(intakeRoutes);
 
   return app;
 }

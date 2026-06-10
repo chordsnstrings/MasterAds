@@ -17,3 +17,6 @@ One line per decision not specified by the docs: `YYYY-MM-DD — decision — re
 - 2026-06-10 — Only canonical conversion rows are relayed; platform claims (non-canonical) are stored but not fanned out — prevents double-sending one real conversion (SW §8.5).
 - 2026-06-10 — Relay dead-letter implemented as terminal status in relayed_to + attention record (not a separate pg-boss queue) — replay command resurrects; status is queryable per event.
 - 2026-06-10 — Kill switch parks relay jobs (re-enqueue with delay) rather than failing them — halting writes must not burn retry budget or lose events.
+- 2026-06-10 — cheerio + csv-parse + SheetJS for URL/CSV/XLSX intake parsing — battle-tested parsers; regexing HTML would be fragile.
+- 2026-06-10 — Intake jobs persisted in DB and processed in-process via setImmediate — durable "reading…" status for the UI without a queue round-trip; file intake completes synchronously since content is already uploaded.
+- 2026-06-10 — Feed diff matches products by URL first, then case-insensitive title — feeds without stable SKUs still sync; new_product rows recorded but not auto-launched.

@@ -109,10 +109,10 @@ Source: SW §7.2, §8.2–8.3, Appendix B.
 
 Source: SW §5.1, FLOW §3–4, §7.
 
-- [ ] `Product` intake service in `packages/core` with three adapters: **URL** (fetch + extract title, images, price, description; resilient to failure with a typed "couldn't read" result — never a crash), **offer text** (free text stored raw for G5 classification), **feed file** (CSV/XLSX parse, tolerant column mapping, multi-product result).
-- [ ] Normalization into the canonical `Product` object regardless of source; catalog vs offer `mode` set per SW §5.1.
-- [ ] Feed sync job in `apps/scheduler`: re-pull connected feeds on a 4–6h cadence, diffing stock/price changes and emitting typed change events (consumed in G9).
-- [ ] API endpoints for the three intake paths used by the UI (FLOW §4), including the "reading…" async status the UI polls.
+- [x] `Product` intake service in `packages/core` with three adapters: **URL** (fetch + extract title, images, price, description; resilient to failure with a typed "couldn't read" result — never a crash), **offer text** (free text stored raw for G5 classification), **feed file** (CSV/XLSX parse, tolerant column mapping, multi-product result).
+- [x] Normalization into the canonical `Product` object regardless of source; catalog vs offer `mode` set per SW §5.1.
+- [x] Feed sync job in `apps/scheduler`: re-pull connected feeds on a 4–6h cadence, diffing stock/price changes and emitting typed change events (consumed in G9).
+- [x] API endpoints for the three intake paths used by the UI (FLOW §4), including the "reading…" async status the UI polls.
 
 **GATE G4:** Fixture tests: a product page HTML fixture extracts correctly; a malformed URL yields the typed fallback (not an exception); a 24-row CSV produces 24 normalized products under one catalog group; feed re-sync detects a price change and a stock-out in fixtures and emits the right events. CI green.
 
