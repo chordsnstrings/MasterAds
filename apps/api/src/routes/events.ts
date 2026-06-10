@@ -30,7 +30,7 @@ export async function eventsRoutes(app: FastifyInstance): Promise<void> {
     const result = await ingestConversion(app.repos, payload);
     // Fan out to the platform relay queues — once per canonical conversion.
     if (app.jobs && !result.duplicate && result.canonical) {
-      await enqueueRelay(app.jobs, result.event.id);
+      await enqueueRelay(app.jobs, result.event.id, String(req.id));
     }
     // Replays of the same (source_site, event_id) return 200 without duplicating.
     return reply.status(result.duplicate ? 200 : 201).send({

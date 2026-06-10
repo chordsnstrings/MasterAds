@@ -18,11 +18,17 @@ export interface JobSender {
 
 export interface RelayJobData {
   eventId: string;
+  /** Trace id from the originating API request (request → queue → adapter). */
+  traceId?: string;
 }
 
 /** Fan one ingested conversion out to all three platform relay queues. */
-export async function enqueueRelay(sender: JobSender, eventId: string): Promise<void> {
+export async function enqueueRelay(
+  sender: JobSender,
+  eventId: string,
+  traceId?: string,
+): Promise<void> {
   for (const platform of RELAY_PLATFORMS) {
-    await sender.send(relayQueueName(platform), { eventId } satisfies RelayJobData);
+    await sender.send(relayQueueName(platform), { eventId, traceId } satisfies RelayJobData);
   }
 }

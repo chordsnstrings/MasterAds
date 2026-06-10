@@ -6,7 +6,9 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests --fileParallelism=false",
-    "start": "node --import tsx src/main.ts"
+    "start": "node --import tsx src/main.ts",
+    "e2e:full": "node --import tsx src/e2e-full.ts",
+    "replay": "node --import tsx src/replay-cli.ts"
   },
   "dependencies": {
     "@engine/adapters": "workspace:*",

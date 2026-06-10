@@ -24,3 +24,4 @@ export * from "./loops/mediumLoop.js";
 export * from "./loops/creativeLifecycle.js";
 export * from "./loops/eventReevaluation.js";
 export * from "./loops/scoring.js";
+export { resetAndSeed } from "./e2eSeed.js";

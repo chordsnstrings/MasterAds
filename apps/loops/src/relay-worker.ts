@@ -116,6 +116,9 @@ export async function startRelayWorker(
       { pollingIntervalSeconds: opts.pollingIntervalSeconds ?? 2 },
       async (jobs) => {
         for (const job of jobs) {
+          if (job.data.traceId) {
+            log("relay job", { platform: relay.platform, eventId: job.data.eventId, traceId: job.data.traceId });
+          }
           await handleRelayJob(boss, repos, relay, job.data.eventId, opts);
         }
       },

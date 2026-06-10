@@ -51,3 +51,6 @@ One line per decision not specified by the docs: `YYYY-MM-DD — decision — re
 - 2026-06-10 — Catalog launch consolidates: one spec on the group's representative product with the group as consolidation slice; per-product creative stays automatic (FLOW §7 "made invisible").
 - 2026-06-10 — /demo/product-page fixture route (non-production only) — lets the paste-link e2e exercise real URL intake without external network.
 - 2026-06-10 — e2e suites run as two sequential Playwright invocations, each reseeding adengine_e2e — creation flow mutates state that supervision screenshots and the sign-off queue depend on.
+- 2026-06-10 — Trace propagation: API request id rides the relay job payload into worker logs; decision ids correlate guardrail decisions to adapter calls — lightweight tracing per SW §11.1 without an external platform until needed.
+- 2026-06-10 — e2e:full implemented as one in-process orchestration (apps/loops) booting API + relay worker + loops against a reset DB — deterministic, single command, exercises the same code paths as the deployed components.
+- 2026-06-10 — EMQ surfaced as an explicit null placeholder in /internal/monitoring — platform-reported metric, populated in live mode (P5); the gap stays visible rather than silent.
