@@ -152,6 +152,9 @@ Source: SW §5.4; FLOW §5.7; UX component states.
 
 **GATE G6:** Stub-mode pipeline: one product in → ≥3 variants × 3 formats out, all stamped with content_id; a fixture containing a banned claim is blocked with a readable reason; every generation emits a CostEvent (test asserts ledger rows); regeneration cap triggers at the configured limit. CI green.
 
+
+> **G6 complete — 2026-06-10, commit 5f20cee.** Stub pipeline: 3 variants × 3 formats, content_id stamped; banned claim blocked with readable reason; CostEvent per generation asserted; cap triggers at configured limit. Nothing deferred.
+
 ---
 
 ## G7 — Platform campaign adapters and launch
