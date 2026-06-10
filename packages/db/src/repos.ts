@@ -5,6 +5,7 @@ import { and, desc, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
 import { createHash, randomUUID } from "node:crypto";
 import type { Db } from "./client.js";
 import {
+  attentionRecords,
   campaignSpecs,
   campaigns,
   clickIdCoverage,
@@ -24,7 +25,9 @@ import {
   type Creative,
   type Decision,
   type DecisionOutcome,
+  type AttentionRecord,
   type CoverageSnapshot,
+  type NewAttentionRecord,
   type NewCampaign,
   type NewCoverageSnapshot,
   type NewCampaignSpec,
@@ -429,6 +432,43 @@ export function createRepos(db: Db) {
           else operatingCost = Number(r.total);
         }
         return { adSpend, operatingCost };
+      },
+    },
+
+    attention: {
+      /** Raise an attention item; deduped on (kind, target_ref) while open. */
+      async raise(
+        row: Omit<NewAttentionRecord, "id" | "status"> & { id?: string },
+      ): Promise<AttentionRecord> {
+        const conds = [eq(attentionRecords.status, "open"), eq(attentionRecords.kind, row.kind)];
+        if (row.targetRef) conds.push(eq(attentionRecords.targetRef, row.targetRef));
+        const existing = (
+          await db
+            .select()
+            .from(attentionRecords)
+            .where(and(...conds))
+        )[0];
+        if (existing) return existing;
+        const id = row.id ?? newId("att");
+        const [r] = await db
+          .insert(attentionRecords)
+          .values({ ...row, id, status: "open" })
+          .returning();
+        if (!r) throw new Error("insert failed");
+        return r;
+      },
+      async resolve(id: string): Promise<void> {
+        await db
+          .update(attentionRecords)
+          .set({ status: "resolved", resolvedAt: new Date() })
+          .where(eq(attentionRecords.id, id));
+      },
+      async listOpen(): Promise<AttentionRecord[]> {
+        return db
+          .select()
+          .from(attentionRecords)
+          .where(eq(attentionRecords.status, "open"))
+          .orderBy(desc(attentionRecords.createdAt));
       },
     },
 

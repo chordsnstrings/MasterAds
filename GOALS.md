@@ -92,11 +92,11 @@ Source: SW §7.1, §8.4, §8.6, FLOW §6 (destinations), Appendix A/B taxonomies
 
 Source: SW §7.2, §8.2–8.3, Appendix B.
 
-- [ ] `packages/adapters`: a `ConversionRelay` interface; three implementations — Meta CAPI, TikTok Events API, Google (Enhanced Conversions / Data Manager) — each mapping the canonical event to the platform payload with the correct click ID, hashed identifiers, value/currency, event_id.
-- [ ] **Driver pattern:** every adapter runs in `live` or `stub` mode via env. Stub mode validates the exact outbound payload shape against recorded platform schemas and logs it; live mode sends. The relay code path is identical in both.
-- [ ] Relay runs in `apps/loops` off a Postgres-backed queue (pg-boss per SW §13.1): retries with backoff, dead-letter after N attempts, per-event relay status persisted (`relayed_to[]`).
-- [ ] Replay/backfill command: re-relay events in a time window (SW self-healing).
-- [ ] Failures raise structured log events; sustained failure per platform raises an attention record (consumed by UI in G11).
+- [x] `packages/adapters`: a `ConversionRelay` interface; three implementations — Meta CAPI, TikTok Events API, Google (Enhanced Conversions / Data Manager) — each mapping the canonical event to the platform payload with the correct click ID, hashed identifiers, value/currency, event_id.
+- [x] **Driver pattern:** every adapter runs in `live` or `stub` mode via env. Stub mode validates the exact outbound payload shape against recorded platform schemas and logs it; live mode sends. The relay code path is identical in both.
+- [x] Relay runs in `apps/loops` off a Postgres-backed queue (pg-boss per SW §13.1): retries with backoff, dead-letter after N attempts, per-event relay status persisted (`relayed_to[]`).
+- [x] Replay/backfill command: re-relay events in a time window (SW self-healing).
+- [x] Failures raise structured log events; sustained failure per platform raises an attention record (consumed by UI in G11).
 
 **GATE G3:** In stub mode end-to-end: an event POSTed to `/v1/events` is relayed to all three adapters with byte-correct payloads (snapshot tests), retried on injected failure, dead-lettered after max attempts, and replayable by command. Relay status visible per event. CI green.
 

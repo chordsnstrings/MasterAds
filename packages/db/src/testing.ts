@@ -17,6 +17,7 @@ export async function resetTestDb(): Promise<Db> {
   const client = new pg.Client({ connectionString: url });
   await client.connect();
   await client.query("DROP SCHEMA public CASCADE; CREATE SCHEMA public;");
+  await client.query("DROP SCHEMA IF EXISTS pgboss CASCADE;");
   await client.end();
   await runMigrations(url);
   return createDb(url);

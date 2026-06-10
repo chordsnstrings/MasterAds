@@ -344,6 +344,30 @@ export const clickIdCoverage = pgTable(
   (t) => [index("click_id_coverage_site_idx").on(t.sourceSite, t.platform, t.computedAt)],
 );
 
+// Attention records (UX §7): what happened + one clear fix; raised by workers.
+export const attentionRecords = pgTable(
+  "attention_records",
+  {
+    id: text("id").primaryKey(),
+    kind: text("kind").notNull(),
+    severity: text("severity", { enum: ["warning", "approval", "error"] })
+      .notNull()
+      .default("warning"),
+    message: text("message").notNull(),
+    fixHint: text("fix_hint"),
+    targetRef: text("target_ref"),
+    status: text("status", { enum: ["open", "resolved"] })
+      .notNull()
+      .default("open"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  },
+  (t) => [index("attention_open_idx").on(t.status, t.createdAt)],
+);
+
+export type AttentionRecord = typeof attentionRecords.$inferSelect;
+export type NewAttentionRecord = typeof attentionRecords.$inferInsert;
+
 export type CoverageSnapshot = typeof clickIdCoverage.$inferSelect;
 export type NewCoverageSnapshot = typeof clickIdCoverage.$inferInsert;
 

@@ -14,3 +14,6 @@ One line per decision not specified by the docs: `YYYY-MM-DD — decision — re
 - 2026-06-10 — Conversion relay status kept on `conversion_events.relayed_to` jsonb (updatable) — only Decision/CostEvent are insert-only per invariant 3.
 - 2026-06-10 — Reconciliation key = canonical event_name + event_id + (email|phone hash|anon) — GOALS G2 specifies "event_id + identity"; first claim wins canonical, later claims stored non-canonical.
 - 2026-06-10 — event_time validated as unix seconds (rejects millisecond timestamps) — SW §7.1 requires occurrence time; ms values are a silent integration bug.
+- 2026-06-10 — Only canonical conversion rows are relayed; platform claims (non-canonical) are stored but not fanned out — prevents double-sending one real conversion (SW §8.5).
+- 2026-06-10 — Relay dead-letter implemented as terminal status in relayed_to + attention record (not a separate pg-boss queue) — replay command resurrects; status is queryable per event.
+- 2026-06-10 — Kill switch parks relay jobs (re-enqueue with delay) rather than failing them — halting writes must not burn retry budget or lose events.
