@@ -227,14 +227,14 @@ Source: SW §9.2; SW §5.3–5.4.
 
 Source: UX doc in full — §4 IA, §6 screens, §7 autonomy surfacing, §8 visual language, §9 components, §10 states, §11 microcopy, §12 responsive, §13 accessibility.
 
-- [ ] App shell: four destinations + persistent `+ Add product` + attention indicator; bottom tab bar under 640px per UX §12.
-- [ ] Design tokens implemented exactly per UX §8 (palette table, type roles with monospace numerals, 8px grid, radii, elevation); dark mode per §8.1.
-- [ ] **Overview**: status headline logic (worst-state), KPI tiles incl. Running cost, Return on total cost, attention area (collapses when empty), product grid. Per UX §6.1.
-- [ ] **Products** + **Product detail**: cards, status chips (exact ordered lifecycle set), funnel bars, plain-language activity with expandable "why", Pause / Adjust controls. Per UX §6.2–6.3.
-- [ ] **Activity**: filterable stream rendering the Decision log through the microcopy translation tables (UX §11) — no platform jargon string can appear (lint the strings file against a banned-terms list).
-- [ ] **Settings**: connections with status, conversion tracking readiness + click-ID coverage (from G2), guardrails incl. kill switch, brand kit, autonomy status + restricted sign-off queue. Per UX §6.6.
-- [ ] All component states from UX §10 implemented (empty/generating/launching/learning/autonomous/attention/paused/error).
-- [ ] **Responsive at all three breakpoints** per UX §12 table; tables degrade to cards on `sm`; 44px targets; `prefers-reduced-motion` respected; WCAG AA contrast (automated axe checks in CI).
+- [x] App shell: four destinations + persistent `+ Add product` + attention indicator; bottom tab bar under 640px per UX §12.
+- [x] Design tokens implemented exactly per UX §8 (palette table, type roles with monospace numerals, 8px grid, radii, elevation); dark mode per §8.1.
+- [x] **Overview**: status headline logic (worst-state), KPI tiles incl. Running cost, Return on total cost, attention area (collapses when empty), product grid. Per UX §6.1.
+- [x] **Products** + **Product detail**: cards, status chips (exact ordered lifecycle set), funnel bars, plain-language activity with expandable "why", Pause / Adjust controls. Per UX §6.2–6.3.
+- [x] **Activity**: filterable stream rendering the Decision log through the microcopy translation tables (UX §11) — no platform jargon string can appear (lint the strings file against a banned-terms list).
+- [x] **Settings**: connections with status, conversion tracking readiness + click-ID coverage (from G2), guardrails incl. kill switch, brand kit, autonomy status + restricted sign-off queue. Per UX §6.6.
+- [x] All component states from UX §10 implemented (empty/generating/launching/learning/autonomous/attention/paused/error).
+- [x] **Responsive at all three breakpoints** per UX §12 table; tables degrade to cards on `sm`; 44px targets; `prefers-reduced-motion` respected; WCAG AA contrast (automated axe checks in CI).
 
 **GATE G11:** Component tests + Playwright e2e against the seeded API: every screen renders with seed data at 375px, 768px, 1280px viewports (screenshot tests); axe passes; the banned-terms lint passes on all UI strings; attention flow (see item → fix → clears) works e2e; kill switch togglable from Settings. CI green.
 

@@ -187,6 +187,47 @@ export async function seed(db: Db): Promise<void> {
   });
 
   await repos.siteKeys.create("demo-store", "demo-store-key", "Demo storefront");
+
+  // UI seed: attention items, coverage snapshots, insights, account health.
+  await repos.attention.raise({
+    kind: "coverage_drop",
+    severity: "warning",
+    message: "Demo-store stopped reporting purchases reliably.",
+    fixHint: "Reconnect the site so the engine optimizes on complete data.",
+    targetRef: "site:demo-store",
+  });
+  await repos.attention.raise({
+    kind: "restricted_approval",
+    severity: "approval",
+    message: "A finance offer needs a compliance check before it can launch.",
+    fixHint: "Review and sign off the playbook in Settings.",
+    targetRef: "playbook:finance",
+  });
+  for (const [platform, pct] of [["meta", 86], ["google", 64], ["tiktok", 41]] as const) {
+    await repos.coverage.insert({
+      sourceSite: "demo-store",
+      platform,
+      coveragePct: pct.toFixed(2),
+      eventsTotal: 100,
+      eventsWithClickId: pct,
+      windowDays: 7,
+    });
+  }
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date(now - i * 86_400_000).toISOString().slice(0, 10);
+    await repos.insights.insertIdempotent({
+      campaignId: campaign.id,
+      date: d,
+      spend: (400 + i * 20).toFixed(4),
+      impressions: 52_000 + i * 1000,
+      clicks: 1040 + i * 20,
+      conversions: 40 + i,
+      revenue: (9000 + i * 200).toFixed(4),
+      currency: "AED",
+    });
+  }
+  await repos.adAccounts.upsert("meta", { tokenValid: true, billingOk: true, accountRef: "act_demo" });
+  await repos.adAccounts.upsert("tiktok", { tokenValid: true, billingOk: true, accountRef: "tt_demo" });
 }
 
 if (process.argv[1] && process.argv[1].endsWith("seed.ts")) {

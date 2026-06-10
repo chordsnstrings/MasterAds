@@ -43,3 +43,7 @@ One line per decision not specified by the docs: `YYYY-MM-DD — decision — re
 - 2026-06-10 — Revenue for net return computed from canonical conversion events (value sums per content_id) — reconciled figures, never platform-summed (SW §8.5).
 - 2026-06-10 — Fatigue heuristic: recent-half CTR < 60% of prior-half over ≥6 days — deterministic, per-campaign; per-creative platform metrics arrive with live insights (P5).
 - 2026-06-10 — Event re-evaluation only deepens (never shallows) on measured weekly terminal volume ≥ 50 — avoids thrashing the optimizer on noise.
+- 2026-06-10 — Dark mode via prefers-color-scheme (tailwind darkMode: media) — UX §8.1 specifies inversion, no toggle specified; system preference is the calm default.
+- 2026-06-10 — Added contrast-safe text variants (attention-deep #8A5A10, positive-deep #1F5C42, ink-muted-deep #525964) for small text on tinted chips — UX §8 tokens kept for fills/icons; WCAG AA (§13) takes precedence for text.
+- 2026-06-10 — Hosted page/form routes live under /hosted/{p,f}/:id — avoids the /p prefix colliding with /products in the SPA proxy.
+- 2026-06-10 — Playwright e2e runs against a dedicated adengine_e2e DB seeded by the API webServer command — hermetic, no globalSetup ordering issues; screenshot baselines committed from this environment (CI runs pnpm check; e2e:full runs locally per gate wording).

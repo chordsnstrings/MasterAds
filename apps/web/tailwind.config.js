@@ -2,7 +2,7 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
-  darkMode: "class",
+  darkMode: "media",
   theme: {
     extend: {
       colors: {
@@ -10,11 +10,14 @@ export default {
         surface: "#FFFFFF",
         ink: "#16181D",
         "ink-muted": "#697079",
+        "ink-muted-deep": "#525964",
         hairline: "#E7E9ED",
         accent: "#2F4BDA",
         "accent-soft": "#EEF1FE",
         positive: "#2E7D5B",
+        "positive-deep": "#1F5C42",
         attention: "#B5791F",
+        "attention-deep": "#8A5A10",
         critical: "#B23A48",
         "canvas-dark": "#15171C",
         "surface-dark": "#1D2026",

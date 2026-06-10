@@ -10,6 +10,7 @@ import { intakeRoutes } from "./routes/intake.js";
 import { planRoutes } from "./routes/plan.js";
 import { creativesRoutes } from "./routes/creatives.js";
 import { launchRoutes } from "./routes/launch.js";
+import { uiRoutes } from "./routes/ui.js";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -60,6 +61,7 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
   await app.register(planRoutes);
   await app.register(creativesRoutes);
   await app.register(launchRoutes);
+  await app.register(uiRoutes);
 
   return app;
 }

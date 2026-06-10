@@ -36,9 +36,9 @@ export function destinationUrl(spec: CampaignSpec, baseUrl: string): string | un
     case "url":
       return d.value;
     case "hosted_page":
-      return `${baseUrl}/p/${spec.productId}`;
+      return `${baseUrl}/hosted/p/${spec.productId}`;
     case "hosted_form":
-      return `${baseUrl}/f/${spec.productId}`;
+      return `${baseUrl}/hosted/f/${spec.productId}`;
     case "whatsapp":
       return `https://wa.me/${d.value.replace(/[^\d]/g, "")}`;
     case "call":

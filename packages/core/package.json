@@ -7,19 +7,23 @@
   "types": "src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests --fileParallelism=false"
+    "test": "vitest run --passWithNoTests --fileParallelism=false",
+    "e2e-seed": "node --import tsx src/e2eSeed.ts"
   },
   "dependencies": {
     "@engine/contracts": "workspace:*",
     "@engine/db": "workspace:*",
     "cheerio": "^1.2.0",
     "csv-parse": "^5.6.0",
+    "pg": "^8.21.0",
     "xlsx": "^0.18.5",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@engine/adapters": "workspace:*",
     "@types/node": "^22.19.20",
+    "@types/pg": "^8.20.0",
+    "tsx": "^4.22.4",
     "typescript": "^5.6.3",
     "vitest": "^2.1.4"
   }
