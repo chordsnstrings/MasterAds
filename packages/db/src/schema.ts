@@ -328,6 +328,25 @@ export const siteKeys = pgTable("site_keys", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Click-ID coverage snapshots (SW §8.7), computed per site × platform (G2).
+export const clickIdCoverage = pgTable(
+  "click_id_coverage",
+  {
+    id: text("id").primaryKey(),
+    sourceSite: text("source_site").notNull(),
+    platform: text("platform", { enum: ["meta", "google", "tiktok"] }).notNull(),
+    coveragePct: numeric("coverage_pct", { precision: 6, scale: 2 }).notNull(),
+    eventsTotal: integer("events_total").notNull(),
+    eventsWithClickId: integer("events_with_click_id").notNull(),
+    windowDays: integer("window_days").notNull(),
+    computedAt: timestamp("computed_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("click_id_coverage_site_idx").on(t.sourceSite, t.platform, t.computedAt)],
+);
+
+export type CoverageSnapshot = typeof clickIdCoverage.$inferSelect;
+export type NewCoverageSnapshot = typeof clickIdCoverage.$inferInsert;
+
 export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;
 export type Playbook = typeof playbooks.$inferSelect;

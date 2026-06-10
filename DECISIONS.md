@@ -12,3 +12,5 @@ One line per decision not specified by the docs: `YYYY-MM-DD — decision — re
 - 2026-06-10 — Custom forward-only SQL migration runner (`schema_migrations` table) instead of drizzle-kit journal — deterministic, no codegen, matches the forward-only convention.
 - 2026-06-10 — Product carries a UI lifecycle `status` column — UX §7 needs a per-product status; deriving it from campaigns would be ambiguous pre-launch.
 - 2026-06-10 — Conversion relay status kept on `conversion_events.relayed_to` jsonb (updatable) — only Decision/CostEvent are insert-only per invariant 3.
+- 2026-06-10 — Reconciliation key = canonical event_name + event_id + (email|phone hash|anon) — GOALS G2 specifies "event_id + identity"; first claim wins canonical, later claims stored non-canonical.
+- 2026-06-10 — event_time validated as unix seconds (rejects millisecond timestamps) — SW §7.1 requires occurrence time; ms values are a silent integration bug.

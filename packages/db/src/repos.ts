@@ -7,6 +7,7 @@ import type { Db } from "./client.js";
 import {
   campaignSpecs,
   campaigns,
+  clickIdCoverage,
   conversionEvents,
   costEvents,
   creatives,
@@ -23,7 +24,9 @@ import {
   type Creative,
   type Decision,
   type DecisionOutcome,
+  type CoverageSnapshot,
   type NewCampaign,
+  type NewCoverageSnapshot,
   type NewCampaignSpec,
   type NewConversionEvent,
   type NewCostEvent,
@@ -426,6 +429,35 @@ export function createRepos(db: Db) {
           else operatingCost = Number(r.total);
         }
         return { adSpend, operatingCost };
+      },
+    },
+
+    coverage: {
+      async insert(
+        row: Omit<NewCoverageSnapshot, "id"> & { id?: string },
+      ): Promise<CoverageSnapshot> {
+        const id = row.id ?? newId("cov");
+        const [r] = await db.insert(clickIdCoverage).values({ ...row, id }).returning();
+        if (!r) throw new Error("insert failed");
+        return r;
+      },
+      /** Latest snapshot per (source_site, platform). */
+      async latest(): Promise<CoverageSnapshot[]> {
+        const rows = await db
+          .select()
+          .from(clickIdCoverage)
+          .orderBy(desc(clickIdCoverage.computedAt))
+          .limit(500);
+        const seen = new Set<string>();
+        const out: CoverageSnapshot[] = [];
+        for (const r of rows) {
+          const k = `${r.sourceSite}:${r.platform}`;
+          if (!seen.has(k)) {
+            seen.add(k);
+            out.push(r);
+          }
+        }
+        return out;
       },
     },
 

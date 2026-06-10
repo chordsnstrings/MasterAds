@@ -73,13 +73,13 @@ Source: SW §6 (all entities), SW §13.1 (ORM).
 
 Source: SW §7.1, §8.4, §8.6, FLOW §6 (destinations), Appendix A/B taxonomies.
 
-- [ ] `packages/contracts`: zod schemas for the full inbound payload per SW §7.1 — event_name (canonical taxonomy), event_time, value+currency, click_ids (fbc/fbclid, fbp, ttclid, gclid, gbraid, wbraid), hashed_identifiers (email_sha256, phone_sha256), content_id, event_id, source_site. These schemas are the single source of payload truth, imported by api, loops, and tests.
-- [ ] `POST /v1/events` on `apps/api`: validates, normalizes event_name to the canonical taxonomy (SW Appendix A), persists to `ConversionEvent`, computes `dedup_key`, idempotent on (source_site, event_id) — replays return 200 without duplicating.
-- [ ] Per-site API key auth on the endpoint; keys stored hashed.
-- [ ] Late/out-of-order events accepted and stored with `occurred vs received` both kept (SW self-healing posture).
-- [ ] Click-ID **coverage computation** (SW §8.7): per site and platform, the rolling percentage of conversion events carrying each click ID, exposed via an internal endpoint and persisted for the UI.
-- [ ] Cross-platform reconciliation key (SW §8.5): dedup of one real conversion claimed by multiple platforms, on event_id + identity, with tests covering the triple-claim case.
-- [ ] Contract documentation generated for site integrators: `docs/integration.md` with payload examples per event type, written in plain language.
+- [x] `packages/contracts`: zod schemas for the full inbound payload per SW §7.1 — event_name (canonical taxonomy), event_time, value+currency, click_ids (fbc/fbclid, fbp, ttclid, gclid, gbraid, wbraid), hashed_identifiers (email_sha256, phone_sha256), content_id, event_id, source_site. These schemas are the single source of payload truth, imported by api, loops, and tests.
+- [x] `POST /v1/events` on `apps/api`: validates, normalizes event_name to the canonical taxonomy (SW Appendix A), persists to `ConversionEvent`, computes `dedup_key`, idempotent on (source_site, event_id) — replays return 200 without duplicating.
+- [x] Per-site API key auth on the endpoint; keys stored hashed.
+- [x] Late/out-of-order events accepted and stored with `occurred vs received` both kept (SW self-healing posture).
+- [x] Click-ID **coverage computation** (SW §8.7): per site and platform, the rolling percentage of conversion events carrying each click ID, exposed via an internal endpoint and persisted for the UI.
+- [x] Cross-platform reconciliation key (SW §8.5): dedup of one real conversion claimed by multiple platforms, on event_id + identity, with tests covering the triple-claim case.
+- [x] Contract documentation generated for site integrators: `docs/integration.md` with payload examples per event type, written in plain language.
 
 **GATE G2:** Contract tests: valid payloads for every event type in the taxonomy persist correctly; malformed payloads rejected with precise errors; duplicate event_id is idempotent; the same conversion claimed via three platform paths reconciles to one canonical row; coverage numbers compute correctly on seeded fixtures. `pnpm check` green.
 
