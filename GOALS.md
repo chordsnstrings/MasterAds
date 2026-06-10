@@ -186,6 +186,9 @@ Source: SW §9.3–9.4, §10; the heart of the system.
 
 **GATE G8:** Tests: a proposed budget change exceeding a cap is blocked and logged; kill switch flipped mid-run halts all writes within one iteration (integration test); fast loop pauses a fixture campaign burning spend with zero conversions and logs the Decision with rationale; a slice crossing the signal threshold auto-promotes; dry-run writes Decisions without mutating. **Mutation-path audit:** grep/static check proving no adapter write is reachable except through the guardrail layer. CI green.
 
+
+> **G8 complete — 2026-06-10, commit 042ebc3.** All gate checks pass: over-cap blocked+logged, kill switch halts iteration with zero writes, burn pause with rationale+evidence, threshold auto-promotion, dry-run non-mutating, mutation-path audit in pnpm check. Nothing deferred.
+
 ---
 
 ## G9 — Channel-keeping automations
