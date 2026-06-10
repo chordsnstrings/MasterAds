@@ -267,12 +267,12 @@ Source: FLOW doc in full; this is the hero flow and must match it to the letter,
 
 Source: SW §11, §13.2–13.3.
 
-- [ ] Structured logging across all components; trace IDs from API request → queue → loop decision → adapter call.
-- [ ] Operational monitoring per SW §11.3 surfaced internally: coverage, learning-phase status, EMQ placeholder, spend + operating-cost anomalies, reconciliation drift, net return.
-- [ ] Full-system e2e in stub mode: seed → add product (API) → classify → generate → launch → inject conversion events → relay → insights ingest → fast loop acts → medium loop reallocates (dry-run) → UI reflects all of it. One command: `pnpm e2e:full`.
-- [ ] Load sanity: ingestion endpoint handles a burst (e.g. 100 rps for 60s) without loss (queue absorbs).
-- [ ] `.do/app.yaml` finalized; staging vs production env documented; `docs/runbook.md`: deploy, rollback, kill switch, replay/backfill, rotating tokens.
-- [ ] `BLOCKED.md` finalized: the exact list of human prerequisites (P1–P6) with where each plugs in, so go-live is a configuration exercise, not a code change.
+- [x] Structured logging across all components; trace IDs from API request → queue → loop decision → adapter call.
+- [x] Operational monitoring per SW §11.3 surfaced internally: coverage, learning-phase status, EMQ placeholder, spend + operating-cost anomalies, reconciliation drift, net return.
+- [x] Full-system e2e in stub mode: seed → add product (API) → classify → generate → launch → inject conversion events → relay → insights ingest → fast loop acts → medium loop reallocates (dry-run) → UI reflects all of it. One command: `pnpm e2e:full`.
+- [x] Load sanity: ingestion endpoint handles a burst (e.g. 100 rps for 60s) without loss (queue absorbs).
+- [x] `.do/app.yaml` finalized; staging vs production env documented; `docs/runbook.md`: deploy, rollback, kill switch, replay/backfill, rotating tokens.
+- [x] `BLOCKED.md` finalized: the exact list of human prerequisites (P1–P6) with where each plugs in, so go-live is a configuration exercise, not a code change.
 
 **GATE G13 (final):** `pnpm check` and `pnpm e2e:full` green from a fresh clone with one setup command. Fresh-Postgres migration from zero passes. The repo deploys to App Platform from `app.yaml` without code edits once P1–P5 are supplied. Every chunk above shows `[x]` with completion notes. Build complete.
 
