@@ -278,6 +278,9 @@ Source: SW §11, §13.2–13.3.
 
 ---
 
+
+> **G13 complete — 2026-06-10, commit 2744aa9. BUILD COMPLETE.** Verified from a literal fresh clone: `./scripts/setup.sh` → `pnpm check` green (8 suites, 113 unit/integration tests) → `pnpm e2e:full` green (full pipeline in stub mode; 100rps×60s burst = 6000/6000 persisted, zero loss). Fresh-Postgres migrations from zero pass inside e2e:full. `.do/app.yaml` deploys all five components with the pre-deploy migration job; go-live = supplying P1–P5 per BLOCKED.md and flipping driver modes — no code changes. Playwright UI suites: 27 tests green (pnpm e2e:ui).
+
 ## Definition of done (whole build)
 
 Phase One is code-complete when GATE G13 passes. Live activation = supplying P1–P5 secrets and flipping adapters from `stub` to `live` per `BLOCKED.md` — no code changes. Phase Two items live in SW §14 and must not be built now; anything tempting from that list goes to `BACKLOG.md`.
