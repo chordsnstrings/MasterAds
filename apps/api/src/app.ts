@@ -1,5 +1,6 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
+import formbody from "@fastify/formbody";
 import { closeDb, createDb, createRepos, type Db, type Repos } from "@engine/db";
 import { createCreativeProvider, createLlmClient, createPlatformAdapters, type CreativeProvider, type LlmClient, type PlatformAdapter } from "@engine/adapters";
 import { seedPlaybooks } from "@engine/core";
@@ -11,6 +12,7 @@ import { planRoutes } from "./routes/plan.js";
 import { creativesRoutes } from "./routes/creatives.js";
 import { launchRoutes } from "./routes/launch.js";
 import { uiRoutes } from "./routes/ui.js";
+import { hostedRoutes } from "./routes/hosted.js";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -39,6 +41,7 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
     },
   });
   await app.register(cors, { origin: true });
+  await app.register(formbody);
 
   const db = opts.db ?? createDb();
   app.decorate("db", db);
@@ -62,6 +65,7 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
   await app.register(creativesRoutes);
   await app.register(launchRoutes);
   await app.register(uiRoutes);
+  await app.register(hostedRoutes);
 
   return app;
 }

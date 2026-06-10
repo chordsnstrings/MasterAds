@@ -9,7 +9,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "e2e": "playwright test"
+    "e2e": "playwright test e2e/creation.spec.ts && playwright test e2e/supervision.spec.ts"
   },
   "dependencies": {
     "react": "^18.3.1",

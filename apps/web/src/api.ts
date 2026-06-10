@@ -103,7 +103,72 @@ async function request<T>(method: string, url: string, body?: unknown): Promise<
   return (await res.json()) as T;
 }
 
+export interface PlanData {
+  specId: string;
+  goal: string | null;
+  platforms: string[];
+  perDay: number;
+  currency: string | null;
+  destination: { kind: string; value: string } | null;
+  policyCategory: "standard" | "restricted";
+  needsDestinationChoice?: boolean;
+  launchAllowed?: boolean;
+  needsDisambiguation?: boolean;
+  question?: string;
+}
+
+export interface CreativePreview {
+  id: string;
+  variantNo: number;
+  format: string;
+  assetRef: string;
+  headline?: string;
+  body?: string;
+  status: string;
+}
+
 export const api = {
+  intake: (input: string) =>
+    request<{ intakeId: string; status: string }>("POST", "/v1/intake", { input }),
+  intakeFile: (filename: string, contentBase64: string) =>
+    request<{ intakeId: string; status: string }>("POST", "/v1/intake/file", {
+      filename,
+      content_base64: contentBase64,
+    }),
+  intakeStatus: (id: string) =>
+    request<{
+      intakeId: string;
+      status: "reading" | "done" | "unreadable";
+      result: {
+        kind?: string;
+        suggestion?: string;
+        productIds?: string[];
+        productCount?: number;
+        catalogGroupId?: string;
+      } | null;
+    }>("GET", `/v1/intake/${id}`),
+  plan: (
+    productId: string,
+    body: { goal?: string; daily_budget?: number; disambiguation?: "product" | "service" },
+  ) => request<PlanData>("POST", `/v1/products/${productId}/plan`, body),
+  generateCreatives: (specId: string) =>
+    request<{ creatives: CreativePreview[] }>("POST", `/v1/specs/${specId}/creatives`),
+  patchSpec: (
+    specId: string,
+    body: {
+      goal?: string;
+      daily_budget?: number;
+      destination?: { kind: string; value: string };
+      target_platforms?: string[];
+    },
+  ) => request<PlanData>("PATCH", `/v1/specs/${specId}`, body),
+  editCreative: (id: string, body: { headline?: string; body?: string }) =>
+    request("PATCH", `/v1/creatives/${id}`, body),
+  launch: (specId: string) =>
+    request<{ status: "live" | "in_review"; dailyCap?: number; currency?: string }>(
+      "POST",
+      `/v1/specs/${specId}/launch`,
+    ),
   overview: () => request<OverviewData>("GET", "/internal/overview"),
   products: () => request<{ products: (ProductCardData & { status: string })[] }>("GET", "/internal/products"),
   product: (id: string) => request<ProductDetailData>("GET", `/internal/products/${id}`),

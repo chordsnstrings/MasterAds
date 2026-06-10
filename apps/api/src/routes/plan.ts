@@ -59,6 +59,42 @@ export async function planRoutes(app: FastifyInstance): Promise<void> {
     });
   });
 
+  // Review-screen edits (FLOW §5): goal, platforms, per-day, destination.
+  const specPatch = z.object({
+    goal: z.string().optional(),
+    daily_budget: z.number().positive().optional(),
+    destination: z
+      .object({
+        kind: z.enum(["url", "hosted_page", "hosted_form", "whatsapp", "call"]),
+        value: z.string(),
+      })
+      .optional(),
+    target_platforms: z.array(z.enum(["meta", "google", "tiktok"])).min(1).optional(),
+  });
+  app.patch<{ Params: { id: string } }>("/v1/specs/:id", async (req, reply) => {
+    const parsed = specPatch.safeParse(req.body ?? {});
+    if (!parsed.success) return reply.status(400).send({ error: "invalid_body" });
+    const spec = await app.repos.specs.get(req.params.id);
+    if (!spec) return reply.status(404).send({ error: "not_found" });
+    const updated = await app.repos.specs.update(spec.id, {
+      ...(parsed.data.goal ? { goal: parsed.data.goal } : {}),
+      ...(parsed.data.daily_budget !== undefined
+        ? { dailyBudget: parsed.data.daily_budget.toFixed(4) }
+        : {}),
+      ...(parsed.data.destination ? { destination: parsed.data.destination } : {}),
+      ...(parsed.data.target_platforms ? { targetPlatforms: parsed.data.target_platforms } : {}),
+    });
+    return {
+      specId: updated.id,
+      goal: updated.goal,
+      perDay: Number(updated.dailyBudget),
+      currency: updated.budgetCurrency,
+      platforms: updated.targetPlatforms,
+      destination: updated.destination,
+      policyCategory: updated.policyCategory,
+    };
+  });
+
   // Restricted sign-off queue (one-time per playbook; SW §9.4 rule 4).
   app.get("/internal/playbooks/pending-signoff", async () => {
     const all = await app.repos.playbooks.list();

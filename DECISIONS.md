@@ -47,3 +47,7 @@ One line per decision not specified by the docs: `YYYY-MM-DD — decision — re
 - 2026-06-10 — Added contrast-safe text variants (attention-deep #8A5A10, positive-deep #1F5C42, ink-muted-deep #525964) for small text on tinted chips — UX §8 tokens kept for fills/icons; WCAG AA (§13) takes precedence for text.
 - 2026-06-10 — Hosted page/form routes live under /hosted/{p,f}/:id — avoids the /p prefix colliding with /products in the SPA proxy.
 - 2026-06-10 — Playwright e2e runs against a dedicated adengine_e2e DB seeded by the API webServer command — hermetic, no globalSetup ordering issues; screenshot baselines committed from this environment (CI runs pnpm check; e2e:full runs locally per gate wording).
+- 2026-06-10 — Hosted page/form ingest server-side via ingestConversion (source_site "hosted-pages"), click IDs read from landing query and threaded through hidden form fields — the hosted destination is a first-class measurement surface (FLOW §6 design note).
+- 2026-06-10 — Catalog launch consolidates: one spec on the group's representative product with the group as consolidation slice; per-product creative stays automatic (FLOW §7 "made invisible").
+- 2026-06-10 — /demo/product-page fixture route (non-production only) — lets the paste-link e2e exercise real URL intake without external network.
+- 2026-06-10 — e2e suites run as two sequential Playwright invocations, each reseeding adengine_e2e — creation flow mutates state that supervision screenshots and the sign-off queue depend on.

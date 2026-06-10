@@ -247,14 +247,14 @@ Source: UX doc in full — §4 IA, §6 screens, §7 autonomy surfacing, §8 visu
 
 Source: FLOW doc in full; this is the hero flow and must match it to the letter, including microcopy (FLOW §12 strings verbatim).
 
-- [ ] Step 1 — Add: single input auto-detecting link/text/file; three ways presented; optional goal/budget fields with defaults; reading state; "couldn't read" graceful redirect to describe-it. FLOW §4.
-- [ ] Conditional disambiguation (product vs service) only on low classifier confidence. FLOW §4.5.
-- [ ] Step 2 — Review: generated plain-language plan sentence consistent with the lines below it; editable Goal (human-outcome list), Shows on (toggles + connect notes), Per day (soft floor note, non-blocking), People go to; creative previews with keep/pick/light-edit/make-new. FLOW §5.
-- [ ] Destination chooser incl. hosted simple page and hosted form (minimal hosted page/form service in `apps/api` — it is also a measurement surface, so its events flow into G2 natively), WhatsApp, call. FLOW §6.
-- [ ] Catalog path: multi-product confirmation copy and single launch. FLOW §7.
-- [ ] Restricted path: Launch → Submit for review, In-review state, calm confirmation. FLOW §8.6.
-- [ ] Launch + confirmation screen with the four reassurance lines (spend cap line pulls the real configured cap). FLOW §9.
-- [ ] Fully responsive: both steps full-screen on `sm`, sticky primary action; all FLOW §13 rules.
+- [x] Step 1 — Add: single input auto-detecting link/text/file; three ways presented; optional goal/budget fields with defaults; reading state; "couldn't read" graceful redirect to describe-it. FLOW §4.
+- [x] Conditional disambiguation (product vs service) only on low classifier confidence. FLOW §4.5.
+- [x] Step 2 — Review: generated plain-language plan sentence consistent with the lines below it; editable Goal (human-outcome list), Shows on (toggles + connect notes), Per day (soft floor note, non-blocking), People go to; creative previews with keep/pick/light-edit/make-new. FLOW §5.
+- [x] Destination chooser incl. hosted simple page and hosted form (minimal hosted page/form service in `apps/api` — it is also a measurement surface, so its events flow into G2 natively), WhatsApp, call. FLOW §6.
+- [x] Catalog path: multi-product confirmation copy and single launch. FLOW §7.
+- [x] Restricted path: Launch → Submit for review, In-review state, calm confirmation. FLOW §8.6.
+- [x] Launch + confirmation screen with the four reassurance lines (spend cap line pulls the real configured cap). FLOW §9.
+- [x] Fully responsive: both steps full-screen on `sm`, sticky primary action; all FLOW §13 rules.
 
 **GATE G12:** Playwright e2e: (a) paste-link happy path to You're-live in two screens; (b) describe-it path with disambiguation and hosted-form destination, then a form submission on the hosted page produces a canonical ConversionEvent (proving the measurement loop); (c) catalog CSV path; (d) restricted product reaches Submit-for-review and is blocked from live until sign-off. Microcopy snapshot tests match FLOW §12 strings. Screenshot tests at all three viewports. CI green.
 

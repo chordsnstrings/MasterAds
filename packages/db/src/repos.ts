@@ -210,6 +210,14 @@ export function createRepos(db: Db) {
       async setStatus(id: string, status: Creative["status"]): Promise<void> {
         await db.update(creatives).set({ status }).where(eq(creatives.id, id));
       },
+      async updatePayload(id: string, patch: Record<string, string>): Promise<void> {
+        const existing = (await db.select().from(creatives).where(eq(creatives.id, id)))[0];
+        if (!existing) throw new Error(`creative ${id} not found`);
+        await db
+          .update(creatives)
+          .set({ payload: { ...existing.payload, ...patch } })
+          .where(eq(creatives.id, id));
+      },
       async setFatigue(id: string, fatigueState: Creative["fatigueState"]): Promise<void> {
         await db.update(creatives).set({ fatigueState }).where(eq(creatives.id, id));
       },

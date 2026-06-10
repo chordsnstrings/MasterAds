@@ -44,6 +44,21 @@ export async function creativesRoutes(app: FastifyInstance): Promise<void> {
     });
   });
 
+  // Light edit (FLOW §5.7): change the words; never a per-format spec editor.
+  app.patch<{ Params: { id: string }; Body: { headline?: string; body?: string } }>(
+    "/v1/creatives/:id",
+    async (req, reply) => {
+      const creative = await app.repos.creatives.get(req.params.id);
+      if (!creative) return reply.status(404).send({ error: "not_found" });
+      const body = (req.body ?? {}) as { headline?: string; body?: string };
+      await app.repos.creatives.updatePayload(creative.id, {
+        ...(body.headline ? { headline: body.headline } : {}),
+        ...(body.body ? { body: body.body } : {}),
+      });
+      return { ok: true };
+    },
+  );
+
   app.get<{ Params: { id: string } }>("/v1/products/:id/creatives", async (req) => {
     const creatives = await app.repos.creatives.byProduct(req.params.id);
     return { creatives };
