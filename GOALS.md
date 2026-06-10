@@ -168,6 +168,9 @@ Source: SW §5.5, §7.3, §12; FLOW §5, §9.
 
 **GATE G7:** Stub-mode end-to-end: a seeded product flows intake → classify → generate → launch, producing Campaign rows in Launching state with snapshot-correct platform payloads for all three adapters; re-running launch is a no-op; the insights job ingests fixture reports and writes ad_spend CostEvents. CI green.
 
+
+> **G7 complete — 2026-06-10, commit 665f80a.** E2E stub flow intake → classify → generate → launch produces Launching campaigns on all platforms; re-launch is a no-op; over-cap budget blocked with logged Decision; insights fixtures ingest with ad_spend CostEvents. Nothing deferred.
+
 ---
 
 ## G8 — Autonomy machinery: loops, guardrails, decisions, kill switch
