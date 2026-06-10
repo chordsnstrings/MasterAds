@@ -116,6 +116,9 @@ Source: SW §5.1, FLOW §3–4, §7.
 
 **GATE G4:** Fixture tests: a product page HTML fixture extracts correctly; a malformed URL yields the typed fallback (not an exception); a 24-row CSV produces 24 normalized products under one catalog group; feed re-sync detects a price change and a stock-out in fixtures and emits the right events. CI green.
 
+
+> **G4 complete — 2026-06-10, commit 00eb9ca.** All fixture tests green: HTML extract, typed fallback, 24-row CSV → one catalog group, re-sync detects price change + stock-out. Nothing deferred.
+
 ---
 
 ## G5 — Classification and playbooks
