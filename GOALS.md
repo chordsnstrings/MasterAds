@@ -218,6 +218,9 @@ Source: SW §9.2; SW §5.3–5.4.
 
 **GATE G10:** Simulation test on seeded data: the medium loop shifts budget toward the higher-net-return campaign within guardrail step limits and logs predicted outcomes; a fatigued fixture creative rotates; a thin product deepens its optimization event when fixture volume rises; scoring fills outcomes after the window. CI green.
 
+
+> **G10 complete — 2026-06-10, commit b94ef97.** Simulation gate green: budget shifted within step limits with predicted outcomes; propose-only below threshold; fatigued creative rotated; thin product deepened to Purchase at 60/wk; outcomes scored (+0.6 delta). Nothing deferred.
+
 ---
 
 ## G11 — Supervision UI (responsive)
