@@ -83,6 +83,9 @@ Source: SW §7.1, §8.4, §8.6, FLOW §6 (destinations), Appendix A/B taxonomies
 
 **GATE G2:** Contract tests: valid payloads for every event type in the taxonomy persist correctly; malformed payloads rejected with precise errors; duplicate event_id is idempotent; the same conversion claimed via three platform paths reconciles to one canonical row; coverage numbers compute correctly on seeded fixtures. `pnpm check` green.
 
+
+> **G2 complete — 2026-06-10, commit d7fcc19.** Contract tests for all event types; malformed payloads return precise field errors; replay idempotent; coverage on fixtures (50/25/0%). Nothing deferred.
+
 ---
 
 ## G3 — Platform relay (outbound conversions)
