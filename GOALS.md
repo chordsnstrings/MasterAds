@@ -46,6 +46,9 @@ These cannot be created by code and are the only things a human supplies. None b
 
 **GATE G0:** `pnpm install && pnpm check` passes clean. All four app entrypoints start and stop without error (api responds on `/health`; workers start, log readiness, exit cleanly on SIGTERM). CI workflow is green on the initial commit.
 
+
+> **G0 complete — 2026-06-10, commit 7764ee5.** Monorepo scaffold, toolchain, CI workflow, .do/app.yaml, env contract, log files. Nothing deferred.
+
 ---
 
 ## G1 — Data model and migrations
