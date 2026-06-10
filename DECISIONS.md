@@ -39,3 +39,7 @@ One line per decision not specified by the docs: `YYYY-MM-DD — decision — re
 - 2026-06-10 — Regional events calendar as in-repo JSON (Ramadan, DSF, White Friday, Q4) with pacing multipliers; one adjustment per campaign per window, autonomous slices only — re-runs cannot compound budgets.
 - 2026-06-10 — Warm-up enforced as a guardrail rule (account age via ad_accounts.platform_created_at, cap 400/day under 30 days) — every budget action passes through it, not just the fast loop.
 - 2026-06-10 — Price-change handling: price-bearing creatives (digit-containing copy) set to expired + Decision; regeneration happens via the G10 rotation path within the G6 cap.
+- 2026-06-10 — Medium loop reallocates pairwise (lowest → highest net-return slice, ≤20% step, gap must exceed 1.2×) — conservative, budget-neutral, deterministic; portfolio-wide optimizers can replace it behind the same guardedExecute path.
+- 2026-06-10 — Revenue for net return computed from canonical conversion events (value sums per content_id) — reconciled figures, never platform-summed (SW §8.5).
+- 2026-06-10 — Fatigue heuristic: recent-half CTR < 60% of prior-half over ≥6 days — deterministic, per-campaign; per-creative platform metrics arrive with live insights (P5).
+- 2026-06-10 — Event re-evaluation only deepens (never shallows) on measured weekly terminal volume ≥ 50 — avoids thrashing the optimizer on noise.

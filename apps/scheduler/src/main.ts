@@ -4,7 +4,7 @@ import { closeDb, createDb, createRepos } from "@engine/db";
 import { createBillingChecker, createPlatformAdapters } from "@engine/adapters";
 import { runFeedSyncSweep } from "./jobs/feed-sync.js";
 import { runInsightsPull } from "./jobs/insights.js";
-import { applyCalendarPacing, expirePromos, processProductChanges, runBillingHealth } from "@engine/core";
+import { applyCalendarPacing, expirePromos, processProductChanges, reevaluateOptimizationEvents, runBillingHealth, runFatigueSweep, runMediumLoopOnce, scoreDecisions } from "@engine/core";
 
 function log(msg: string, extra: Record<string, unknown> = {}): void {
   console.log(
@@ -39,6 +39,42 @@ const jobs: ScheduledJob[] = [
     run: async () => {
       const r = await runInsightsPull(repos, platformAdapters);
       log("insights pulled", { ...r });
+    },
+  },
+  {
+    name: "medium-loop",
+    intervalMs: 24 * 60 * 60_000, // daily reasoning-brain cadence (SW §9.3)
+    lastRun: 0,
+    run: async () => {
+      const r = await runMediumLoopOnce({ repos, adapters: platformAdapters });
+      log("medium loop ran", { ...r });
+    },
+  },
+  {
+    name: "fatigue-sweep",
+    intervalMs: 24 * 60 * 60_000,
+    lastRun: 0,
+    run: async () => {
+      const r = await runFatigueSweep(repos);
+      if (r.rotated.length > 0) log("creatives rotated", { ...r });
+    },
+  },
+  {
+    name: "event-reevaluation",
+    intervalMs: 24 * 60 * 60_000,
+    lastRun: 0,
+    run: async () => {
+      const r = await reevaluateOptimizationEvents({ repos, adapters: platformAdapters });
+      if (r.deepened.length > 0) log("optimization events deepened", { ...r });
+    },
+  },
+  {
+    name: "outcome-scoring",
+    intervalMs: 6 * 60 * 60_000,
+    lastRun: 0,
+    run: async () => {
+      const r = await scoreDecisions(repos);
+      if (r.scored > 0) log("decisions scored", { ...r });
     },
   },
   {

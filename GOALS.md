@@ -211,10 +211,10 @@ Source: SW §14 Phase One step 6.
 
 Source: SW §9.2; SW §5.3–5.4.
 
-- [ ] **Medium loop** (daily): cross-campaign budget reallocation on **net return** (revenue ÷ [ad_spend + operating cost] from the CostEvent ledger, SW §9.1), bounded by guardrails, executed only on auto-promoted slices; propose-only (Decision with executed=false) on slices still below threshold.
-- [ ] **Creative fatigue detection:** frequency/CTR-decay heuristic per creative; rotation to held variants, regeneration request when the pool is exhausted (respecting the G6 cap).
-- [ ] **Event-selection re-evaluation:** periodic re-check of each product's optimization event as volume grows (deepen when terminal volume clears threshold).
-- [ ] Outcome scoring job: fills Decision.actual_outcome and scored_delta after the observation window, producing the decision-quality metric (SW §11.2).
+- [x] **Medium loop** (daily): cross-campaign budget reallocation on **net return** (revenue ÷ [ad_spend + operating cost] from the CostEvent ledger, SW §9.1), bounded by guardrails, executed only on auto-promoted slices; propose-only (Decision with executed=false) on slices still below threshold.
+- [x] **Creative fatigue detection:** frequency/CTR-decay heuristic per creative; rotation to held variants, regeneration request when the pool is exhausted (respecting the G6 cap).
+- [x] **Event-selection re-evaluation:** periodic re-check of each product's optimization event as volume grows (deepen when terminal volume clears threshold).
+- [x] Outcome scoring job: fills Decision.actual_outcome and scored_delta after the observation window, producing the decision-quality metric (SW §11.2).
 
 **GATE G10:** Simulation test on seeded data: the medium loop shifts budget toward the higher-net-return campaign within guardrail step limits and logs predicted outcomes; a fatigued fixture creative rotates; a thin product deepens its optimization event when fixture volume rises; scoring fills outcomes after the window. CI green.
 
