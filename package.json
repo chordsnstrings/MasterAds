@@ -11,12 +11,13 @@
     "lint": "eslint .",
     "lint:ui-strings": "node scripts/lint-ui-strings.mjs",
     "test": "pnpm -r --workspace-concurrency=1 run test",
-    "check": "pnpm run typecheck && pnpm run lint && pnpm run lint:ui-strings && pnpm run test",
+    "check": "pnpm run typecheck && pnpm run lint && pnpm run lint:ui-strings && pnpm run audit:mutations && pnpm run test",
     "build": "pnpm -r run build",
     "migrate": "pnpm --filter @engine/db run migrate",
     "seed": "pnpm --filter @engine/db run seed",
     "e2e:full": "node scripts/e2e-full.mjs",
-    "kill-switch": "pnpm --filter @engine/db run kill-switch"
+    "kill-switch": "pnpm --filter @engine/db run kill-switch",
+    "audit:mutations": "node scripts/audit-mutation-paths.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.14.0",

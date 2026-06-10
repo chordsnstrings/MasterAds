@@ -32,3 +32,7 @@ One line per decision not specified by the docs: `YYYY-MM-DD — decision — re
 - 2026-06-10 — Stub platform campaign ids are deterministic per spec (hash) — combined with the (spec, platform) unique index, launch is idempotent by construction.
 - 2026-06-10 — Campaigns are created PAUSED/DISABLE in platform payloads — live activation is an explicit resume step, so a live-mode misfire cannot spend before review.
 - 2026-06-10 — ad_spend CostEvents only written when the (campaign, date) insights row is newly inserted — keeps the insert-only ledger duplicate-free under hourly pulls.
+- 2026-06-10 — Fast-loop thresholds in settings key fast_loop (burn 1.5×/2d, anomaly z≥3 or 3× budget, learning/promotion 50/wk) — configurable per SW Appendix C defaults.
+- 2026-06-10 — Auto-promotion measured on weekly platform-reported conversions per campaign slice — the per-slice signal-sufficiency condition of SW §9.4 rule 3; flips status to autonomous and logs a Decision.
+- 2026-06-10 — Lifecycle/promotion Decisions (non-platform mutations) written directly to the Decision log with guardrailStatus=passed — guardrails govern platform writes; internal state flips are still fully audited.
+- 2026-06-10 — Mutation-path audit as a static check in pnpm check — approveAction() only in guardrails, adapter writes start with preWrite, platform endpoints only inside adapters.

@@ -177,12 +177,12 @@ Source: SW §5.5, §7.3, §12; FLOW §5, §9.
 
 Source: SW §9.3–9.4, §10; the heart of the system.
 
-- [ ] **Guardrail layer** (`packages/core/guardrails`): deterministic, pre-action validation of every proposed mutation — spend caps (per campaign/vertical/global), max change size per step, change-frequency limits, blast-radius limits, operating-cost caps. Pure functions; every platform-mutating code path routes through it (enforced by construction: adapters accept only guardrail-approved action objects).
-- [ ] **Kill switch:** DB flag; every loop iteration and every adapter write checks it first; flipping it halts all writes and inference within one iteration. Admin endpoint + one-line CLI to flip it.
-- [ ] **Decision log:** every proposed action persisted as a `Decision` with rationale, predicted outcome, guardrail status, executed flag — before execution. Outcome scoring job fills actual_outcome/scored_delta later.
-- [ ] **Fast loop** (`apps/loops`, deterministic, no LLM): pacing checks, spend anomaly detection (configurable z-score/threshold), zero-conversion burn pausing, circuit breakers. Runs on a minutes cadence; autonomous from first deploy per SW §9.4 rule 2.
-- [ ] **Auto-promotion gate** (SW §9.4 rule 3): per campaign/vertical signal-sufficiency check that flips allocation authority automatically when the data threshold clears; status persisted and surfaced.
-- [ ] Dry-run mode: any loop can run propose-only, writing Decisions with `executed=false`.
+- [x] **Guardrail layer** (`packages/core/guardrails`): deterministic, pre-action validation of every proposed mutation — spend caps (per campaign/vertical/global), max change size per step, change-frequency limits, blast-radius limits, operating-cost caps. Pure functions; every platform-mutating code path routes through it (enforced by construction: adapters accept only guardrail-approved action objects).
+- [x] **Kill switch:** DB flag; every loop iteration and every adapter write checks it first; flipping it halts all writes and inference within one iteration. Admin endpoint + one-line CLI to flip it.
+- [x] **Decision log:** every proposed action persisted as a `Decision` with rationale, predicted outcome, guardrail status, executed flag — before execution. Outcome scoring job fills actual_outcome/scored_delta later.
+- [x] **Fast loop** (`apps/loops`, deterministic, no LLM): pacing checks, spend anomaly detection (configurable z-score/threshold), zero-conversion burn pausing, circuit breakers. Runs on a minutes cadence; autonomous from first deploy per SW §9.4 rule 2.
+- [x] **Auto-promotion gate** (SW §9.4 rule 3): per campaign/vertical signal-sufficiency check that flips allocation authority automatically when the data threshold clears; status persisted and surfaced.
+- [x] Dry-run mode: any loop can run propose-only, writing Decisions with `executed=false`.
 
 **GATE G8:** Tests: a proposed budget change exceeding a cap is blocked and logged; kill switch flipped mid-run halts all writes within one iteration (integration test); fast loop pauses a fixture campaign burning spend with zero conversions and logs the Decision with rationale; a slice crossing the signal threshold auto-promotes; dry-run writes Decisions without mutating. **Mutation-path audit:** grep/static check proving no adapter write is reachable except through the guardrail layer. CI green.
 
