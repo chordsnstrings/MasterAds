@@ -8,5 +8,8 @@ export * from "./classify/eventSelection.js";
 export * from "./classify/spec.js";
 export * from "./classify/launchGate.js";
 export * from "./playbooks/index.js";
+export * from "./creative/policy.js";
+export * from "./creative/scoring.js";
+export * from "./creative/generate.js";
 
 export const CORE_VERSION = "0.1.0";

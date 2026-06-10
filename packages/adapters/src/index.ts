@@ -2,6 +2,14 @@
 export * from "./relay/index.js";
 export { driverMode, type DriverMode } from "./env.js";
 export {
+  createCreativeProvider,
+  FORMAT_DIMENSIONS,
+  type CreativeProvider,
+  type GeneratedAsset,
+  type ImageBrief,
+  type VideoBrief,
+} from "./creative.js";
+export {
   createLlmClient,
   type LlmClient,
   type LlmOperation,

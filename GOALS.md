@@ -142,13 +142,13 @@ Source: SW §5.2–5.3, Appendix C; FLOW §4.5, §8.6.
 
 Source: SW §5.4; FLOW §5.7; UX component states.
 
-- [ ] Generation service: from `Product` + creative angle, produce copy variants (LLM) and image/video briefs dispatched to the creative provider adapter (live/stub driver pattern; stub returns deterministic placeholder assets with correct dimensions per format).
-- [ ] Format adaptation: every concept rendered to 1:1, 9:16, 16:9 variants; assets stored with format metadata.
-- [ ] `content_id` stamped on every asset and threaded to campaign construction (G7).
-- [ ] **Pre-flight policy screening** (Phase One step 4): a screening pass over generated copy/visual descriptors against per-platform rule lists (data-driven, in-repo, extensible); failures block submission and produce a plain-language reason.
-- [ ] Predictive pre-screening hook: a scoring interface (stub: heuristic score) gating which variants are launched vs held.
-- [ ] **CostEvent emission**: every generation call writes an `ai_inference` CostEvent with units and price (SW §6.1) — enforced in the adapter so it cannot be skipped.
-- [ ] Regeneration capped per product per period (SW §10.2 operating-cost caps), cap configurable.
+- [x] Generation service: from `Product` + creative angle, produce copy variants (LLM) and image/video briefs dispatched to the creative provider adapter (live/stub driver pattern; stub returns deterministic placeholder assets with correct dimensions per format).
+- [x] Format adaptation: every concept rendered to 1:1, 9:16, 16:9 variants; assets stored with format metadata.
+- [x] `content_id` stamped on every asset and threaded to campaign construction (G7).
+- [x] **Pre-flight policy screening** (Phase One step 4): a screening pass over generated copy/visual descriptors against per-platform rule lists (data-driven, in-repo, extensible); failures block submission and produce a plain-language reason.
+- [x] Predictive pre-screening hook: a scoring interface (stub: heuristic score) gating which variants are launched vs held.
+- [x] **CostEvent emission**: every generation call writes an `ai_inference` CostEvent with units and price (SW §6.1) — enforced in the adapter so it cannot be skipped.
+- [x] Regeneration capped per product per period (SW §10.2 operating-cost caps), cap configurable.
 
 **GATE G6:** Stub-mode pipeline: one product in → ≥3 variants × 3 formats out, all stamped with content_id; a fixture containing a banned claim is blocked with a readable reason; every generation emits a CostEvent (test asserts ledger rows); regeneration cap triggers at the configured limit. CI green.
 

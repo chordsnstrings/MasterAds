@@ -1,0 +1,24 @@
+{
+  "common": [
+    { "pattern": "guaranteed (returns|profit|income|results)", "reason": "Promises of guaranteed results aren't allowed in ads." },
+    { "pattern": "get rich( quick)?", "reason": "Get-rich-quick claims aren't allowed in ads." },
+    { "pattern": "risk[- ]free", "reason": "Claims that something is risk-free aren't allowed in ads." },
+    { "pattern": "miracle (cure|treatment|results)", "reason": "Miracle-cure claims aren't allowed in ads." },
+    { "pattern": "cures? (cancer|diabetes|disease)", "reason": "Claims of curing medical conditions aren't allowed in ads." },
+    { "pattern": "lose \\d+ ?(kg|kilos|pounds|lbs)", "reason": "Specific weight-loss promises aren't allowed in ads." },
+    { "pattern": "100% (safe|effective|guaranteed)", "reason": "Absolute safety or effectiveness claims aren't allowed in ads." }
+  ],
+  "meta": [
+    { "pattern": "before (and|&) after", "reason": "Before-and-after imagery isn't allowed for this channel." },
+    { "pattern": "are you (over|under) \\d+", "reason": "Calling out personal attributes like age isn't allowed for this channel." },
+    { "pattern": "do you (suffer|struggle) (from|with)", "reason": "Calling out personal conditions isn't allowed for this channel." }
+  ],
+  "google": [
+    { "pattern": "click here", "reason": "\"Click here\" phrasing isn't allowed for this channel." },
+    { "pattern": "#1|number one", "reason": "Unverifiable superlatives need third-party proof for this channel." }
+  ],
+  "tiktok": [
+    { "pattern": "before (and|&) after", "reason": "Before-and-after imagery isn't allowed for this channel." },
+    { "pattern": "(alcohol|cigarette|vape|tobacco)", "reason": "This product category isn't allowed for this channel." }
+  ]
+}

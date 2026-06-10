@@ -25,3 +25,6 @@ One line per decision not specified by the docs: `YYYY-MM-DD — decision — re
 - 2026-06-10 — Suggested daily budgets by price tier: AED 150/300/500/800 — FLOW §5.5 floor note references ~AED 150; scaled up with consideration depth.
 - 2026-06-10 — Playbook target platforms added as additive migration 0005 — ecommerce → meta+tiktok+google; lead-gen verticals → meta+google.
 - 2026-06-10 — Anthropic priced at $3/$15 per Mtok in the cost ledger — current claude-sonnet pricing; unit price stored on every row so re-pricing is data, not code.
+- 2026-06-10 — Regeneration cap counts creative asset rows per product per rolling period (default 36/7d), stored in settings key creative_caps — simple, configurable, covers both manual "Make new ones" and automated rotation.
+- 2026-06-10 — Predictive pre-screening: deterministic copy heuristic scorer behind a PredictiveScorer interface, launch threshold 0.5 — stub per GOALS; learned model slots in behind the same interface.
+- 2026-06-10 — Stub creative pricing: $0.04/image, $0.10/video-second — placeholder unit prices so net-return math is exercised end to end.
