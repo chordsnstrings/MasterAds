@@ -238,6 +238,9 @@ Source: UX doc in full — §4 IA, §6 screens, §7 autonomy surfacing, §8 visu
 
 **GATE G11:** Component tests + Playwright e2e against the seeded API: every screen renders with seed data at 375px, 768px, 1280px viewports (screenshot tests); axe passes; the banned-terms lint passes on all UI strings; attention flow (see item → fix → clears) works e2e; kill switch togglable from Settings. CI green.
 
+
+> **G11 complete — 2026-06-10, commit 103b773.** 22 Playwright tests green (screens at 375/768/1280 with committed baselines, axe AA, attention see→fix→clears, kill switch from Settings, sign-off queue), 6 component tests, ui-strings lint clean. Nothing deferred.
+
 ---
 
 ## G12 — Creation flow UI
