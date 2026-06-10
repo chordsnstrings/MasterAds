@@ -64,6 +64,9 @@ Source: SW §6 (all entities), SW §13.1 (ORM).
 
 **GATE G1:** Migrations apply from zero on a fresh Postgres. Seed runs. Repository tests pass in CI. Attempting to update or delete a `Decision`/`CostEvent` row through the repository API fails by construction.
 
+
+> **G1 complete — 2026-06-10, commit 9a60669.** Drizzle + custom forward-only SQL runner; insert-only enforced by repo API and DB triggers; decision outcomes as separate insert-only stream; seed with 3 products across statuses. Nothing deferred.
+
 ---
 
 ## G2 — Conversion ingestion (the inbound contract)
