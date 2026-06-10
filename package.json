@@ -10,7 +10,7 @@
     "typecheck": "pnpm -r run typecheck",
     "lint": "eslint .",
     "lint:ui-strings": "node scripts/lint-ui-strings.mjs",
-    "test": "pnpm -r run test",
+    "test": "pnpm -r --workspace-concurrency=1 run test",
     "check": "pnpm run typecheck && pnpm run lint && pnpm run lint:ui-strings && pnpm run test",
     "build": "pnpm -r run build",
     "migrate": "pnpm --filter @engine/db run migrate",

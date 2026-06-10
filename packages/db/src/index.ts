@@ -1,3 +1,5 @@
-// @engine/db — schema, migrations, typed repositories. Implemented in G1.
-
-export const DB_VERSION = "0.1.0";
+export * from "./schema.js";
+export { createDb, closeDb, connectionString, type Db } from "./client.js";
+export { createRepos, newId, hashSiteKey, type Repos } from "./repos.js";
+export { runMigrations } from "./migrate.js";
+export { seed } from "./seed.js";

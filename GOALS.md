@@ -55,12 +55,12 @@ These cannot be created by code and are the only things a human supplies. None b
 
 Source: SW §6 (all entities), SW §13.1 (ORM).
 
-- [ ] Choose Drizzle or Prisma (record in `DECISIONS.md`); implement the full schema: `Product`, `CampaignSpec`, `Playbook`, `Creative`, `Campaign`, `ConversionEvent`, `Decision`, `CostEvent` with every field listed in SW §6.1, plus relations per §6.2.
-- [ ] `Decision` and `CostEvent` are insert-only (event-sourced): no update/delete paths exposed in the data layer; enforce via repository API design.
-- [ ] System settings table including the **kill-switch flag** (SW §13.2: a DB flag checked by every worker iteration).
-- [ ] Migrations versioned in-repo; a migration runner wired as the pre-deploy step in `.do/app.yaml`; forward-only convention documented in the package README.
-- [ ] Typed repository layer in `packages/db` for every entity; seed script creating a demo dataset (3 products across statuses, sample decisions, conversions, costs) used by tests and UI development.
-- [ ] Unit tests on repositories against a real Postgres (dockerized in CI via service container).
+- [x] Choose Drizzle or Prisma (record in `DECISIONS.md`); implement the full schema: `Product`, `CampaignSpec`, `Playbook`, `Creative`, `Campaign`, `ConversionEvent`, `Decision`, `CostEvent` with every field listed in SW §6.1, plus relations per §6.2.
+- [x] `Decision` and `CostEvent` are insert-only (event-sourced): no update/delete paths exposed in the data layer; enforce via repository API design.
+- [x] System settings table including the **kill-switch flag** (SW §13.2: a DB flag checked by every worker iteration).
+- [x] Migrations versioned in-repo; a migration runner wired as the pre-deploy step in `.do/app.yaml`; forward-only convention documented in the package README.
+- [x] Typed repository layer in `packages/db` for every entity; seed script creating a demo dataset (3 products across statuses, sample decisions, conversions, costs) used by tests and UI development.
+- [x] Unit tests on repositories against a real Postgres (dockerized in CI via service container).
 
 **GATE G1:** Migrations apply from zero on a fresh Postgres. Seed runs. Repository tests pass in CI. Attempting to update or delete a `Decision`/`CostEvent` row through the repository API fails by construction.
 
