@@ -202,6 +202,9 @@ Source: SW §14 Phase One step 6.
 
 **GATE G9:** Fixture-driven tests for each: stock-out pauses within one sync cycle; promo expiry pulls its creative; an expired token fixture triggers refresh-then-attention; warm-up caps a young account's budget step; a calendar window adjusts pacing and the Decision log shows why. CI green.
 
+
+> **G9 complete — 2026-06-10, commit 54d4014.** All five fixture-driven gate tests pass (stock-out, promo expiry, refresh-then-attention, warm-up cap, calendar window with Decision why). Nothing deferred.
+
 ---
 
 ## G10 — Allocation brain and creative lifecycle
