@@ -1,0 +1,7 @@
+[
+  { "name": "Ramadan", "start": "2026-02-17", "end": "2026-03-19", "pacingMultiplier": 1.2 },
+  { "name": "Dubai Shopping Festival", "start": "2025-12-05", "end": "2026-01-11", "pacingMultiplier": 1.15 },
+  { "name": "Dubai Shopping Festival", "start": "2026-12-04", "end": "2027-01-10", "pacingMultiplier": 1.15 },
+  { "name": "White Friday", "start": "2026-11-23", "end": "2026-11-29", "pacingMultiplier": 1.25 },
+  { "name": "Q4 peak", "start": "2026-10-01", "end": "2026-12-31", "pacingMultiplier": 1.1 }
+]

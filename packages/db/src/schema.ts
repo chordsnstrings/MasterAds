@@ -348,6 +348,41 @@ export const clickIdCoverage = pgTable(
   (t) => [index("click_id_coverage_site_idx").on(t.sourceSite, t.platform, t.computedAt)],
 );
 
+// Promos are first-class records with end dates (G9): bound creative
+// auto-expires with the promo.
+export const promos = pgTable(
+  "promos",
+  {
+    id: text("id").primaryKey(),
+    productId: text("product_id")
+      .notNull()
+      .references(() => products.id),
+    label: text("label").notNull(),
+    startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+    endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
+    expired: boolean("expired").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("promos_active_idx").on(t.expired, t.endsAt)],
+);
+
+// Ad-account health: token/billing state and platform account age (warm-up).
+export const adAccounts = pgTable("ad_accounts", {
+  id: text("id").primaryKey(),
+  platform: text("platform", { enum: ["meta", "google", "tiktok"] }).notNull().unique(),
+  accountRef: text("account_ref"),
+  platformCreatedAt: timestamp("platform_created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  tokenValid: boolean("token_valid").notNull().default(true),
+  billingOk: boolean("billing_ok").notNull().default(true),
+  lastCheckedAt: timestamp("last_checked_at", { withTimezone: true }),
+});
+
+export type Promo = typeof promos.$inferSelect;
+export type NewPromo = typeof promos.$inferInsert;
+export type AdAccount = typeof adAccounts.$inferSelect;
+
 // Daily campaign insights from platform reporting (G7).
 export const campaignInsights = pgTable(
   "campaign_insights",

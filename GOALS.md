@@ -195,10 +195,10 @@ Source: SW §9.3–9.4, §10; the heart of the system.
 
 Source: SW §14 Phase One step 6.
 
-- [ ] **Stock/price/promo auto-actions:** stock-out event (from G4 feed diff) → pause that product's ads within the sync window; price change → flag price-bearing creatives for regeneration; promos as first-class records with end dates whose creative auto-expires. All actions flow as Decisions through guardrails.
-- [ ] **Billing/connection health:** scheduled checks on platform token validity and account billing status (stub-mode fixtures); auto-refresh where possible; attention record on self-repair failure.
-- [ ] **New-account warm-up:** ramp pacing rule in the fast loop capping daily spend growth on accounts younger than a configurable age.
-- [ ] **Calendar pacing (minimal):** static regional events calendar (Ramadan, DSF, White Friday, Q4) in-repo as data; pacing logic consumes it to pre-adjust budgets within guardrail bounds.
+- [x] **Stock/price/promo auto-actions:** stock-out event (from G4 feed diff) → pause that product's ads within the sync window; price change → flag price-bearing creatives for regeneration; promos as first-class records with end dates whose creative auto-expires. All actions flow as Decisions through guardrails.
+- [x] **Billing/connection health:** scheduled checks on platform token validity and account billing status (stub-mode fixtures); auto-refresh where possible; attention record on self-repair failure.
+- [x] **New-account warm-up:** ramp pacing rule in the fast loop capping daily spend growth on accounts younger than a configurable age.
+- [x] **Calendar pacing (minimal):** static regional events calendar (Ramadan, DSF, White Friday, Q4) in-repo as data; pacing logic consumes it to pre-adjust budgets within guardrail bounds.
 
 **GATE G9:** Fixture-driven tests for each: stock-out pauses within one sync cycle; promo expiry pulls its creative; an expired token fixture triggers refresh-then-attention; warm-up caps a young account's budget step; a calendar window adjusts pacing and the Decision log shows why. CI green.
 

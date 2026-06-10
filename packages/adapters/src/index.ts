@@ -20,3 +20,4 @@ export {
 
 export const ADAPTERS_VERSION = "0.1.0";
 export { createPlatformAdapters, createMetaPlatform, createGooglePlatform, createTikTokPlatform, type PlatformAdapter, type InsightsReport, type PlatformAdapterOptions } from "./platforms.js";
+export { createBillingChecker, type BillingChecker, type BillingHealth } from "./billing.js";

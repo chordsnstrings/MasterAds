@@ -1,9 +1,10 @@
 // scheduler worker — cron-style triggers (SW §13.2): feed syncs now (G4);
 // insights pulls, billing health, medium loop added in G7/G9/G10.
 import { closeDb, createDb, createRepos } from "@engine/db";
-import { createPlatformAdapters } from "@engine/adapters";
+import { createBillingChecker, createPlatformAdapters } from "@engine/adapters";
 import { runFeedSyncSweep } from "./jobs/feed-sync.js";
 import { runInsightsPull } from "./jobs/insights.js";
+import { applyCalendarPacing, expirePromos, processProductChanges, runBillingHealth } from "@engine/core";
 
 function log(msg: string, extra: Record<string, unknown> = {}): void {
   console.log(
@@ -38,6 +39,42 @@ const jobs: ScheduledJob[] = [
     run: async () => {
       const r = await runInsightsPull(repos, platformAdapters);
       log("insights pulled", { ...r });
+    },
+  },
+  {
+    name: "product-change-sweep",
+    intervalMs: 15 * 60_000, // within the feed sync window (stock-out → pause)
+    lastRun: 0,
+    run: async () => {
+      const r = await processProductChanges({ repos, adapters: platformAdapters });
+      if (r.processed > 0) log("product changes processed", { ...r });
+    },
+  },
+  {
+    name: "promo-expiry",
+    intervalMs: 60 * 60_000,
+    lastRun: 0,
+    run: async () => {
+      const r = await expirePromos(repos);
+      if (r.expiredPromos > 0) log("promos expired", { ...r });
+    },
+  },
+  {
+    name: "billing-health",
+    intervalMs: 6 * 60 * 60_000,
+    lastRun: 0,
+    run: async () => {
+      const r = await runBillingHealth(repos, createBillingChecker());
+      log("billing health checked", { ...r });
+    },
+  },
+  {
+    name: "calendar-pacing",
+    intervalMs: 24 * 60 * 60_000,
+    lastRun: 0,
+    run: async () => {
+      const r = await applyCalendarPacing({ repos, adapters: platformAdapters });
+      if (r.adjusted.length > 0) log("calendar pacing applied", { ...r });
     },
   },
   {

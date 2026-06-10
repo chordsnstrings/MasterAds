@@ -36,3 +36,6 @@ One line per decision not specified by the docs: `YYYY-MM-DD — decision — re
 - 2026-06-10 — Auto-promotion measured on weekly platform-reported conversions per campaign slice — the per-slice signal-sufficiency condition of SW §9.4 rule 3; flips status to autonomous and logs a Decision.
 - 2026-06-10 — Lifecycle/promotion Decisions (non-platform mutations) written directly to the Decision log with guardrailStatus=passed — guardrails govern platform writes; internal state flips are still fully audited.
 - 2026-06-10 — Mutation-path audit as a static check in pnpm check — approveAction() only in guardrails, adapter writes start with preWrite, platform endpoints only inside adapters.
+- 2026-06-10 — Regional events calendar as in-repo JSON (Ramadan, DSF, White Friday, Q4) with pacing multipliers; one adjustment per campaign per window, autonomous slices only — re-runs cannot compound budgets.
+- 2026-06-10 — Warm-up enforced as a guardrail rule (account age via ad_accounts.platform_created_at, cap 400/day under 30 days) — every budget action passes through it, not just the fast loop.
+- 2026-06-10 — Price-change handling: price-bearing creatives (digit-containing copy) set to expired + Decision; regeneration happens via the G10 rotation path within the G6 cap.

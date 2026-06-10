@@ -5,6 +5,7 @@ import { and, desc, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
 import { createHash, randomUUID } from "node:crypto";
 import type { Db } from "./client.js";
 import {
+  adAccounts,
   attentionRecords,
   campaignInsights,
   campaignSpecs,
@@ -19,9 +20,11 @@ import {
   intakeJobs,
   playbooks,
   productChangeEvents,
+  promos,
   products,
   siteKeys,
   systemSettings,
+  type AdAccount,
   type Campaign,
   type CampaignInsight,
   type CampaignSpec,
@@ -48,7 +51,9 @@ import {
   type NewDecision,
   type NewPlaybook,
   type NewProduct,
+  type NewPromo,
   type Playbook,
+  type Promo,
   type Product,
   type RelayRecord,
 } from "./schema.js";
@@ -443,6 +448,57 @@ export function createRepos(db: Db) {
           else operatingCost = Number(r.total);
         }
         return { adSpend, operatingCost };
+      },
+    },
+
+    promos: {
+      async create(row: Omit<NewPromo, "id"> & { id?: string }): Promise<Promo> {
+        const id = row.id ?? newId("promo");
+        const [r] = await db.insert(promos).values({ ...row, id }).returning();
+        if (!r) throw new Error("insert failed");
+        return r;
+      },
+      async listExpiring(now: Date): Promise<Promo[]> {
+        return db
+          .select()
+          .from(promos)
+          .where(and(eq(promos.expired, false), lte(promos.endsAt, now)));
+      },
+      async markExpired(id: string): Promise<void> {
+        await db.update(promos).set({ expired: true }).where(eq(promos.id, id));
+      },
+      async byProduct(productId: string): Promise<Promo[]> {
+        return db.select().from(promos).where(eq(promos.productId, productId));
+      },
+    },
+
+    adAccounts: {
+      async upsert(
+        platform: "meta" | "google" | "tiktok",
+        patch: Partial<Pick<AdAccount, "accountRef" | "tokenValid" | "billingOk" | "platformCreatedAt">>,
+      ): Promise<AdAccount> {
+        const existing = (
+          await db.select().from(adAccounts).where(eq(adAccounts.platform, platform))
+        )[0];
+        if (existing) {
+          const [r] = await db
+            .update(adAccounts)
+            .set({ ...patch, lastCheckedAt: new Date() })
+            .where(eq(adAccounts.platform, platform))
+            .returning();
+          return r!;
+        }
+        const [r] = await db
+          .insert(adAccounts)
+          .values({ id: newId("acct"), platform, ...patch, lastCheckedAt: new Date() })
+          .returning();
+        return r!;
+      },
+      async get(platform: "meta" | "google" | "tiktok"): Promise<AdAccount | undefined> {
+        return (await db.select().from(adAccounts).where(eq(adAccounts.platform, platform)))[0];
+      },
+      async list(): Promise<AdAccount[]> {
+        return db.select().from(adAccounts);
       },
     },
 

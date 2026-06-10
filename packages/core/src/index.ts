@@ -19,3 +19,4 @@ export * from "./launch.js";
 
 export const CORE_VERSION = "0.1.0";
 export * from "./loops/fastLoop.js";
+export * from "./automations/index.js";
