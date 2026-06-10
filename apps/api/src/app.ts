@@ -1,7 +1,7 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
 import { closeDb, createDb, createRepos, type Db, type Repos } from "@engine/db";
-import { createCreativeProvider, createLlmClient, type CreativeProvider, type LlmClient } from "@engine/adapters";
+import { createCreativeProvider, createLlmClient, createPlatformAdapters, type CreativeProvider, type LlmClient, type PlatformAdapter } from "@engine/adapters";
 import { seedPlaybooks } from "@engine/core";
 import type { JobSender } from "@engine/core";
 import { eventsRoutes } from "./routes/events.js";
@@ -9,6 +9,7 @@ import { internalRoutes } from "./routes/internal.js";
 import { intakeRoutes } from "./routes/intake.js";
 import { planRoutes } from "./routes/plan.js";
 import { creativesRoutes } from "./routes/creatives.js";
+import { launchRoutes } from "./routes/launch.js";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -17,6 +18,7 @@ declare module "fastify" {
     jobs: JobSender | null;
     llm: LlmClient;
     creative: CreativeProvider;
+    platforms: Record<"meta" | "google" | "tiktok", PlatformAdapter>;
   }
 }
 
@@ -24,6 +26,7 @@ export interface BuildAppOptions {
   db?: Db;
   llm?: LlmClient;
   creative?: CreativeProvider;
+  platforms?: Record<"meta" | "google" | "tiktok", PlatformAdapter>;
   /** Queue producer for relay fan-out; null disables enqueue (unit tests). */
   jobs?: JobSender | null;
 }
@@ -46,6 +49,7 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
   const repos = createRepos(db);
   app.decorate("llm", opts.llm ?? createLlmClient({ repos }));
   app.decorate("creative", opts.creative ?? createCreativeProvider({ repos }));
+  app.decorate("platforms", opts.platforms ?? createPlatformAdapters({ repos }));
   await seedPlaybooks(repos);
 
   app.get("/health", async () => ({ status: "ok", service: "api" }));
@@ -55,6 +59,7 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
   await app.register(intakeRoutes);
   await app.register(planRoutes);
   await app.register(creativesRoutes);
+  await app.register(launchRoutes);
 
   return app;
 }

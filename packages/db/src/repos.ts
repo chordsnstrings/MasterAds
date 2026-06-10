@@ -6,6 +6,7 @@ import { createHash, randomUUID } from "node:crypto";
 import type { Db } from "./client.js";
 import {
   attentionRecords,
+  campaignInsights,
   campaignSpecs,
   campaigns,
   clickIdCoverage,
@@ -22,6 +23,7 @@ import {
   siteKeys,
   systemSettings,
   type Campaign,
+  type CampaignInsight,
   type CampaignSpec,
   type ConversionEvent,
   type CostEvent,
@@ -32,6 +34,7 @@ import {
   type CoverageSnapshot,
   type NewAttentionRecord,
   type NewCampaign,
+  type NewCampaignInsight,
   type FeedSource,
   type IntakeJob,
   type NewCoverageSnapshot,
@@ -440,6 +443,44 @@ export function createRepos(db: Db) {
           else operatingCost = Number(r.total);
         }
         return { adSpend, operatingCost };
+      },
+    },
+
+    insights: {
+      /** Idempotent per (campaign, date): returns whether a row was created. */
+      async insertIdempotent(
+        row: Omit<NewCampaignInsight, "id"> & { id?: string },
+      ): Promise<{ insight: CampaignInsight; inserted: boolean }> {
+        const id = row.id ?? newId("ins");
+        const [inserted] = await db
+          .insert(campaignInsights)
+          .values({ ...row, id })
+          .onConflictDoNothing({ target: [campaignInsights.campaignId, campaignInsights.date] })
+          .returning();
+        if (inserted) return { insight: inserted, inserted: true };
+        const existing = (
+          await db
+            .select()
+            .from(campaignInsights)
+            .where(
+              and(
+                eq(campaignInsights.campaignId, row.campaignId),
+                eq(campaignInsights.date, row.date),
+              ),
+            )
+        )[0];
+        if (!existing) throw new Error("insights upsert race");
+        return { insight: existing, inserted: false };
+      },
+      async byCampaign(campaignId: string): Promise<CampaignInsight[]> {
+        return db
+          .select()
+          .from(campaignInsights)
+          .where(eq(campaignInsights.campaignId, campaignId))
+          .orderBy(campaignInsights.date);
+      },
+      async since(date: string): Promise<CampaignInsight[]> {
+        return db.select().from(campaignInsights).where(gte(campaignInsights.date, date));
       },
     },
 

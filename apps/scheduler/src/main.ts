@@ -1,7 +1,9 @@
 // scheduler worker — cron-style triggers (SW §13.2): feed syncs now (G4);
 // insights pulls, billing health, medium loop added in G7/G9/G10.
 import { closeDb, createDb, createRepos } from "@engine/db";
+import { createPlatformAdapters } from "@engine/adapters";
 import { runFeedSyncSweep } from "./jobs/feed-sync.js";
+import { runInsightsPull } from "./jobs/insights.js";
 
 function log(msg: string, extra: Record<string, unknown> = {}): void {
   console.log(
@@ -11,6 +13,7 @@ function log(msg: string, extra: Record<string, unknown> = {}): void {
 
 const db = createDb();
 const repos = createRepos(db);
+const platformAdapters = createPlatformAdapters({ repos });
 
 let running = true;
 const shutdown = (signal: string): void => {
@@ -28,6 +31,15 @@ interface ScheduledJob {
 }
 
 const jobs: ScheduledJob[] = [
+  {
+    name: "insights-pull",
+    intervalMs: 60 * 60_000, // hourly; rows are idempotent per (campaign, day)
+    lastRun: 0,
+    run: async () => {
+      const r = await runInsightsPull(repos, platformAdapters);
+      log("insights pulled", { ...r });
+    },
+  },
   {
     name: "feed-sync-sweep",
     intervalMs: 15 * 60_000, // sweep often; per-feed cadence enforced by `due`

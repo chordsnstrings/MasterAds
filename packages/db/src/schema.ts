@@ -348,6 +348,29 @@ export const clickIdCoverage = pgTable(
   (t) => [index("click_id_coverage_site_idx").on(t.sourceSite, t.platform, t.computedAt)],
 );
 
+// Daily campaign insights from platform reporting (G7).
+export const campaignInsights = pgTable(
+  "campaign_insights",
+  {
+    id: text("id").primaryKey(),
+    campaignId: text("campaign_id")
+      .notNull()
+      .references(() => campaigns.id),
+    date: text("date").notNull(),
+    spend: numeric("spend", { precision: 14, scale: 4 }).notNull(),
+    impressions: integer("impressions").notNull(),
+    clicks: integer("clicks").notNull(),
+    conversions: integer("conversions").notNull(),
+    revenue: numeric("revenue", { precision: 14, scale: 4 }).notNull().default("0"),
+    currency: text("currency").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("campaign_insights_day_uq").on(t.campaignId, t.date)],
+);
+
+export type CampaignInsight = typeof campaignInsights.$inferSelect;
+export type NewCampaignInsight = typeof campaignInsights.$inferInsert;
+
 // Intake jobs: async "reading…" status polled by the creation flow UI (G4).
 export const intakeJobs = pgTable("intake_jobs", {
   id: text("id").primaryKey(),

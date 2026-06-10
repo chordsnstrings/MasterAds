@@ -9,13 +9,13 @@
     "start": "node --import tsx src/main.ts"
   },
   "dependencies": {
-    "@engine/adapters": "workspace:*",
     "@engine/contracts": "workspace:*",
     "@engine/core": "workspace:*",
     "@engine/db": "workspace:*",
     "pg-boss": "^10.1.5"
   },
   "devDependencies": {
+    "@engine/adapters": "workspace:*",
     "@types/node": "^22.19.20",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",

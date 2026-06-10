@@ -2,8 +2,8 @@
 // percentage of conversion events carrying each platform's click ID.
 // Falling coverage is silent attribution decay and must alert.
 import type { ConversionEvent, Repos } from "@engine/db";
+import type { Platform } from "./guardrails/approval.js";
 
-export type Platform = "meta" | "google" | "tiktok";
 export const PLATFORMS: readonly Platform[] = ["meta", "google", "tiktok"];
 
 export interface CoverageRow {

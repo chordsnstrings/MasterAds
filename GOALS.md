@@ -161,10 +161,10 @@ Source: SW §5.4; FLOW §5.7; UX component states.
 
 Source: SW §5.5, §7.3, §12; FLOW §5, §9.
 
-- [ ] `packages/adapters`: the uniform adapter interface of SW §7.3 (create/update/pause/resume/duplicate campaign, upload creative, read insights) implemented for Meta, Google, TikTok against their **AI campaign types** (Advantage+ / PMax / Smart+), live/stub drivers as in G3.
-- [ ] Launch orchestration: `CampaignSpec` + selected creatives → platform campaign(s) created, `Campaign` rows persisted with platform IDs, lifecycle set to Launching → Learning (status machine per UX §7, exact ordered set).
-- [ ] Insights pull job in `apps/scheduler`: spend, impressions, conversions per campaign on a regular cadence into Postgres; `ad_spend` CostEvents written from platform-reported spend (SW §6.1).
-- [ ] Rate-limit and async-report handling per SW §12 noted per adapter; idempotent campaign creation (re-running a launch cannot double-create).
+- [x] `packages/adapters`: the uniform adapter interface of SW §7.3 (create/update/pause/resume/duplicate campaign, upload creative, read insights) implemented for Meta, Google, TikTok against their **AI campaign types** (Advantage+ / PMax / Smart+), live/stub drivers as in G3.
+- [x] Launch orchestration: `CampaignSpec` + selected creatives → platform campaign(s) created, `Campaign` rows persisted with platform IDs, lifecycle set to Launching → Learning (status machine per UX §7, exact ordered set).
+- [x] Insights pull job in `apps/scheduler`: spend, impressions, conversions per campaign on a regular cadence into Postgres; `ad_spend` CostEvents written from platform-reported spend (SW §6.1).
+- [x] Rate-limit and async-report handling per SW §12 noted per adapter; idempotent campaign creation (re-running a launch cannot double-create).
 
 **GATE G7:** Stub-mode end-to-end: a seeded product flows intake → classify → generate → launch, producing Campaign rows in Launching state with snapshot-correct platform payloads for all three adapters; re-running launch is a no-op; the insights job ingests fixture reports and writes ad_spend CostEvents. CI green.
 

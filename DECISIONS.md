@@ -28,3 +28,7 @@ One line per decision not specified by the docs: `YYYY-MM-DD — decision — re
 - 2026-06-10 — Regeneration cap counts creative asset rows per product per rolling period (default 36/7d), stored in settings key creative_caps — simple, configurable, covers both manual "Make new ones" and automated rotation.
 - 2026-06-10 — Predictive pre-screening: deterministic copy heuristic scorer behind a PredictiveScorer interface, launch threshold 0.5 — stub per GOALS; learned model slots in behind the same interface.
 - 2026-06-10 — Stub creative pricing: $0.04/image, $0.10/video-second — placeholder unit prices so net-return math is exercised end to end.
+- 2026-06-10 — Guardrail approval implemented in G7 (ahead of G8) as a module-private WeakSet brand — adapters are born unable to execute unapproved actions; G8 extends the rule set, not the mechanism.
+- 2026-06-10 — Stub platform campaign ids are deterministic per spec (hash) — combined with the (spec, platform) unique index, launch is idempotent by construction.
+- 2026-06-10 — Campaigns are created PAUSED/DISABLE in platform payloads — live activation is an explicit resume step, so a live-mode misfire cannot spend before review.
+- 2026-06-10 — ad_spend CostEvents only written when the (campaign, date) insights row is newly inserted — keeps the insert-only ledger duplicate-free under hourly pulls.
