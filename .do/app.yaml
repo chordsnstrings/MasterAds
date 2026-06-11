@@ -253,6 +253,19 @@ workers:
       - key: BILLING_MODE
         scope: RUN_TIME
         value: stub
+      - key: EMAIL_MODE
+        scope: RUN_TIME
+        value: stub
+      - key: OPERATOR_EMAIL
+        scope: RUN_TIME
+        value: ""
+      - key: RESEND_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: PLACEHOLDER
+      - key: EMAIL_FROM
+        scope: RUN_TIME
+        value: ""
 
 databases:
   # Managed PostgreSQL; never exposed publicly.

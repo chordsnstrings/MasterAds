@@ -19,6 +19,7 @@ import {
   experiments,
   feedSources,
   intakeJobs,
+  notifications,
   playbooks,
   productChangeEvents,
   promos,
@@ -58,6 +59,8 @@ import {
   type Experiment,
   type NewExperiment,
   type NewSignalSnapshot,
+  type NewNotification,
+  type Notification,
   type Promo,
   type Product,
   type SignalSnapshot,
@@ -663,6 +666,43 @@ export function createRepos(db: Db) {
           .from(attentionRecords)
           .where(eq(attentionRecords.status, "open"))
           .orderBy(desc(attentionRecords.createdAt));
+      },
+    },
+
+    notifications: {
+      /** Queue an email; deduped on dedup_key so repeats are no-ops. */
+      async queue(
+        row: Omit<NewNotification, "id" | "status"> & { id?: string },
+      ): Promise<Notification | undefined> {
+        const id = row.id ?? newId("ntf");
+        const [r] = await db
+          .insert(notifications)
+          .values({ ...row, id, status: "pending" })
+          .onConflictDoNothing({ target: notifications.dedupKey })
+          .returning();
+        return r;
+      },
+      async listPending(): Promise<Notification[]> {
+        return db
+          .select()
+          .from(notifications)
+          .where(eq(notifications.status, "pending"))
+          .orderBy(notifications.createdAt);
+      },
+      async markSent(id: string): Promise<void> {
+        await db
+          .update(notifications)
+          .set({ status: "sent", sentAt: new Date(), attempts: sql`${notifications.attempts} + 1` })
+          .where(eq(notifications.id, id));
+      },
+      async markFailed(id: string, error: string): Promise<void> {
+        await db
+          .update(notifications)
+          .set({ status: "failed", lastError: error, attempts: sql`${notifications.attempts} + 1` })
+          .where(eq(notifications.id, id));
+      },
+      async list(): Promise<Notification[]> {
+        return db.select().from(notifications).orderBy(desc(notifications.createdAt));
       },
     },
 

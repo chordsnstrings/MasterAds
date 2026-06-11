@@ -1,10 +1,10 @@
 // scheduler worker — cron-style triggers (SW §13.2): feed syncs now (G4);
 // insights pulls, billing health, medium loop added in G7/G9/G10.
 import { closeDb, createDb, createRepos } from "@engine/db";
-import { createBillingChecker, createPlatformAdapters } from "@engine/adapters";
+import { createBillingChecker, createEmailSender, createPlatformAdapters } from "@engine/adapters";
 import { runFeedSyncSweep } from "./jobs/feed-sync.js";
 import { runInsightsPull } from "./jobs/insights.js";
-import { applyCalendarPacing, computeAndPersistCoverage, computeAndPersistSignalQuality, expirePromos, processProductChanges, reevaluateOptimizationEvents, runBillingHealth, runFatigueSweep, runMediumLoopOnce, scoreDecisions, updatePlaybookPriors } from "@engine/core";
+import { applyCalendarPacing, computeAndPersistCoverage, computeAndPersistSignalQuality, dispatchNotifications, expirePromos, processProductChanges, queueAttentionNotifications, queueWeeklyDigest, reevaluateOptimizationEvents, runBillingHealth, runFatigueSweep, runMediumLoopOnce, scoreDecisions, updatePlaybookPriors } from "@engine/core";
 
 function log(msg: string, extra: Record<string, unknown> = {}): void {
   console.log(
@@ -15,6 +15,7 @@ function log(msg: string, extra: Record<string, unknown> = {}): void {
 const db = createDb();
 const repos = createRepos(db);
 const platformAdapters = createPlatformAdapters({ repos });
+const emailSender = createEmailSender();
 
 let running = true;
 const shutdown = (signal: string): void => {
@@ -129,6 +130,25 @@ const jobs: ScheduledJob[] = [
     run: async () => {
       const r = await applyCalendarPacing({ repos, adapters: platformAdapters });
       if (r.adjusted.length > 0) log("calendar pacing applied", { ...r });
+    },
+  },
+  {
+    name: "notifications",
+    intervalMs: 5 * 60_000, // alert emails for items needing a person
+    lastRun: 0,
+    run: async () => {
+      await queueAttentionNotifications(repos);
+      const r = await dispatchNotifications(repos, emailSender);
+      if (r.sent > 0 || r.failed > 0) log("notifications dispatched", { ...r });
+    },
+  },
+  {
+    name: "weekly-digest",
+    intervalMs: 24 * 60 * 60_000, // checked daily; outbox dedupes per ISO week
+    lastRun: 0,
+    run: async () => {
+      const r = await queueWeeklyDigest(repos);
+      if (r.queued) log("weekly digest queued", {});
     },
   },
   {

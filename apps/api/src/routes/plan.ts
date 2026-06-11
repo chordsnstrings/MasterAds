@@ -2,7 +2,7 @@
 // product-vs-service disambiguation (FLOW §4.5).
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { buildSpecForProduct, checkLaunchGate, classifyProduct } from "@engine/core";
+import { buildSpecForProduct, checkLaunchGate, classifyProduct, queueSignoffNotification } from "@engine/core";
 
 const planBody = z.object({
   goal: z
@@ -110,6 +110,8 @@ export async function planRoutes(app: FastifyInstance): Promise<void> {
         req.params.id,
         (req.body as { by?: string } | null)?.by ?? "operator",
       );
+      // FLOW §8.6: email the owner that their reviewed ads are approved.
+      await queueSignoffNotification(app.repos, signed);
       return { id: signed.id, signedOffAt: signed.signedOffAt };
     },
   );

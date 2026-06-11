@@ -1,7 +1,72 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { STRINGS } from "../strings";
-import type { AttentionItem, OverviewData } from "../api";
+import { api, type AttentionItem, type OverviewData } from "../api";
 import { AttentionCard, Card, KpiTile, Money, Num, StatusChip } from "../components";
+
+/** First-run checklist (UX §5.1): shown on the empty Overview until dismissed. */
+function FirstRunChecklist({
+  checklist,
+}: {
+  checklist: OverviewData["checklist"];
+}): JSX.Element | null {
+  const [hidden, setHidden] = useState(false);
+  const C = STRINGS.checklist;
+  if (hidden || checklist.dismissed) return null;
+  const steps: { key: keyof typeof checklist.items; label: string }[] = [
+    { key: "accounts", label: C.accounts },
+    { key: "site", label: C.site },
+    { key: "brandKit", label: C.brandKit },
+    { key: "guardrails", label: C.guardrails },
+  ];
+  return (
+    <section data-testid="first-run-checklist">
+      <Card className="mt-6 p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold">{C.title}</h2>
+          <p className="mt-1 text-sm text-ink-muted">{C.intro}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setHidden(true);
+            void api.dismissChecklist();
+          }}
+          className="min-h-11 shrink-0 px-2 text-sm text-ink-muted"
+        >
+          {C.dismiss}
+        </button>
+      </div>
+      <ul className="mt-4 space-y-2">
+        {steps.map((s) => (
+          <li key={s.key} className="flex min-h-11 items-center justify-between gap-3 text-sm">
+            <span className="flex items-center gap-2">
+              <span aria-hidden="true">{checklist.items[s.key] ? "✓" : "○"}</span>
+              {s.label}
+              {checklist.items[s.key] && <span className="sr-only">{C.done}</span>}
+            </span>
+            {!checklist.items[s.key] && (
+              <Link to="/settings" className="shrink-0 text-accent">
+                {C.open}
+              </Link>
+            )}
+          </li>
+        ))}
+        <li className="flex min-h-11 items-center justify-between gap-3 text-sm">
+          <span className="flex items-center gap-2">
+            <span aria-hidden="true">○</span>
+            {C.addFirst}
+          </span>
+          <Link to="/add" className="shrink-0 text-accent">
+            {STRINGS.nav.addShort}
+          </Link>
+        </li>
+      </ul>
+      </Card>
+    </section>
+  );
+}
 
 export function ProductGrid({ products }: { products: OverviewData["products"] }): JSX.Element {
   return (
@@ -67,6 +132,8 @@ export default function Overview({
           )}
         </p>
       )}
+
+      {empty && <FirstRunChecklist checklist={data.checklist} />}
 
       <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-5">
         <KpiTile label={STRINGS.kpi.spend} value={<Money value={kpis.spend7d} />} series={kpis.spendSeries} />

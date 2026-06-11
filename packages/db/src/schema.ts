@@ -349,6 +349,28 @@ export const siteKeys = pgTable("site_keys", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Operator email outbox (W5): attention alerts, sign-off confirmations,
+// weekly digest. Rows are queued (deduped on dedup_key) and dispatched by the
+// scheduler through the email adapter.
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: text("id").primaryKey(),
+    kind: text("kind").notNull(),
+    dedupKey: text("dedup_key").unique(),
+    subject: text("subject").notNull(),
+    body: text("body").notNull(),
+    status: text("status", { enum: ["pending", "sent", "failed"] })
+      .notNull()
+      .default("pending"),
+    attempts: integer("attempts").notNull().default(0),
+    lastError: text("last_error"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+  },
+  (t) => [index("notifications_pending_idx").on(t.status, t.createdAt)],
+);
+
 // Click-ID coverage snapshots (SW §8.7), computed per site × platform (G2).
 export const clickIdCoverage = pgTable(
   "click_id_coverage",
@@ -556,3 +578,5 @@ export type NewDecisionOutcome = typeof decisionOutcomes.$inferInsert;
 export type CostEvent = typeof costEvents.$inferSelect;
 export type NewCostEvent = typeof costEvents.$inferInsert;
 export type SiteKey = typeof siteKeys.$inferSelect;
+export type Notification = typeof notifications.$inferSelect;
+export type NewNotification = typeof notifications.$inferInsert;

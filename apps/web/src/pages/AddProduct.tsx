@@ -40,6 +40,7 @@ export default function AddProduct({
   const [editHeadline, setEditHeadline] = useState("");
   const [editBody, setEditBody] = useState("");
   const [editLine, setEditLine] = useState<"goal" | "platforms" | "budget" | "destination" | null>(null);
+  const [previewFormat, setPreviewFormat] = useState<"1:1" | "9:16" | "16:9">("1:1");
   const [destKind, setDestKind] = useState("hosted_form");
   const [destValue, setDestValue] = useState("");
   const [connections, setConnections] = useState<SettingsData["connections"]>([]);
@@ -66,7 +67,7 @@ export default function AddProduct({
     const detail = await api.product(pid);
     setProductTitle(detail.product.title);
     const gen = await api.generateCreatives(result.specId);
-    setCreatives(gen.creatives.filter((c) => c.format === "1:1"));
+    setCreatives(gen.creatives);
     setSelected(new Set(gen.creatives.filter((c) => c.format === "1:1").map((c) => c.id)));
     setStep({ kind: "review" });
   }
@@ -436,8 +437,25 @@ export default function AddProduct({
         {catalogCount <= 1 && (
           <section className="mt-6">
             <h2 className="text-lg font-semibold">{C.yourAds}</h2>
+            {/* Format preview tabs (W5): the same ads in each shape they run in. */}
+            <div className="mt-3 flex gap-2" role="tablist" aria-label={C.yourAds}>
+              {(["1:1", "9:16", "16:9"] as const).map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  role="tab"
+                  aria-selected={previewFormat === f}
+                  onClick={() => setPreviewFormat(f)}
+                  className={`min-h-11 rounded-control border px-3 text-sm ${previewFormat === f ? "border-accent text-accent" : "border-hairline text-ink-muted"}`}
+                >
+                  {C.formatTabs[f]}
+                </button>
+              ))}
+            </div>
             <div className="mt-3 grid grid-cols-3 gap-3">
-              {creatives.map((c) => (
+              {creatives
+                .filter((c) => c.format === previewFormat)
+                .map((c) => (
                 <button
                   key={c.id}
                   type="button"
@@ -449,21 +467,30 @@ export default function AddProduct({
                   }}
                   className={`rounded-card border p-3 text-left text-xs ${selected.has(c.id) ? "border-accent" : "border-hairline"} bg-accent-soft/40`}
                 >
-                  <div className="flex h-20 items-center justify-center rounded-control bg-accent-soft text-center font-medium text-accent">
+                  <div
+                    className={`flex items-center justify-center rounded-control bg-accent-soft text-center font-medium text-accent ${
+                      previewFormat === "9:16"
+                        ? "mx-auto aspect-[9/16] w-2/3"
+                        : previewFormat === "16:9"
+                          ? "aspect-video"
+                          : "aspect-square"
+                    }`}
+                  >
                     {c.headline}
                   </div>
                   <p className="mt-2 text-ink-muted">{c.body}</p>
                 </button>
               ))}
             </div>
-            <p className="mt-2 text-sm text-ink-muted">{C.creativeHelp(creatives.length)}</p>
+            <p className="mt-2 text-sm text-ink-muted">
+              {C.creativeHelp(creatives.filter((c) => c.format === previewFormat).length)}
+            </p>
             <button
               type="button"
               onClick={() =>
                 void api.generateCreatives(plan.specId).then((g) => {
-                  const fresh = g.creatives.filter((c) => c.format === "1:1");
-                  setCreatives(fresh);
-                  setSelected(new Set(fresh.map((c) => c.id)));
+                  setCreatives(g.creatives);
+                  setSelected(new Set(g.creatives.filter((c) => c.format === "1:1").map((c) => c.id)));
                 })
               }
               className="mt-1 min-h-11 text-sm text-accent"

@@ -21,6 +21,10 @@ export interface ProductCardData {
 
 export interface OverviewData {
   headline: "running" | "learning" | "needs_attention";
+  checklist: {
+    dismissed: boolean;
+    items: { accounts: boolean; site: boolean; brandKit: boolean; guardrails: boolean };
+  };
   counts: { products: number; learning: number; needsAttention: number };
   kpis: {
     spend7d: number;
@@ -192,6 +196,7 @@ export const api = {
       `/v1/specs/${specId}/launch`,
     ),
   overview: () => request<OverviewData>("GET", "/internal/overview"),
+  dismissChecklist: () => request<{ ok: boolean }>("POST", "/internal/checklist/dismiss"),
   products: () => request<{ products: (ProductCardData & { status: string })[] }>("GET", "/internal/products"),
   product: (id: string) => request<ProductDetailData>("GET", `/internal/products/${id}`),
   activity: (params: { type?: string; productId?: string } = {}) => {

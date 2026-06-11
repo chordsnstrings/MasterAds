@@ -45,6 +45,19 @@ export const STRINGS = {
     resolved: "Done",
   },
 
+  checklist: {
+    title: "Get set up",
+    intro: "A few quick steps and the engine can take it from there.",
+    accounts: "Connect the places your ads will show",
+    site: "Add your website so results are counted",
+    brandKit: "Add your brand look (logo and colors)",
+    guardrails: "Review your spending limits",
+    open: "Open settings",
+    addFirst: "Add your first product",
+    dismiss: "Hide this",
+    done: "Done",
+  },
+
   status: {
     draft: "Draft",
     in_review: "In review",
@@ -217,6 +230,11 @@ export const STRINGS = {
     lowBudgetNote:
       "Below about AED 150 a day it's harder for us to learn what works, so results may be slower.",
     yourAds: "Your ads",
+    formatTabs: {
+      "1:1": "Square",
+      "9:16": "Tall",
+      "16:9": "Wide",
+    } as Record<string, string>,
     creativeHelp: (n: number): string => `We made ${n}. Keep all, or pick your favorites.`,
     makeNew: "Make new ones",
     editWords: "Change the words",

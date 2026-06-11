@@ -128,8 +128,36 @@ try {
   }
   await waitFor(async () => {
     const ev = await repos.conversions.get(eventIds[0]!);
-    return (ev?.relayedTo.filter((x) => x.status === "sent").length ?? 0) === 3;
-  }, "relay to all three platforms");
+    return (ev?.relayedTo.filter((x) => x.status === "sent").length ?? 0) === 5;
+  }, "relay to all five platforms");
+
+  // ---- 4b. Lead-quality loop (W3): closed lead becomes a relayed Purchase ------
+  log("lead closed-loop");
+  await post(
+    "/v1/events",
+    {
+      event_name: "Lead",
+      event_time: Math.floor(Date.now() / 1000) - 600,
+      click_ids: { fbclid: "e2e-lead-fb", gclid: "e2e-lead-g" },
+      hashed_identifiers: { email_sha256: "f".repeat(64) },
+      content_id: productId,
+      event_id: "e2e-lead-1",
+      source_site: "e2e-shop",
+    },
+    { "x-api-key": "e2e-key" },
+  );
+  await post(
+    "/v1/leads/outcome",
+    { source_site: "e2e-shop", event_id: "e2e-lead-1", status: "closed", value: 1200, currency: "AED" },
+    { "x-api-key": "e2e-key" },
+  );
+  await waitFor(async () => {
+    const closed = (await repos.conversions.listAll()).find((e) => e.eventId === "e2e-lead-1-closed");
+    return (closed?.relayedTo.filter((x) => x.status === "sent").length ?? 0) >= 1;
+  }, "closed lead relayed as an offline purchase");
+  const closedEvent = (await repos.conversions.listAll()).find((e) => e.eventId === "e2e-lead-1-closed")!;
+  assert.equal(closedEvent.eventName, "Purchase", "closed lead recorded as a purchase");
+  assert.equal(closedEvent.clickIds.fbclid, "e2e-lead-fb", "closed conversion inherits the lead's click IDs");
 
   // ---- 5. Insights ingest (incl. a zero-conversion burner for the fast loop) --
   log("insights ingest");

@@ -99,8 +99,22 @@ export async function uiRoutes(app: FastifyInstance): Promise<void> {
     }
     const days = [...spendByDay.keys()].sort();
 
+    // First-run checklist (UX §5.1): shown on the empty Overview until done
+    // or dismissed; completion is derived from real state, not stored flags.
+    const firstRun = await repos.settings.get<{ dismissed?: boolean }>("first_run");
+    const checklist = {
+      dismissed: firstRun?.dismissed === true,
+      items: {
+        accounts: (await repos.adAccounts.list()).length > 0,
+        site: (await repos.siteKeys.list()).length > 0,
+        brandKit: (await repos.settings.get("brand_kit")) !== undefined,
+        guardrails: (await repos.settings.get("guardrails")) !== undefined,
+      },
+    };
+
     return {
       headline,
+      checklist,
       counts: { products: products.length, learning, needsAttention },
       kpis: {
         spend7d: adSpend,
@@ -114,6 +128,11 @@ export async function uiRoutes(app: FastifyInstance): Promise<void> {
       attention,
       products: productCards,
     };
+  });
+
+  app.post("/internal/checklist/dismiss", async () => {
+    await app.repos.settings.set("first_run", { dismissed: true });
+    return { ok: true };
   });
 
   // ---- Products ------------------------------------------------------------
