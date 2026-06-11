@@ -85,6 +85,7 @@ export interface ProductDetailData {
 export interface SettingsData {
   connections: {
     platform: string;
+    mode: "stub" | "live";
     connected: boolean;
     tokenValid: boolean;
     billingOk: boolean;

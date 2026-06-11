@@ -2,7 +2,7 @@
 // account billing status. Stub/live driver pattern; fixtures injectable.
 import { driverMode, type DriverMode } from "./env.js";
 
-export type Platform = "meta" | "google" | "tiktok";
+export type Platform = "meta" | "google" | "tiktok" | "snapchat" | "pinterest";
 
 export interface BillingHealth {
   platform: Platform;

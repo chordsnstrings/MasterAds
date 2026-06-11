@@ -179,7 +179,7 @@ export interface HealthChecker {
 export async function runBillingHealth(
   repos: Repos,
   checker: HealthChecker,
-  platforms: Platform[] = ["meta", "google", "tiktok"],
+  platforms: Platform[] = ["meta", "google", "tiktok", "snapchat", "pinterest"],
 ): Promise<{ healthy: Platform[]; refreshed: Platform[]; attention: Platform[] }> {
   const result = { healthy: [] as Platform[], refreshed: [] as Platform[], attention: [] as Platform[] };
   for (const platform of platforms) {

@@ -56,15 +56,24 @@ export default function Settings(): JSX.Element {
               >
                 <span>{STRINGS.platformNames[c.platform] ?? c.platform}</span>
                 <span className="flex items-center gap-3 text-sm">
-                  <span className={c.connected && c.tokenValid ? "text-positive" : "text-critical"}>
-                    {c.connected
-                      ? c.tokenValid
-                        ? STRINGS.settings.connectionOk
-                        : STRINGS.settings.connectionProblem
-                      : STRINGS.settings.notConnected}
-                  </span>
+                  {c.connected && c.mode === "stub" ? (
+                    <span
+                      className="text-attention-deep"
+                      title={STRINGS.settings.connectionTestHint}
+                    >
+                      {STRINGS.settings.connectionTest}
+                    </span>
+                  ) : (
+                    <span className={c.connected && c.tokenValid ? "text-positive" : "text-critical"}>
+                      {c.connected
+                        ? c.tokenValid
+                          ? STRINGS.settings.connectionOk
+                          : STRINGS.settings.connectionProblem
+                        : STRINGS.settings.notConnected}
+                    </span>
+                  )}
                   <button type="button" className="min-h-11 rounded-control px-3 text-accent">
-                    {c.connected ? STRINGS.settings.reconnect : STRINGS.settings.connect}
+                    {c.connected && c.mode === "live" ? STRINGS.settings.reconnect : STRINGS.settings.connect}
                   </button>
                 </span>
               </div>

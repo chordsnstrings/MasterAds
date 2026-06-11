@@ -10,6 +10,7 @@ import {
   type UpdateCampaignAction,
 } from "@engine/core";
 import type { Campaign, Decision, Repos } from "@engine/db";
+import { driverMode } from "@engine/adapters";
 
 function isoDaysAgo(n: number): Date {
   return new Date(Date.now() - n * 86_400_000);
@@ -344,8 +345,12 @@ export async function uiRoutes(app: FastifyInstance): Promise<void> {
     const accounts = await repos.adAccounts.list();
     const connections = (["meta", "google", "tiktok", "snapchat", "pinterest"] as const).map((platform) => {
       const acct = accounts.find((a) => a.platform === platform);
+      // In stub mode the health job simulates a healthy account so the whole
+      // pipeline runs without credentials — the UI must label that honestly.
+      const mode = driverMode(`${platform.toUpperCase()}_MODE`);
       return {
         platform,
+        mode,
         connected: acct !== undefined,
         tokenValid: acct?.tokenValid ?? false,
         billingOk: acct?.billingOk ?? false,

@@ -135,6 +135,9 @@ export const STRINGS = {
     title: "Settings",
     connections: "Connected accounts",
     connectionOk: "Connected",
+    connectionTest: "Test mode",
+    connectionTestHint:
+      "Running on practice data — no real account is linked and no money is spent. Add real credentials to go live.",
     connectionProblem: "Needs reconnecting",
     notConnected: "Not connected",
     reconnect: "Reconnect",
