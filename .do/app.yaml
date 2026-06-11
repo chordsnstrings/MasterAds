@@ -1,9 +1,10 @@
 # DigitalOcean App Platform spec — Autonomous Ad Engine (SW §13.2)
+# Deployed as app "adagent" (region blr, managed PG cluster ads-work).
 # main -> production. A staging app uses the same spec with branch: staging.
 # Secrets are configured as encrypted env vars in the App Platform UI/API;
 # placeholders below mark every variable each component needs.
-name: ad-engine
-region: fra
+name: adagent
+region: blr
 features:
   - buildpack-stack=ubuntu-22
 
@@ -22,7 +23,7 @@ jobs:
     envs:
       - key: DATABASE_URL
         scope: RUN_TIME
-        value: ${db.DATABASE_URL}
+        value: ${ads-work.DATABASE_URL}
 
 services:
   # The only public-facing component: ingestion endpoint, internal API, UI backend.
@@ -42,7 +43,7 @@ services:
     envs:
       - key: DATABASE_URL
         scope: RUN_TIME
-        value: ${db.DATABASE_URL}
+        value: ${ads-work.DATABASE_URL}
       - key: NODE_ENV
         scope: RUN_TIME
         value: production
@@ -110,7 +111,7 @@ workers:
     envs:
       - key: DATABASE_URL
         scope: RUN_TIME
-        value: ${db.DATABASE_URL}
+        value: ${ads-work.DATABASE_URL}
       - key: NODE_ENV
         scope: RUN_TIME
         value: production
@@ -225,7 +226,7 @@ workers:
     envs:
       - key: DATABASE_URL
         scope: RUN_TIME
-        value: ${db.DATABASE_URL}
+        value: ${ads-work.DATABASE_URL}
       - key: NODE_ENV
         scope: RUN_TIME
         value: production
@@ -269,10 +270,10 @@ workers:
 
 databases:
   # Existing managed PostgreSQL cluster (ads-work), attached by name — the
-  # ${db.DATABASE_URL} bindings above resolve to its credentials at deploy
+  # ${ads-work.DATABASE_URL} bindings above resolve to its credentials at deploy
   # time, so the connection string never lives in the repo. Connections use
   # TLS (sslmode=require), handled by @engine/db's sslConfig.
-  - name: db
+  - name: ads-work
     engine: PG
     version: "16"
     production: true
