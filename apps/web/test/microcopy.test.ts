@@ -6,7 +6,8 @@ const C = STRINGS.creation;
 
 describe("FLOW §12 microcopy (verbatim, binding)", () => {
   it("matches the specified strings exactly", () => {
-    expect(C.addTitle).toBe("Add something to advertise");
+    // Owner override 2026-06-11: campaign vocabulary replaces FLOW §12 here.
+    expect(C.addTitle).toBe("Start a campaign");
     expect(C.inputPlaceholder).toBe("Paste a link · or type what you sell…");
     expect(`${C.wayLink} · ${C.wayDescribe} · ${C.wayList}`).toBe(
       "Paste a link · Describe it · Add a list",

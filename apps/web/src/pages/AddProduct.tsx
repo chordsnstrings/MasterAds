@@ -48,10 +48,15 @@ export default function AddProduct({
   const [destKind, setDestKind] = useState("hosted_form");
   const [destValue, setDestValue] = useState("");
   const [connections, setConnections] = useState<SettingsData["connections"]>([]);
+  const [brands, setBrands] = useState<{ id: string; name: string }[]>([]);
+  const [brandId, setBrandId] = useState<string | null>(() => localStorage.getItem("brand") || null);
+  const [newBrandName, setNewBrandName] = useState("");
+  const [creatingBrand, setCreatingBrand] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     void api.settings().then((s) => setConnections(s.connections));
+    void api.brands().then((b) => setBrands(b.brands.map((x) => ({ id: x.id, name: x.name }))));
   }, []);
 
   async function buildPlanAndReview(
@@ -68,6 +73,7 @@ export default function AddProduct({
       return;
     }
     setPlan(result);
+    if (brandId) await api.setBrand(pid, { brand_id: brandId });
     const detail = await api.product(pid);
     setProductTitle(detail.product.title);
     const gen = await api.generateCreatives(result.specId);
@@ -704,6 +710,64 @@ export default function AddProduct({
         </p>
       )}
       <Card className="mt-4 p-4">
+        {/* Which brand runs this campaign (W11). */}
+        <div className="mb-3">
+          <p className="text-sm font-medium">{STRINGS.brands.wizardLabel}</p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {brands.map((b) => (
+              <button
+                key={b.id}
+                type="button"
+                data-testid="brand-chip"
+                onClick={() => setBrandId(brandId === b.id ? null : b.id)}
+                className={`min-h-11 rounded-full border px-4 text-sm ${
+                  brandId === b.id
+                    ? "border-accent bg-accent-soft font-medium text-accent dark:bg-accent/15"
+                    : "border-hairline text-ink-muted dark:border-white/15"
+                }`}
+              >
+                {b.name}
+              </button>
+            ))}
+            {!creatingBrand ? (
+              <button
+                type="button"
+                data-testid="brand-new"
+                onClick={() => setCreatingBrand(true)}
+                className="min-h-11 rounded-full border border-dashed border-accent/60 px-4 text-sm text-accent hover:bg-accent-soft dark:hover:bg-accent/15"
+              >
+                {STRINGS.brands.newBrand}
+              </button>
+            ) : (
+              <span className="flex items-center gap-2">
+                <input
+                  value={newBrandName}
+                  onChange={(e) => setNewBrandName(e.target.value)}
+                  placeholder={STRINGS.brands.newBrandName}
+                  aria-label={STRINGS.brands.newBrandName}
+                  data-testid="brand-name-input"
+                  className="min-h-11 rounded-control border border-hairline bg-surface px-3 text-sm dark:border-white/15 dark:bg-surface-dark"
+                />
+                <button
+                  type="button"
+                  data-testid="brand-create"
+                  disabled={!newBrandName.trim()}
+                  onClick={() =>
+                    void api.addBrand({ name: newBrandName.trim() }).then((b) => {
+                      setBrands([...brands, { id: b.id, name: b.name }]);
+                      setBrandId(b.id);
+                      setNewBrandName("");
+                      setCreatingBrand(false);
+                    })
+                  }
+                  className="min-h-11 rounded-control bg-accent px-4 text-sm font-medium text-white hover:bg-accent-deep disabled:opacity-50"
+                >
+                  {STRINGS.brands.create}
+                </button>
+              </span>
+            )}
+          </div>
+        </div>
         <textarea
           ref={inputRef}
           value={input}

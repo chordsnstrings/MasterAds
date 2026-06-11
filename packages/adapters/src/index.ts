@@ -24,3 +24,7 @@ export const ADAPTERS_VERSION = "0.1.0";
 export { createPlatformAdapters, createMetaPlatform, createGooglePlatform, createTikTokPlatform, createSnapchatPlatform, createPinterestPlatform, type PlatformAdapter, type InsightsReport, type PlatformAdapterOptions } from "./platforms.js";
 export { createBillingChecker, type BillingChecker, type BillingHealth } from "./billing.js";
 export { createEmailSender, type EmailMessage, type EmailSender } from "./email.js";
+export { resolveCreds } from "./live/creds.js";
+export { buildMetaLiveCreateBody } from "./live/meta.js";
+export { buildTikTokLiveCreateBody } from "./live/tiktok.js";
+export { buildGoogleLiveMutate } from "./live/google.js";

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { STRINGS } from "../strings";
 import { api, type ProductDetailData } from "../api";
-import { ActivityItem, AdMedia, Card, FunnelBars, Money, Num, StatusChip } from "../components";
+import { ActivityItem, AdMedia, Card, FunnelBars, Money, Num, Sparkline, StatusChip } from "../components";
 
 export default function ProductDetail(): JSX.Element {
   const { id } = useParams<{ id: string }>();
@@ -88,6 +88,68 @@ export default function ProductDetail(): JSX.Element {
       )}
       {STRINGS.statusNote[product.status] && (
         <p className="mt-2 text-sm text-attention-deep">{STRINGS.statusNote[product.status]}</p>
+      )}
+
+      {data.channels.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-lg font-semibold tracking-tight">{STRINGS.channels.title}</h2>
+          <p className="mt-1 text-sm leading-relaxed text-ink-muted">{STRINGS.channels.hint}</p>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {(() => {
+              const best = data.channels.reduce<string | null>((acc, ch) => {
+                if (ch.netReturn === null) return acc;
+                const cur = data.channels.find((x) => x.campaignId === acc);
+                return !cur || cur.netReturn === null || ch.netReturn > cur.netReturn
+                  ? ch.campaignId
+                  : acc;
+              }, null);
+              return data.channels.map((ch) => (
+                <div
+                  key={ch.campaignId}
+                  data-testid="channel-card"
+                  className={`relative rounded-card border bg-surface p-5 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover dark:bg-surface-dark ${
+                    ch.campaignId === best
+                      ? "border-accent/50 ring-1 ring-accent/30"
+                      : "border-hairline/70 dark:border-white/10"
+                  }`}
+                >
+                  {ch.campaignId === best && (
+                    <span className="absolute right-3 top-3 rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-medium text-accent dark:bg-accent/15">
+                      {STRINGS.channels.winner}
+                    </span>
+                  )}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium">{STRINGS.platformNames[ch.platform] ?? ch.platform}</span>
+                    <span className="font-mono text-xs text-ink-muted">
+                      {STRINGS.channels.perDay(ch.dailyBudget.toFixed(0))}
+                    </span>
+                  </div>
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+                    <div>
+                      <div className="font-mono text-base font-semibold tabular-nums">{ch.spend7d.toFixed(0)}</div>
+                      <div className="mt-0.5 text-ink-muted">{STRINGS.product.spent}</div>
+                    </div>
+                    <div>
+                      <div className="font-mono text-base font-semibold tabular-nums">{ch.results7d}</div>
+                      <div className="mt-0.5 text-ink-muted">{STRINGS.kpi.results.split(" ·")[0]?.toLowerCase()}</div>
+                    </div>
+                    <div>
+                      <div className="font-mono text-base font-semibold tabular-nums">
+                        {ch.netReturn !== null ? `${ch.netReturn.toFixed(1)}×` : "—"}
+                      </div>
+                      <div className="mt-0.5 text-ink-muted">{STRINGS.product.netShort}</div>
+                    </div>
+                  </div>
+                  {ch.spendSeries.length > 1 ? (
+                    <Sparkline series={ch.spendSeries} />
+                  ) : (
+                    <p className="mt-3 text-center text-xs text-ink-muted">{STRINGS.channels.noData}</p>
+                  )}
+                </div>
+              ));
+            })()}
+          </div>
+        </section>
       )}
 
       <section className="mt-8">

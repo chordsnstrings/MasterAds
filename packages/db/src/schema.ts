@@ -14,6 +14,21 @@ import {
 } from "drizzle-orm/pg-core";
 
 // ---------------------------------------------------------------------------
+// Brands (W11): workspaces. Each brand has its own look and its own ad-account
+// connections per platform; campaigns belong to a brand.
+// ---------------------------------------------------------------------------
+export const brands = pgTable("brands", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  logoUrl: text("logo_url"),
+  primaryColor: text("primary_color"),
+  tone: text("tone"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type Brand = typeof brands.$inferSelect;
+
+// ---------------------------------------------------------------------------
 // Product (SW §6.1) — one row per advertised thing, catalog or offer mode.
 // ---------------------------------------------------------------------------
 export const products = pgTable("products", {
@@ -52,6 +67,8 @@ export const products = pgTable("products", {
   // Per-product brand (W8): logoUrl/primaryColor/font/tone — falls back to
   // the global brand kit in system settings when unset.
   brandKit: jsonb("brand_kit").$type<Record<string, string>>(),
+  // Which brand workspace this campaign belongs to (W11).
+  brandId: text("brand_id").references(() => brands.id),
   // Products imported together from one feed share a catalog group (FLOW §7).
   catalogGroupId: text("catalog_group_id"),
   rawInput: text("raw_input"), // offer text kept raw for classification (G5)
@@ -427,11 +444,11 @@ export const platformConnections = pgTable("platform_connections", {
   id: text("id").primaryKey(),
   platform: text("platform", {
     enum: ["meta", "google", "tiktok", "snapchat", "pinterest", "ai"],
-  })
-    .notNull()
-    .unique(),
+  }).notNull(),
   credentials: jsonb("credentials").$type<Record<string, string>>().notNull(),
   adAccountRef: text("ad_account_ref"),
+  // NULL = account-wide default; set = this brand's own account (W11).
+  brandId: text("brand_id").references(() => brands.id),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

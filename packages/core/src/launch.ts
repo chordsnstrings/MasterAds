@@ -84,7 +84,15 @@ export async function launchProduct(
   const active = await repos.campaigns.listActive();
   const globalDailyBudget = active.reduce((sum, c) => sum + Number(c.budget), 0);
 
-  const dailyBudget = Number(spec.dailyBudget ?? 0);
+  // W11: the spec's daily budget is the campaign TOTAL — split it across the
+  // chosen channels (equal start; the daily reallocation loop then shifts the
+  // split toward whichever channel performs best).
+  const totalDailyBudget = Number(spec.dailyBudget ?? 0);
+  const platformCount = Math.max(spec.targetPlatforms.length, 1);
+  const dailyBudget = Math.max(
+    Math.round((totalDailyBudget / platformCount) * 100) / 100,
+    totalDailyBudget > 0 ? 1 : 0,
+  );
   const objective = OBJECTIVE_BY_TERMINAL[spec.terminalEvent] ?? "purchases";
   const launched: Campaign[] = [];
   const blockedPlatforms: { platform: string; reasons: string[] }[] = [];

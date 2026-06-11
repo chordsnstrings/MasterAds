@@ -7,15 +7,15 @@ export const STRINGS = {
 
   nav: {
     overview: "Overview",
-    products: "Products",
+    products: "Campaigns",
     activity: "Activity",
     settings: "Settings",
-    addProduct: "+ Add product",
-    addShort: "+ Add",
+    addProduct: "+ New campaign",
+    addShort: "+ New",
   },
 
   pageIntro: {
-    products: "Everything you're advertising, in one place.",
+    products: "Every campaign, every brand, every channel \u2014 in one place.",
     activity: "Every move the engine makes, in plain words — tap \u201cwhy\u201d for the evidence.",
     settings: "Where ads show, how results are counted, and the limits the engine can never cross.",
   },
@@ -24,11 +24,11 @@ export const STRINGS = {
     running: "Everything is running.",
     learning: "Learning what works.",
     needs_attention: "Something needs your attention.",
-    empty: "No products yet. Add one to start.",
+    empty: "No campaigns yet. Launch your first to start.",
   },
 
   counts: {
-    products: (n: number): string => `${n} product${n === 1 ? "" : "s"}`,
+    products: (n: number): string => `${n} campaign${n === 1 ? "" : "s"}`,
     learning: (n: number): string => `${n} learning`,
     attention: (n: number): string => `${n} need${n === 1 ? "s" : ""} attention`,
   },
@@ -59,7 +59,7 @@ export const STRINGS = {
     brandKit: "Add your brand look (logo and colors)",
     guardrails: "Review your spending limits",
     open: "Open settings",
-    addFirst: "Add your first product",
+    addFirst: "Launch your first campaign",
     dismiss: "Hide this",
     done: "Done",
   },
@@ -285,6 +285,31 @@ export const STRINGS = {
     saved: "Saved",
   },
 
+  brands: {
+    title: "Brands",
+    switchAll: "All brands",
+    switchLabel: "Brand",
+    wizardLabel: "Which brand is this for?",
+    newBrand: "+ New brand",
+    newBrandName: "Brand name",
+    create: "Create brand",
+    none: "No brand",
+    connectScope: "Whose accounts do these keys belong to?",
+    connectScopeDefault: "Account-wide default",
+    connectedLine: (n: number): string =>
+      n === 0 ? "No accounts of its own yet \u2014 uses the defaults." : `${n} of its own accounts connected.`,
+    settingsHint:
+      "Each brand can carry its own ad accounts per channel. Campaigns launched under a brand run on that brand's accounts; brands without their own keys use the account-wide defaults.",
+  },
+
+  channels: {
+    title: "By channel",
+    hint: "All channels, one view. Budget shifts daily toward whichever channel returns best.",
+    winner: "Leading",
+    perDay: (n: string): string => `${n}/day`,
+    noData: "No results yet",
+  },
+
   aiManager: {
     title: "AI manager",
     hint: "Once a day the AI reviews everything \u2014 spend, results, returns on every channel \u2014 and proposes budget changes, pauses, resumes and new rules. It can only act inside your spending limits, every move is written to Activity, and the stop-everything switch halts it like everything else.",
@@ -381,7 +406,7 @@ export const STRINGS = {
 
   // Creation flow — FLOW §12 strings, used verbatim (binding).
   creation: {
-    addTitle: "Add something to advertise",
+    addTitle: "Start a campaign",
     addSubtitle: "Paste a link, describe it, or add a list.",
     inputPlaceholder: "Paste a link · or type what you sell…",
     wayLink: "Paste a link",

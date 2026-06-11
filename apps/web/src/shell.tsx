@@ -36,9 +36,15 @@ const DESTINATIONS = [
 
 export function AppShell({
   attentionCount,
+  brands = [],
+  selectedBrand = null,
+  onSelectBrand,
   children,
 }: {
   attentionCount: number;
+  brands?: { id: string; name: string }[];
+  selectedBrand?: string | null;
+  onSelectBrand?: (id: string | null) => void;
   children: ReactNode;
 }): JSX.Element {
   const { pathname } = useLocation();
@@ -86,6 +92,22 @@ export function AppShell({
             </nav>
           </div>
           <div className="flex items-center gap-2">
+            {brands.length > 0 && onSelectBrand && (
+              <select
+                value={selectedBrand ?? ""}
+                onChange={(e) => onSelectBrand(e.target.value || null)}
+                aria-label={STRINGS.brands.switchLabel}
+                data-testid="brand-switcher"
+                className="min-h-11 rounded-full border border-hairline/70 bg-surface px-3 text-sm text-ink-muted dark:border-white/15 dark:bg-surface-dark dark:text-white"
+              >
+                <option value="">{STRINGS.brands.switchAll}</option>
+                {brands.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            )}
             <ThemeToggle />
             <Link
               to="/add"

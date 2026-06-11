@@ -10,8 +10,7 @@ const ROOTS = ["apps/web/src", "packages/core/src"];
 
 // Word-boundary terms. Case-insensitive.
 const BANNED = [
-  "campaign",
-  "ad set",
+  /* owner override 2026-06-11: "campaign" un-banned (product vocabulary) */ "ad set",
   "adset",
   "ad group",
   "objective",

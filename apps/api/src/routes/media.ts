@@ -25,6 +25,8 @@ const brandBody = z.object({
   primaryColor: z.string().optional(),
   font: z.string().optional(),
   tone: z.string().optional(),
+  // W11: attach this campaign to a brand workspace.
+  brand_id: z.string().optional(),
 });
 
 export async function mediaRoutes(app: FastifyInstance): Promise<void> {
@@ -88,14 +90,26 @@ export async function mediaRoutes(app: FastifyInstance): Promise<void> {
     if (!product) return reply.status(404).send({ error: "not_found" });
     const parsed = brandBody.safeParse(req.body ?? {});
     if (!parsed.success) return reply.status(400).send({ error: "invalid_body" });
+    const { brand_id, ...kitFields } = parsed.data;
     const merged: Record<string, string> = { ...(product.brandKit ?? {}) };
-    for (const [k, v] of Object.entries(parsed.data)) {
+    for (const [k, v] of Object.entries(kitFields)) {
       if (typeof v === "string") {
         if (v.trim() === "") delete merged[k];
         else merged[k] = v.trim();
       }
     }
-    const updated = await app.repos.products.update(product.id, { brandKit: merged });
-    return { brandKit: updated.brandKit ?? {} };
+    // Assigning a brand inherits its look where the page hasn't set its own.
+    if (brand_id) {
+      const brand = await app.repos.brands.get(brand_id);
+      if (!brand) return reply.status(404).send({ error: "brand_not_found" });
+      if (!merged.logoUrl && brand.logoUrl) merged.logoUrl = brand.logoUrl;
+      if (!merged.primaryColor && brand.primaryColor) merged.primaryColor = brand.primaryColor;
+      if (!merged.tone && brand.tone) merged.tone = brand.tone;
+    }
+    const updated = await app.repos.products.update(product.id, {
+      brandKit: merged,
+      ...(brand_id ? { brandId: brand_id } : {}),
+    });
+    return { brandKit: updated.brandKit ?? {}, brandId: updated.brandId ?? null };
   });
 }

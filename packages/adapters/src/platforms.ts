@@ -28,6 +28,10 @@ import {
   type UploadCreativeAction,
 } from "@engine/core";
 import { driverMode, type DriverMode } from "./env.js";
+import { resolveCreds } from "./live/creds.js";
+import { metaCreateCampaign, metaInsights, metaSetBudget, metaSetStatus } from "./live/meta.js";
+import { googleCreateCampaign, googleInsights, googleSetBudget, googleSetStatus } from "./live/google.js";
+import { tiktokCreateCampaign, tiktokInsights, tiktokSetBudget, tiktokSetStatus } from "./live/tiktok.js";
 
 export interface InsightsReport {
   date: string; // yyyy-mm-dd
@@ -245,12 +249,25 @@ function deterministicInsights(platformCampaignId: string, date: string): Insigh
   };
 }
 
+interface LiveOps {
+  create?: (action: CreateCampaignAction) => Promise<string>;
+  setBudget?: (action: UpdateCampaignAction) => Promise<void>;
+  setStatus?: (action: PauseResumeAction, active: boolean) => Promise<void>;
+  insights?: (platformCampaignId: string, date: string) => Promise<{
+    spend: number;
+    impressions: number;
+    clicks: number;
+    conversions: number;
+    revenue: number;
+  }>;
+}
+
 function makeAdapter(
   platform: Platform,
   opts: PlatformAdapterOptions,
   buildCreatePayload: (a: CreateCampaignAction) => Record<string, unknown>,
   createSchema: z.ZodTypeAny,
-  liveCreate: (payload: Record<string, unknown>) => Promise<string>,
+  liveOps: LiveOps = {},
 ): PlatformAdapter {
   const mode = opts.mode ?? driverMode(`${platform.toUpperCase()}_MODE`);
   const { repos } = opts;
@@ -275,7 +292,12 @@ function makeAdapter(
         log(platform, "stub create_campaign", { payload, platformCampaignId });
         return { platformCampaignId };
       }
-      return { platformCampaignId: await liveCreate(payload) };
+      if (!liveOps.create) {
+        throw new Error(`${platform} live create requires P5 credentials (see BLOCKED.md)`);
+      }
+      const platformCampaignId = await liveOps.create(approved.action);
+      log(platform, "live create_campaign", { platformCampaignId });
+      return { platformCampaignId };
     },
     async updateCampaign(approved) {
       await preWrite(approved);
@@ -284,7 +306,11 @@ function makeAdapter(
         log(platform, "stub update_campaign", { platformCampaignId, changes });
         return;
       }
-      throw new Error(`${platform} live update requires P5 credentials (see BLOCKED.md)`);
+      if (!liveOps.setBudget || changes.dailyBudget === undefined) {
+        throw new Error(`${platform} live update requires P5 credentials (see BLOCKED.md)`);
+      }
+      await liveOps.setBudget(approved.action);
+      log(platform, "live update_campaign", { platformCampaignId, changes });
     },
     async pauseCampaign(approved) {
       await preWrite(approved);
@@ -292,7 +318,11 @@ function makeAdapter(
         log(platform, "stub pause_campaign", { id: approved.action.platformCampaignId });
         return;
       }
-      throw new Error(`${platform} live pause requires P5 credentials (see BLOCKED.md)`);
+      if (!liveOps.setStatus) {
+        throw new Error(`${platform} live pause requires P5 credentials (see BLOCKED.md)`);
+      }
+      await liveOps.setStatus(approved.action, false);
+      log(platform, "live pause_campaign", { id: approved.action.platformCampaignId });
     },
     async resumeCampaign(approved) {
       await preWrite(approved);
@@ -300,7 +330,11 @@ function makeAdapter(
         log(platform, "stub resume_campaign", { id: approved.action.platformCampaignId });
         return;
       }
-      throw new Error(`${platform} live resume requires P5 credentials (see BLOCKED.md)`);
+      if (!liveOps.setStatus) {
+        throw new Error(`${platform} live resume requires P5 credentials (see BLOCKED.md)`);
+      }
+      await liveOps.setStatus(approved.action, true);
+      log(platform, "live resume_campaign", { id: approved.action.platformCampaignId });
     },
     async duplicateCampaign(approved) {
       await preWrite(approved);
@@ -330,7 +364,11 @@ function makeAdapter(
       const key = `${scope.platformCampaignId}:${window.date}`;
       if (opts.insightsFixtures?.[key]) return opts.insightsFixtures[key];
       if (mode === "stub") return deterministicInsights(scope.platformCampaignId, window.date);
-      throw new Error(`${platform} live insights require P5 credentials (see BLOCKED.md)`);
+      if (!liveOps.insights) {
+        throw new Error(`${platform} live insights require P5 credentials (see BLOCKED.md)`);
+      }
+      const m = await liveOps.insights(scope.platformCampaignId, window.date);
+      return { date: window.date, currency: "AED", ...m };
     },
   };
 }
@@ -353,8 +391,28 @@ export function createMetaPlatform(opts: PlatformAdapterOptions): PlatformAdapte
       content_ids: a.payload.contentIds,
     }),
     metaCreateSchema,
-    async () => {
-      throw new Error("meta live create requires P5 credentials (see BLOCKED.md)");
+    {
+      create: async (a) => {
+        const creds = await resolveCreds(opts.repos, "meta", { productId: a.payload.contentIds[0] });
+        return metaCreateCampaign(creds, {
+          name: a.payload.name,
+          objective: META_OBJECTIVES[a.payload.objective],
+          policyCategory: a.payload.policyCategory,
+          dailyBudget: a.payload.dailyBudget,
+        });
+      },
+      setBudget: async (a) => {
+        const creds = await resolveCreds(opts.repos, "meta", { campaignId: a.campaignId });
+        await metaSetBudget(creds, a.platformCampaignId, a.changes.dailyBudget!);
+      },
+      setStatus: async (a, active) => {
+        const creds = await resolveCreds(opts.repos, "meta", { campaignId: a.campaignId });
+        await metaSetStatus(creds, a.platformCampaignId, active);
+      },
+      insights: async (platformCampaignId, date) => {
+        const creds = await resolveCreds(opts.repos, "meta", { platformCampaignId });
+        return metaInsights(creds, platformCampaignId, date);
+      },
     },
   );
 }
@@ -379,8 +437,23 @@ export function createGooglePlatform(opts: PlatformAdapterOptions): PlatformAdap
       conversion_goal: GOOGLE_CONVERSION_GOALS[a.payload.optimizationEvent] ?? "purchase",
     }),
     googleCreateSchema,
-    async () => {
-      throw new Error("google live create requires P5 credentials (see BLOCKED.md)");
+    {
+      create: async (a) => {
+        const creds = await resolveCreds(opts.repos, "google", { productId: a.payload.contentIds[0] });
+        return googleCreateCampaign(creds, { name: a.payload.name, dailyBudget: a.payload.dailyBudget });
+      },
+      setBudget: async (a) => {
+        const creds = await resolveCreds(opts.repos, "google", { campaignId: a.campaignId });
+        await googleSetBudget(creds, a.platformCampaignId, a.changes.dailyBudget!);
+      },
+      setStatus: async (a, active) => {
+        const creds = await resolveCreds(opts.repos, "google", { campaignId: a.campaignId });
+        await googleSetStatus(creds, a.platformCampaignId, active);
+      },
+      insights: async (platformCampaignId, date) => {
+        const creds = await resolveCreds(opts.repos, "google", { platformCampaignId });
+        return googleInsights(creds, platformCampaignId, date);
+      },
     },
   );
 }
@@ -402,8 +475,27 @@ export function createTikTokPlatform(opts: PlatformAdapterOptions): PlatformAdap
       product_ids: a.payload.contentIds,
     }),
     tiktokCreateSchema,
-    async () => {
-      throw new Error("tiktok live create requires P5 credentials (see BLOCKED.md)");
+    {
+      create: async (a) => {
+        const creds = await resolveCreds(opts.repos, "tiktok", { productId: a.payload.contentIds[0] });
+        return tiktokCreateCampaign(creds, {
+          name: a.payload.name,
+          objective: TIKTOK_OBJECTIVES[a.payload.objective],
+          dailyBudget: a.payload.dailyBudget,
+        });
+      },
+      setBudget: async (a) => {
+        const creds = await resolveCreds(opts.repos, "tiktok", { campaignId: a.campaignId });
+        await tiktokSetBudget(creds, a.platformCampaignId, a.changes.dailyBudget!);
+      },
+      setStatus: async (a, active) => {
+        const creds = await resolveCreds(opts.repos, "tiktok", { campaignId: a.campaignId });
+        await tiktokSetStatus(creds, a.platformCampaignId, active);
+      },
+      insights: async (platformCampaignId, date) => {
+        const creds = await resolveCreds(opts.repos, "tiktok", { platformCampaignId });
+        return tiktokInsights(creds, platformCampaignId, date);
+      },
     },
   );
 }
@@ -425,9 +517,6 @@ export function createSnapchatPlatform(opts: PlatformAdapterOptions): PlatformAd
       regulated_content: a.payload.policyCategory === "restricted",
     }),
     snapchatCreateSchema,
-    async () => {
-      throw new Error("snapchat live create requires P5 credentials (see BLOCKED.md)");
-    },
   );
 }
 
@@ -447,9 +536,6 @@ export function createPinterestPlatform(opts: PlatformAdapterOptions): PlatformA
       content_ids: a.payload.contentIds,
     }),
     pinterestCreateSchema,
-    async () => {
-      throw new Error("pinterest live create requires P5 credentials (see BLOCKED.md)");
-    },
   );
 }
 

@@ -17,11 +17,18 @@ import {
 
 const saveBody = z.object({
   credentials: z.record(z.string(), z.string()),
+  // W11: scope these keys to one brand's own ad account.
+  brand_id: z.string().optional(),
 });
 
 export async function connectionsRoutes(app: FastifyInstance): Promise<void> {
-  app.get("/internal/connections", async () => {
-    const saved = await app.repos.platformConnections.list();
+  app.get<{ Querystring: { brand_id?: string } }>("/internal/connections", async (req) => {
+    const all = await app.repos.platformConnections.list();
+    const scope = req.query.brand_id ?? null;
+    // Brand view: that brand's own rows, falling back to account-wide rows.
+    const saved = all.filter((r) =>
+      scope ? r.brandId === scope || (r.brandId === null && !all.some((x) => x.platform === r.platform && x.brandId === scope)) : r.brandId === null,
+    );
     const aiRow = saved.find((r) => r.platform === "ai");
     return {
       ai: {
@@ -74,7 +81,7 @@ export async function connectionsRoutes(app: FastifyInstance): Promise<void> {
         platform === "ai"
           ? AI_CONNECTION_FIELDS.map((f) => f.key as string)
           : CONNECTION_FIELDS[platform].map((f) => f.key);
-      const existing = await app.repos.platformConnections.get(platform);
+      const existing = await app.repos.platformConnections.get(platform, body.data.brand_id ?? null);
       const incoming = Object.fromEntries(
         Object.entries(body.data.credentials)
           .map(([k, v]) => [k, v.trim()] as [string, string])
@@ -101,6 +108,7 @@ export async function connectionsRoutes(app: FastifyInstance): Promise<void> {
         platform,
         merged,
         adAccountRef ?? undefined,
+        body.data.brand_id ?? null,
       );
       // Settings "Connected accounts" shows which exact account is linked.
       await app.repos.adAccounts.upsert(platform, { accountRef: adAccountRef });

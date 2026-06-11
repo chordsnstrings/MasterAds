@@ -58,13 +58,36 @@ function decisionView(d: Decision, outcomes?: { actualOutcome: string }[]) {
 
 export async function uiRoutes(app: FastifyInstance): Promise<void> {
   // ---- Overview ------------------------------------------------------------
-  app.get("/internal/overview", async () => {
+  app.get<{ Querystring: { brand?: string } }>("/internal/overview", async (req) => {
     const repos = app.repos;
-    const products = await repos.products.list();
+    const brandScope = req.query.brand || null;
+    const allProducts = await repos.products.list();
+    const products = brandScope
+      ? allProducts.filter((p) => p.brandId === brandScope)
+      : allProducts;
     const attention = await repos.attention.listOpen();
     const since = isoDaysAgo(7);
-    const { adSpend, operatingCost } = await repos.costs.globalSums(since);
-    const conversions = await repos.conversions.listCanonicalSince(since);
+    const conversionsAll = await repos.conversions.listCanonicalSince(since);
+    // Brand scope: sum the brand's products; account scope: ledger totals.
+    let adSpend: number;
+    let operatingCost: number;
+    let conversions: typeof conversionsAll;
+    if (brandScope) {
+      adSpend = 0;
+      operatingCost = 0;
+      const ids = new Set(products.map((p) => p.id));
+      for (const p of products) {
+        const sums = await repos.costs.sumsByProduct(p.id, since);
+        adSpend += sums.adSpend;
+        operatingCost += sums.operatingCost;
+      }
+      conversions = conversionsAll.filter((e) => ids.has(e.contentId));
+    } else {
+      const totals = await repos.costs.globalSums(since);
+      adSpend = totals.adSpend;
+      operatingCost = totals.operatingCost;
+      conversions = conversionsAll;
+    }
     const revenue = conversions.reduce((s, e) => s + (e.value !== null ? Number(e.value) : 0), 0);
     const totalCost = adSpend + operatingCost;
 
@@ -79,6 +102,7 @@ export async function uiRoutes(app: FastifyInstance): Promise<void> {
       productCards.push({
         id: p.id,
         title: p.title,
+        brandId: p.brandId ?? null,
         status: p.status,
         spend7d: m.spend7d,
         conversions7d: m.conversions7d,
@@ -202,10 +226,34 @@ export async function uiRoutes(app: FastifyInstance): Promise<void> {
       .sort(([, a], [, b]) => b - a)
       .map(([k, v]) => ({ hook: k.slice(5), sharePct: Math.round(v * 100) }));
 
+    // By-channel comparison (W11): each platform's last-7-days rollup so all
+    // channels read side by side on one page; the daily loop shifts budget
+    // toward whichever channel returns best.
+    const channels = [];
+    for (const c of campaigns) {
+      const rows = (await repos.insights.byCampaign(c.id)).slice(-7);
+      const chSpend = rows.reduce((s2, r) => s2 + Number(r.spend), 0);
+      const chResults = rows.reduce((s2, r) => s2 + r.conversions, 0);
+      const chRevenue = rows.reduce((s2, r) => s2 + Number(r.revenue), 0);
+      channels.push({
+        campaignId: c.id,
+        platform: c.platform,
+        status: c.status,
+        dailyBudget: Number(c.budget),
+        spend7d: Number(chSpend.toFixed(2)),
+        results7d: chResults,
+        revenue7d: Number(chRevenue.toFixed(2)),
+        costPerResult: chResults > 0 ? Number((chSpend / chResults).toFixed(2)) : null,
+        netReturn: chSpend > 0 ? Number((chRevenue / chSpend).toFixed(2)) : null,
+        spendSeries: rows.map((r) => Number(r.spend)),
+      });
+    }
+
     return {
       product,
       spec: spec ?? null,
       campaigns,
+      channels,
       metrics: { ...m, netReturn: m.spend7d + m.runningCost7d > 0 ? m.revenue7d / (m.spend7d + m.runningCost7d) : null },
       funnel,
       activity,

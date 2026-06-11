@@ -9,6 +9,7 @@ export interface AttentionItem {
 }
 
 export interface ProductCardData {
+  brandId?: string | null;
   id: string;
   title: string;
   status: string;
@@ -83,7 +84,21 @@ export interface AdView {
   durationSeconds: string | null;
 }
 
+export interface ChannelView {
+  campaignId: string;
+  platform: string;
+  status: string;
+  dailyBudget: number;
+  spend7d: number;
+  results7d: number;
+  revenue7d: number;
+  costPerResult: number | null;
+  netReturn: number | null;
+  spendSeries: number[];
+}
+
 export interface ProductDetailData {
+  channels: ChannelView[];
   ads: AdView[];
   winning: { hook: string; sharePct: number }[];
   product: {
@@ -238,10 +253,29 @@ export const api = {
       content_base64: contentBase64,
     }),
   setBrand: (productId: string, kit: Record<string, string>) =>
-    request<{ brandKit: Record<string, string> }>("POST", `/v1/products/${productId}/brand`, kit),
-  overview: () => request<OverviewData>("GET", "/internal/overview"),
+    request<{ brandKit: Record<string, string>; brandId: string | null }>(
+      "POST",
+      `/v1/products/${productId}/brand`,
+      kit,
+    ),
+  overview: (brand?: string | null) =>
+    request<OverviewData>("GET", `/internal/overview${brand ? `?brand=${encodeURIComponent(brand)}` : ""}`),
+  brands: () =>
+    request<{
+      brands: {
+        id: string;
+        name: string;
+        logoUrl: string | null;
+        primaryColor: string | null;
+        tone: string | null;
+        campaignCount: number;
+        connectedPlatforms: { platform: string; adAccountRef: string | null }[];
+      }[];
+    }>("GET", "/internal/brands"),
+  addBrand: (body: { name: string; logoUrl?: string; primaryColor?: string; tone?: string }) =>
+    request<{ id: string; name: string }>("POST", "/internal/brands", body),
   dismissChecklist: () => request<{ ok: boolean }>("POST", "/internal/checklist/dismiss"),
-  connections: () =>
+  connections: (brandId?: string | null) =>
     request<{
       ai: {
         savedAt: string | null;
@@ -267,7 +301,7 @@ export const api = {
           savedMask: string | null;
         }[];
       }[];
-    }>("GET", "/internal/connections"),
+    }>("GET", `/internal/connections${brandId ? `?brand_id=${encodeURIComponent(brandId)}` : ""}`),
   aiManager: () => request<{ enabled: boolean; auto: boolean }>("GET", "/internal/ai-manager"),
   setAiManager: (body: { enabled?: boolean; auto?: boolean }) =>
     request<{ enabled: boolean; auto: boolean }>("POST", "/internal/ai-manager", body),
@@ -291,11 +325,11 @@ export const api = {
   setRuleEnabled: (id: string, enabled: boolean) =>
     request<{ ok: boolean }>("PATCH", `/internal/rules/${id}`, { enabled }),
   deleteRule: (id: string) => request<{ ok: boolean }>("DELETE", `/internal/rules/${id}`),
-  saveConnection: (platform: string, credentials: Record<string, string>) =>
+  saveConnection: (platform: string, credentials: Record<string, string>, brandId?: string | null) =>
     request<{ platform: string; adAccountRef: string | null; saved: string[] }>(
       "POST",
       `/internal/connections/${platform}`,
-      { credentials },
+      brandId ? { credentials, brand_id: brandId } : { credentials },
     ),
   products: () => request<{ products: (ProductCardData & { status: string })[] }>("GET", "/internal/products"),
   product: (id: string) => request<ProductDetailData>("GET", `/internal/products/${id}`),

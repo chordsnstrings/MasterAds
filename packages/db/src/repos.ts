@@ -20,6 +20,7 @@ import {
   feedSources,
   intakeJobs,
   automationRules,
+  brands,
   mediaAssets,
   notifications,
   platformConnections,
@@ -68,6 +69,7 @@ import {
   type MediaAsset,
   type AutomationRule,
   type NewAutomationRule,
+  type Brand,
   type Promo,
   type Product,
   type SignalSnapshot,
@@ -104,6 +106,7 @@ export function createRepos(db: Db) {
             | "availability"
             | "status"
             | "brandKit"
+            | "brandId"
             | "vertical"
             | "category"
             | "images"
@@ -277,6 +280,14 @@ export function createRepos(db: Db) {
       },
       async list(): Promise<Campaign[]> {
         return db.select().from(campaigns);
+      },
+      async byPlatformCampaignId(platformCampaignId: string): Promise<Campaign | undefined> {
+        return (
+          await db
+            .select()
+            .from(campaigns)
+            .where(eq(campaigns.platformCampaignId, platformCampaignId))
+        )[0];
       },
       async listActive(): Promise<Campaign[]> {
         return db
@@ -501,6 +512,28 @@ export function createRepos(db: Db) {
       },
     },
 
+    brands: {
+      async create(row: { name: string; logoUrl?: string; primaryColor?: string; tone?: string }): Promise<Brand> {
+        const [r] = await db.insert(brands).values({ id: newId("brand"), ...row }).returning();
+        if (!r) throw new Error("insert failed");
+        return r;
+      },
+      async list(): Promise<Brand[]> {
+        return db.select().from(brands).orderBy(brands.createdAt);
+      },
+      async get(id: string): Promise<Brand | undefined> {
+        return (await db.select().from(brands).where(eq(brands.id, id)))[0];
+      },
+      async update(
+        id: string,
+        patch: Partial<Pick<Brand, "name" | "logoUrl" | "primaryColor" | "tone">>,
+      ): Promise<Brand> {
+        const [r] = await db.update(brands).set(patch).where(eq(brands.id, id)).returning();
+        if (!r) throw new Error("brand not found");
+        return r;
+      },
+    },
+
     automationRules: {
       async create(
         row: Omit<NewAutomationRule, "id"> & { id?: string },
@@ -547,9 +580,21 @@ export function createRepos(db: Db) {
         platform: "meta" | "google" | "tiktok" | "snapchat" | "pinterest" | "ai",
         credentials: Record<string, string>,
         adAccountRef?: string,
+        brandId?: string | null,
       ): Promise<PlatformConnection> {
+        const scope = brandId ?? null;
         const existing = (
-          await db.select().from(platformConnections).where(eq(platformConnections.platform, platform))
+          await db
+            .select()
+            .from(platformConnections)
+            .where(
+              and(
+                eq(platformConnections.platform, platform),
+                scope === null
+                  ? isNull(platformConnections.brandId)
+                  : eq(platformConnections.brandId, scope),
+              ),
+            )
         )[0];
         if (existing) {
           const [r] = await db
@@ -559,21 +604,42 @@ export function createRepos(db: Db) {
               adAccountRef: adAccountRef ?? existing.adAccountRef,
               updatedAt: new Date(),
             })
-            .where(eq(platformConnections.platform, platform))
+            .where(eq(platformConnections.id, existing.id))
             .returning();
           return r!;
         }
         const [r] = await db
           .insert(platformConnections)
-          .values({ id: newId("conn"), platform, credentials, adAccountRef })
+          .values({ id: newId("conn"), platform, credentials, adAccountRef, brandId: scope })
           .returning();
         return r!;
       },
+      /** Brand-specific row when present, else the account-wide default. */
       async get(
         platform: "meta" | "google" | "tiktok" | "snapchat" | "pinterest" | "ai",
+        brandId?: string | null,
       ): Promise<PlatformConnection | undefined> {
+        if (brandId) {
+          const scoped = (
+            await db
+              .select()
+              .from(platformConnections)
+              .where(
+                and(
+                  eq(platformConnections.platform, platform),
+                  eq(platformConnections.brandId, brandId),
+                ),
+              )
+          )[0];
+          if (scoped) return scoped;
+        }
         return (
-          await db.select().from(platformConnections).where(eq(platformConnections.platform, platform))
+          await db
+            .select()
+            .from(platformConnections)
+            .where(
+              and(eq(platformConnections.platform, platform), isNull(platformConnections.brandId)),
+            )
         )[0];
       },
       async list(): Promise<PlatformConnection[]> {
