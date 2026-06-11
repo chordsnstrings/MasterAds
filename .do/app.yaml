@@ -93,6 +93,7 @@ static_sites:
     build_command: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @engine/web run build
     output_dir: apps/web/dist
     environment_slug: node-js
+    catchall_document: index.html
     routes:
       - path: /app
 

@@ -42,7 +42,7 @@ export default function App(): JSX.Element {
   }
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "")}>
       <AppShell attentionCount={overview?.attention.length ?? 0}>
         {overview === null ? (
           <p className="text-ink-muted">{STRINGS.common.loading}</p>

@@ -2,7 +2,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  // Deployed under /app on App Platform; dev server and e2e stay at /.
+  base: mode === "production" ? "/app/" : "/",
   plugins: [react()],
   test: {
     exclude: ["e2e/**", "node_modules/**", "dist/**", "test-results/**"],
@@ -15,4 +17,4 @@ export default defineConfig({
       "/hosted": process.env.API_PROXY_TARGET ?? "http://localhost:3000",
     },
   },
-});
+}));
