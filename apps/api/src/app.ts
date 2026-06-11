@@ -72,6 +72,10 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
 
   app.get("/health", async () => ({ status: "ok", service: "api" }));
 
+  // The supervision UI is the static site mounted at /app; the bare domain
+  // belongs to the API's ingress rule, so send visitors to the UI.
+  app.get("/", async (_req, reply) => reply.redirect("/app"));
+
   await app.register(eventsRoutes);
   await app.register(internalRoutes);
   await app.register(intakeRoutes);
