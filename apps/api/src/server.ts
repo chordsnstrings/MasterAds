@@ -1,12 +1,12 @@
 import PgBoss from "pg-boss";
-import { connectionString, sslConfig } from "@engine/db";
+import { connectionOptions } from "@engine/db";
 import { buildApp } from "./app.js";
 
 const port = Number(process.env.PORT ?? 3000);
 
 // The API is the relay producer: ingested conversions are fanned out to the
 // platform queues here and consumed by the loops worker.
-const boss = new PgBoss({ connectionString: connectionString(), ssl: sslConfig() });
+const boss = new PgBoss(connectionOptions());
 await boss.start();
 
 const app = await buildApp({ jobs: boss });

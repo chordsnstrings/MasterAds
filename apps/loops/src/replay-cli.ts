@@ -1,7 +1,7 @@
 // Replay/backfill command (GOALS G3):
 //   pnpm --filter @engine/loops run replay -- --from 2026-06-01 --to 2026-06-10 [--platform meta]
 import PgBoss from "pg-boss";
-import { connectionString, createDb, closeDb, createRepos, sslConfig } from "@engine/db";
+import { connectionOptions, createDb, closeDb, createRepos } from "@engine/db";
 import { replayWindow } from "./relay-worker.js";
 
 function arg(name: string): string | undefined {
@@ -24,7 +24,7 @@ if (!from || !to) {
 }
 
 const db = createDb();
-const boss = new PgBoss({ connectionString: connectionString(), ssl: sslConfig() });
+const boss = new PgBoss(connectionOptions());
 await boss.start();
 try {
   const n = await replayWindow(boss, createRepos(db), {

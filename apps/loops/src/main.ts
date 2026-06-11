@@ -2,7 +2,7 @@
 import PgBoss from "pg-boss";
 import { createPlatformAdapters, createRelays } from "@engine/adapters";
 import { runFastLoopOnce } from "@engine/core";
-import { closeDb, connectionString, createDb, createRepos, sslConfig } from "@engine/db";
+import { closeDb, connectionOptions, createDb, createRepos } from "@engine/db";
 import { startRelayWorker } from "./relay-worker.js";
 
 function log(msg: string, extra: Record<string, unknown> = {}): void {
@@ -11,7 +11,7 @@ function log(msg: string, extra: Record<string, unknown> = {}): void {
 
 const db = createDb();
 const repos = createRepos(db);
-const boss = new PgBoss({ connectionString: connectionString(), ssl: sslConfig() });
+const boss = new PgBoss(connectionOptions());
 boss.on("error", (err) => log("pg-boss error", { error: String(err) }));
 
 let running = true;

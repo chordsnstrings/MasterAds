@@ -29,9 +29,21 @@ function withoutSslmode(url: string): string {
   return url.replace(/([?&])sslmode=[^&\s]+&?/, "$1").replace(/[?&]$/, "");
 }
 
+/**
+ * Connection options for pg/pg-boss. node-postgres parses the connection
+ * string LAST, so an in-URL sslmode would override the explicit ssl option —
+ * the sslmode is therefore stripped and ssl passed explicitly. Every
+ * connection in the system (pool, migrations, queues) must come through here.
+ */
+export function connectionOptions(url: string = connectionString()): {
+  connectionString: string;
+  ssl: ReturnType<typeof sslConfig>;
+} {
+  return { connectionString: withoutSslmode(url), ssl: sslConfig(url) };
+}
+
 export function createDb(url: string = connectionString()): Db {
-  const ssl = sslConfig(url);
-  const pool = new pg.Pool({ connectionString: withoutSslmode(url), max: 10, ssl });
+  const pool = new pg.Pool({ ...connectionOptions(url), max: 10 });
   const db = drizzle(pool, { schema }) as unknown as Db;
   db.$pool = pool;
   return db;
