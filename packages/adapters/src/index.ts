@@ -13,9 +13,11 @@ export {
   createLlmClient,
   type LlmClient,
   type LlmOperation,
+  type LlmProvider,
   type LlmRequest,
   type LlmResponse,
   type StubResponder,
+  resolveProviderConfig,
 } from "./llm.js";
 
 export const ADAPTERS_VERSION = "0.1.0";

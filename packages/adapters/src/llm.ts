@@ -2,10 +2,17 @@
 // ai_inference CostEvent with units and price — enforced HERE, inside the
 // adapter, so it cannot be skipped (invariant 4). Money is the unit; token
 // counts never leave the ledger.
+//
+// Provider options (LLM_PROVIDER): anthropic (default) | openai | deepseek | llama.
+// Claude uses the official Anthropic SDK against the native Messages API;
+// openai/deepseek/llama share one OpenAI-compatible chat-completions driver
+// (llama works with Groq, Together, Fireworks, vLLM, Ollama — any base URL).
+import Anthropic from "@anthropic-ai/sdk";
 import type { Repos } from "@engine/db";
 import { driverMode, type DriverMode } from "./env.js";
 
 export type LlmOperation = "classification" | "narration" | "creative_copy";
+export type LlmProvider = "anthropic" | "openai" | "deepseek" | "llama";
 
 export interface LlmRequest {
   operation: LlmOperation;
@@ -21,12 +28,77 @@ export interface LlmResponse {
 
 export interface LlmClient {
   readonly mode: DriverMode;
+  readonly provider: LlmProvider;
   complete(req: LlmRequest): Promise<LlmResponse>;
 }
 
-// USD per token (claude-sonnet pricing) — used to price the ledger rows.
-const INPUT_PRICE = 3 / 1_000_000;
-const OUTPUT_PRICE = 15 / 1_000_000;
+// ---------------------------------------------------------------------------
+// Pricing (USD per token). Defaults per provider/model; override via env so
+// re-pricing is configuration, not code:
+//   LLM_INPUT_PRICE_PER_MTOK / LLM_OUTPUT_PRICE_PER_MTOK
+// ---------------------------------------------------------------------------
+interface ProviderConfig {
+  provider: LlmProvider;
+  model: string;
+  inputPricePerTok: number;
+  outputPricePerTok: number;
+  baseUrl?: string;
+  apiKeyEnv: string;
+}
+
+const DEFAULT_PRICES_PER_MTOK: Record<LlmProvider, { input: number; output: number }> = {
+  anthropic: { input: 3, output: 15 }, // claude-sonnet-4-6
+  openai: { input: 0.15, output: 0.6 }, // gpt-4o-mini
+  deepseek: { input: 0.27, output: 1.1 }, // deepseek-chat
+  llama: { input: 0, output: 0 }, // often self-hosted; set overrides for hosted APIs
+};
+
+export function resolveProviderConfig(env: NodeJS.ProcessEnv = process.env): ProviderConfig {
+  const provider = (env.LLM_PROVIDER ?? "anthropic") as LlmProvider;
+  if (!["anthropic", "openai", "deepseek", "llama"].includes(provider)) {
+    throw new Error(`unknown LLM_PROVIDER "${env.LLM_PROVIDER}" (anthropic|openai|deepseek|llama)`);
+  }
+  const defaults = DEFAULT_PRICES_PER_MTOK[provider];
+  const inputPerMtok = env.LLM_INPUT_PRICE_PER_MTOK ? Number(env.LLM_INPUT_PRICE_PER_MTOK) : defaults.input;
+  const outputPerMtok = env.LLM_OUTPUT_PRICE_PER_MTOK ? Number(env.LLM_OUTPUT_PRICE_PER_MTOK) : defaults.output;
+  const base = {
+    inputPricePerTok: inputPerMtok / 1_000_000,
+    outputPricePerTok: outputPerMtok / 1_000_000,
+  };
+  switch (provider) {
+    case "anthropic":
+      return {
+        provider,
+        model: env.ANTHROPIC_MODEL ?? "claude-sonnet-4-6",
+        apiKeyEnv: "ANTHROPIC_API_KEY",
+        ...base,
+      };
+    case "openai":
+      return {
+        provider,
+        model: env.OPENAI_MODEL ?? "gpt-4o-mini",
+        baseUrl: env.OPENAI_BASE_URL ?? "https://api.openai.com/v1",
+        apiKeyEnv: "OPENAI_API_KEY",
+        ...base,
+      };
+    case "deepseek":
+      return {
+        provider,
+        model: env.DEEPSEEK_MODEL ?? "deepseek-chat",
+        baseUrl: env.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com/v1",
+        apiKeyEnv: "DEEPSEEK_API_KEY",
+        ...base,
+      };
+    case "llama":
+      return {
+        provider,
+        model: env.LLAMA_MODEL ?? "llama-3.3-70b",
+        baseUrl: env.LLAMA_BASE_URL ?? "",
+        apiKeyEnv: "LLAMA_API_KEY",
+        ...base,
+      };
+  }
+}
 
 export type StubResponder = (req: LlmRequest) => string;
 
@@ -102,23 +174,98 @@ function defaultStubResponder(req: LlmRequest): string {
   });
 }
 
+// ---------------------------------------------------------------------------
+// Live drivers
+// ---------------------------------------------------------------------------
+async function completeAnthropic(
+  config: ProviderConfig,
+  apiKey: string,
+  req: LlmRequest,
+): Promise<{ text: string; inputTokens: number; outputTokens: number }> {
+  const anthropic = new Anthropic({ apiKey });
+  const response = await anthropic.messages.create({
+    model: config.model,
+    max_tokens: req.maxTokens ?? 1024,
+    ...(req.system ? { system: req.system } : {}),
+    messages: [{ role: "user", content: req.prompt }],
+  });
+  const text = response.content
+    .filter((block): block is Anthropic.TextBlock => block.type === "text")
+    .map((block) => block.text)
+    .join("");
+  return {
+    text,
+    inputTokens: response.usage.input_tokens,
+    outputTokens: response.usage.output_tokens,
+  };
+}
+
+/** OpenAI-compatible chat completions: OpenAI, DeepSeek, Llama hosts. */
+async function completeOpenAiCompatible(
+  config: ProviderConfig,
+  apiKey: string,
+  req: LlmRequest,
+): Promise<{ text: string; inputTokens: number; outputTokens: number }> {
+  if (!config.baseUrl) {
+    throw new Error(
+      `${config.provider} live mode needs a base URL (set ${config.provider.toUpperCase()}_BASE_URL)`,
+    );
+  }
+  const res = await fetch(`${config.baseUrl.replace(/\/$/, "")}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      ...(apiKey ? { authorization: `Bearer ${apiKey}` } : {}),
+    },
+    body: JSON.stringify({
+      model: config.model,
+      max_tokens: req.maxTokens ?? 1024,
+      messages: [
+        ...(req.system ? [{ role: "system", content: req.system }] : []),
+        { role: "user", content: req.prompt },
+      ],
+    }),
+  });
+  if (!res.ok) throw new Error(`${config.provider} ${res.status}: ${await res.text()}`);
+  const body = (await res.json()) as {
+    choices: { message: { content: string | null } }[];
+    usage?: { prompt_tokens?: number; completion_tokens?: number };
+  };
+  return {
+    text: body.choices[0]?.message.content ?? "",
+    inputTokens: body.usage?.prompt_tokens ?? 0,
+    outputTokens: body.usage?.completion_tokens ?? 0,
+  };
+}
+
 export function createLlmClient(opts: {
   repos: Repos;
   mode?: DriverMode;
   responder?: StubResponder;
+  provider?: LlmProvider;
 }): LlmClient {
   const mode = opts.mode ?? driverMode("LLM_MODE");
   const { repos } = opts;
+  const config = resolveProviderConfig(
+    opts.provider ? { ...process.env, LLM_PROVIDER: opts.provider } : process.env,
+  );
 
-  async function emitCost(req: LlmRequest, inputTokens: number, outputTokens: number, model: string, provider: string): Promise<void> {
-    const amount = inputTokens * INPUT_PRICE + outputTokens * OUTPUT_PRICE;
+  async function emitCost(
+    req: LlmRequest,
+    inputTokens: number,
+    outputTokens: number,
+    model: string,
+    provider: string,
+  ): Promise<void> {
+    const amount =
+      inputTokens * config.inputPricePerTok + outputTokens * config.outputPricePerTok;
     await repos.costs.insert({
       costType: "ai_inference",
       operation: req.operation,
       providerOrPlatform: provider,
       model,
       units: { input_tokens: inputTokens, output_tokens: outputTokens },
-      unitPrice: OUTPUT_PRICE.toFixed(8),
+      unitPrice: config.outputPricePerTok.toFixed(8),
       amount: amount.toFixed(6),
       currency: "USD",
       productId: req.productId ?? null,
@@ -128,6 +275,7 @@ export function createLlmClient(opts: {
 
   return {
     mode,
+    provider: config.provider,
     async complete(req: LlmRequest): Promise<LlmResponse> {
       if (mode === "stub") {
         const text = (opts.responder ?? defaultStubResponder)(req);
@@ -136,31 +284,20 @@ export function createLlmClient(opts: {
         await emitCost(req, inputTokens, outputTokens, "stub-llm-1", "stub-llm");
         return { text };
       }
-      const apiKey = process.env.ANTHROPIC_API_KEY;
-      if (!apiKey) throw new Error("ANTHROPIC_API_KEY required in live mode");
-      const model = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-6";
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-        },
-        body: JSON.stringify({
-          model,
-          max_tokens: req.maxTokens ?? 1024,
-          system: req.system,
-          messages: [{ role: "user", content: req.prompt }],
-        }),
-      });
-      if (!res.ok) throw new Error(`anthropic ${res.status}: ${await res.text()}`);
-      const body = (await res.json()) as {
-        content: { type: string; text?: string }[];
-        usage: { input_tokens: number; output_tokens: number };
-      };
-      const text = body.content.find((c) => c.type === "text")?.text ?? "";
-      await emitCost(req, body.usage.input_tokens, body.usage.output_tokens, model, "anthropic");
-      return { text };
+
+      const apiKey = process.env[config.apiKeyEnv];
+      if (!apiKey && config.provider !== "llama") {
+        // Llama may point at an unauthenticated local endpoint (vLLM/Ollama).
+        throw new Error(`${config.apiKeyEnv} required for LLM_PROVIDER=${config.provider} in live mode`);
+      }
+
+      const result =
+        config.provider === "anthropic"
+          ? await completeAnthropic(config, apiKey!, req)
+          : await completeOpenAiCompatible(config, apiKey ?? "", req);
+
+      await emitCost(req, result.inputTokens, result.outputTokens, config.model, config.provider);
+      return { text: result.text };
     },
   };
 }

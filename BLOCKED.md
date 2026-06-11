@@ -18,12 +18,21 @@ what to provide, where it plugs in, and what flips.
   `${db.DATABASE_URL}` bindings already present in the spec.
 - **Plugs in:** api/loops/scheduler/migrate components.
 
-## P3 — Anthropic API key (classification, narration, copy)
-- **Provide:** `ANTHROPIC_API_KEY` as an encrypted env var on `api` and `loops`;
-  optionally `ANTHROPIC_MODEL` (default claude-sonnet-4-6).
+## P3 — LLM API key (classification, narration, copy)
+- **Provider is selectable** via `LLM_PROVIDER`: `anthropic` (default) |
+  `openai` | `deepseek` | `llama` (any OpenAI-compatible host: Groq, Together,
+  Fireworks, vLLM, Ollama). One key for the chosen provider is enough.
+- **Provide (encrypted env vars on `api` and `loops`):**
+  - Anthropic: `ANTHROPIC_API_KEY` (+ `ANTHROPIC_MODEL`, default claude-sonnet-4-6)
+  - OpenAI: `OPENAI_API_KEY` (+ `OPENAI_MODEL`, default gpt-4o-mini)
+  - DeepSeek: `DEEPSEEK_API_KEY` (+ `DEEPSEEK_MODEL`, default deepseek-chat)
+  - Llama: `LLAMA_BASE_URL` required (+ `LLAMA_MODEL`; `LLAMA_API_KEY` optional
+    for unauthenticated local endpoints)
+  - Optional: `LLM_INPUT_PRICE_PER_MTOK` / `LLM_OUTPUT_PRICE_PER_MTOK` so the
+    cost ledger prices the chosen model correctly (per-provider defaults exist).
 - **Flip:** `LLM_MODE=live`.
 - **Stub meanwhile:** deterministic keyword classifier + canned copy; identical
-  code path; every call still writes a CostEvent.
+  code path; every call still writes a CostEvent — for every provider.
 
 ## P4 — Creative generation API key (image/video provider)
 - **Provide:** `CREATIVE_API_KEY` + `CREATIVE_PROVIDER`; the live driver calls
