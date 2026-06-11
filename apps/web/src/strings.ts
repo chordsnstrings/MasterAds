@@ -79,6 +79,8 @@ export const STRINGS = {
     goal: "Goal",
     save: "Save",
     cancel: "Cancel",
+    marginLabel: "Profit kept per sale (%)",
+    marginHint: "If set, returns count your profit, not the full sale amount.",
     empty: "Nothing here yet. The engine will narrate what it does as it works.",
   },
 
@@ -90,6 +92,7 @@ export const STRINGS = {
     Lead: "Enquiries",
     CompleteRegistration: "Sign-ups",
     Install: "Installs",
+    ClosedLead: "Closed deals",
   } as Record<string, string>,
 
   goals: {

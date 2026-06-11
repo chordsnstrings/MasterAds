@@ -131,7 +131,7 @@ describe("creative generation (GATE G6)", () => {
   it("regeneration cap triggers at the configured limit", async () => {
     const llm = createLlmClient({ repos, mode: "stub" });
     const provider = createCreativeProvider({ repos, mode: "stub" });
-    const cap = { maxVariantRowsPerPeriod: 9, periodDays: 7 };
+    const cap = { maxVariantRowsPerPeriod: 18, periodDays: 7 }; // one 6-hook run
     const fresh = await repos.products.insert({
       mode: "catalog",
       title: "Capped product",
@@ -160,7 +160,7 @@ describe("creative generation (GATE G6)", () => {
     }
     // Cap is configurable: a bigger cap allows another batch.
     const third = await generateCreatives({ repos, llm, provider }, fresh, freshSpec, {
-      cap: { maxVariantRowsPerPeriod: 36, periodDays: 7 },
+      cap: { maxVariantRowsPerPeriod: 72, periodDays: 7 },
     });
     expect(third.kind).toBe("generated");
   });

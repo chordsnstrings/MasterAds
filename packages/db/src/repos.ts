@@ -16,6 +16,7 @@ import {
   creatives,
   decisionOutcomes,
   decisions,
+  experiments,
   feedSources,
   intakeJobs,
   playbooks,
@@ -54,6 +55,8 @@ import {
   type NewProduct,
   type NewPromo,
   type Playbook,
+  type Experiment,
+  type NewExperiment,
   type NewSignalSnapshot,
   type Promo,
   type Product,
@@ -94,6 +97,7 @@ export function createRepos(db: Db) {
             | "category"
             | "images"
             | "url"
+            | "marginPct"
           >
         >,
       ): Promise<Product> {
@@ -143,6 +147,9 @@ export function createRepos(db: Db) {
       },
       async list(): Promise<Playbook[]> {
         return db.select().from(playbooks);
+      },
+      async updatePriors(id: string, priors: Record<string, number>): Promise<void> {
+        await db.update(playbooks).set({ performancePriors: priors }).where(eq(playbooks.id, id));
       },
       async signOff(id: string, by: string): Promise<Playbook> {
         const [r] = await db
@@ -656,6 +663,42 @@ export function createRepos(db: Db) {
           .from(attentionRecords)
           .where(eq(attentionRecords.status, "open"))
           .orderBy(desc(attentionRecords.createdAt));
+      },
+    },
+
+    experiments: {
+      async create(row: Omit<NewExperiment, "id"> & { id?: string }): Promise<Experiment> {
+        const id = row.id ?? newId("exp");
+        const [r] = await db.insert(experiments).values({ ...row, id }).returning();
+        if (!r) throw new Error("insert failed");
+        return r;
+      },
+      async list(): Promise<Experiment[]> {
+        return db.select().from(experiments).orderBy(desc(experiments.createdAt));
+      },
+      async get(id: string): Promise<Experiment | undefined> {
+        return (await db.select().from(experiments).where(eq(experiments.id, id)))[0];
+      },
+      async complete(id: string, readout: NonNullable<Experiment["readout"]>): Promise<Experiment> {
+        const [r] = await db
+          .update(experiments)
+          .set({ status: "complete", readout })
+          .where(eq(experiments.id, id))
+          .returning();
+        if (!r) throw new Error(`experiment ${id} not found`);
+        return r;
+      },
+      async setStatus(id: string, status: Experiment["status"]): Promise<void> {
+        await db.update(experiments).set({ status }).where(eq(experiments.id, id));
+      },
+      async latestCompleted(): Promise<Experiment | undefined> {
+        const rows = await db
+          .select()
+          .from(experiments)
+          .where(eq(experiments.status, "complete"))
+          .orderBy(desc(experiments.createdAt))
+          .limit(1);
+        return rows[0];
       },
     },
 

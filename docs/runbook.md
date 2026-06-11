@@ -88,3 +88,19 @@ raises an attention item only when self-repair fails.
 | Coverage falling | Site stopped sending click IDs — see docs/integration.md with the site owner. |
 | Campaign stuck in learning >14d | Volume too thin: event selection will consolidate/fall back on next re-evaluation; consider budget or creative changes. |
 | Runaway creative regeneration | Bounded by the per-product cap (settings `creative_caps`) and operating-cost guardrails; check `/internal/monitoring` anomalies. |
+
+## Incrementality (geo holdouts)
+
+The gold standard for proving ads cause results (not just capture them):
+
+1. Pick matched markets — similar conversion volume (within ~20%), demographics,
+   seasonality. Example: Dubai (test) vs Abu Dhabi (control).
+2. Create the experiment: `POST /internal/experiments` with name, platform,
+   regions, and a 2–4 week window (shorter windows miss the conversion lag).
+3. Run ads normally in the test region; exclude/hold out the control region on
+   the platform side for the window.
+4. Complete with observed numbers:
+   `POST /internal/experiments/:id/complete {test_conversions, control_conversions, incremental_return?}`
+   — lift % is computed; `incremental_return` (incremental revenue ÷ spend in
+   the window) feeds the Overview "Incremental return" tile.
+5. Re-run quarterly: incrementality decays as platforms re-learn.

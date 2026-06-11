@@ -10,7 +10,6 @@
     "start": "node --import tsx src/server.ts"
   },
   "dependencies": {
-    "@engine/adapters": "workspace:*",
     "@engine/contracts": "workspace:*",
     "@engine/core": "workspace:*",
     "@engine/db": "workspace:*",
@@ -21,6 +20,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@engine/adapters": "workspace:*",
     "@types/node": "^22.19.20",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",

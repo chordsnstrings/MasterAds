@@ -40,7 +40,8 @@ export function destinationUrl(spec: CampaignSpec, baseUrl: string): string | un
     case "hosted_form":
       return `${baseUrl}/hosted/f/${spec.productId}`;
     case "whatsapp":
-      return `https://wa.me/${d.value.replace(/[^\d]/g, "")}`;
+      // Measured CTWA-lite redirect: click IDs captured before the handoff.
+      return `${baseUrl}/hosted/wa/${spec.productId}?p=${d.value.replace(/[^\d]/g, "")}`;
     case "call":
       return `tel:${d.value}`;
   }

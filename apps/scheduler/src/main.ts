@@ -4,7 +4,7 @@ import { closeDb, createDb, createRepos } from "@engine/db";
 import { createBillingChecker, createPlatformAdapters } from "@engine/adapters";
 import { runFeedSyncSweep } from "./jobs/feed-sync.js";
 import { runInsightsPull } from "./jobs/insights.js";
-import { applyCalendarPacing, computeAndPersistCoverage, computeAndPersistSignalQuality, expirePromos, processProductChanges, reevaluateOptimizationEvents, runBillingHealth, runFatigueSweep, runMediumLoopOnce, scoreDecisions } from "@engine/core";
+import { applyCalendarPacing, computeAndPersistCoverage, computeAndPersistSignalQuality, expirePromos, processProductChanges, reevaluateOptimizationEvents, runBillingHealth, runFatigueSweep, runMediumLoopOnce, scoreDecisions, updatePlaybookPriors } from "@engine/core";
 
 function log(msg: string, extra: Record<string, unknown> = {}): void {
   console.log(
@@ -75,6 +75,15 @@ const jobs: ScheduledJob[] = [
     run: async () => {
       const r = await reevaluateOptimizationEvents({ repos, adapters: platformAdapters });
       if (r.deepened.length > 0) log("optimization events deepened", { ...r });
+    },
+  },
+  {
+    name: "playbook-priors",
+    intervalMs: 24 * 60 * 60_000, // daily: creative learnings accrue per vertical
+    lastRun: 0,
+    run: async () => {
+      const r = await updatePlaybookPriors(repos);
+      if (r.updated.length > 0) log("playbook priors updated", { ...r });
     },
   },
   {

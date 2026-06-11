@@ -12,6 +12,7 @@ export default function ProductDetail(): JSX.Element {
   const [adjusting, setAdjusting] = useState(false);
   const [goal, setGoal] = useState("best");
   const [budget, setBudget] = useState("");
+  const [margin, setMargin] = useState("");
   const [blockedNote, setBlockedNote] = useState<string | null>(null);
 
   async function reload(): Promise<void> {
@@ -42,6 +43,7 @@ export default function ProductDetail(): JSX.Element {
     const result = await api.adjustIntent(id, {
       goal,
       daily_budget: budget ? Number(budget) : undefined,
+      margin_pct: margin ? Number(margin) : undefined,
     });
     setBlockedNote(result.blocked.length > 0 ? result.blocked[0]! : null);
     setAdjusting(false);
@@ -133,6 +135,17 @@ export default function ProductDetail(): JSX.Element {
                 onChange={(e) => setBudget(e.target.value)}
                 className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 font-mono dark:bg-surface-dark dark:border-ink-muted/30"
               />
+            </label>
+            <label className="block text-sm">
+              {STRINGS.product.marginLabel}
+              <input
+                type="number"
+                value={margin}
+                onChange={(e) => setMargin(e.target.value)}
+                placeholder="100"
+                className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 font-mono dark:bg-surface-dark dark:border-ink-muted/30"
+              />
+              <span className="mt-1 block text-xs text-ink-muted">{STRINGS.product.marginHint}</span>
             </label>
           </div>
           <div className="mt-4 flex gap-3">

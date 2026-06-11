@@ -86,6 +86,38 @@ export async function hostedRoutes(app: FastifyInstance): Promise<void> {
     });
   }
 
+  // Measured WhatsApp destination (W3.3, CTWA-lite): the ad's landing URL is
+  // this redirect, so the platform-stamped click IDs are captured and a
+  // Lead-intent event recorded before handing off to the chat.
+  app.get<{ Params: { id: string }; Querystring: Query }>(
+    "/hosted/wa/:id",
+    async (req, reply) => {
+      const product = await app.repos.products.get(req.params.id);
+      if (!product) return reply.status(404).send("Not found");
+      const phone = (req.query.p ?? "").replace(/[^\d]/g, "");
+      if (!phone) return reply.status(400).send("Missing phone");
+      const result = await ingestConversion(app.repos, {
+        event_name: "Contact",
+        event_time: Math.floor(Date.now() / 1000),
+        click_ids: clickIdsFromQuery(req.query),
+        hashed_identifiers: {},
+        content_id: product.id,
+        event_id: `wa-tap-${randomUUID()}`,
+        source_site: HOSTED_SOURCE,
+        consent_granted: true,
+        client_ip_address: req.ip,
+        client_user_agent:
+          typeof req.headers["user-agent"] === "string"
+            ? req.headers["user-agent"].slice(0, 512)
+            : undefined,
+      });
+      if (app.jobs && !result.duplicate && result.canonical) {
+        await enqueueRelay(app.jobs, result.event.id);
+      }
+      return reply.redirect(`https://wa.me/${phone}`, 302);
+    },
+  );
+
   // Simple page we make for you.
   app.get<{ Params: { id: string }; Querystring: Query }>(
     "/hosted/p/:id",

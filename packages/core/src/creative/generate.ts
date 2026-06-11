@@ -11,6 +11,17 @@ import { heuristicScorer, LAUNCH_SCORE_THRESHOLD, type PredictiveScorer } from "
 export const CREATIVE_FORMATS = ["1:1", "9:16", "16:9"] as const;
 export type CreativeFormat = (typeof CREATIVE_FORMATS)[number];
 
+/** Hook framework (W3.2): the six hook archetypes of 2026 creative practice. */
+export const HOOK_TYPES = [
+  "curiosity",
+  "social_proof",
+  "benefit",
+  "contrarian",
+  "urgency",
+  "sensory",
+] as const;
+export type HookType = (typeof HOOK_TYPES)[number];
+
 /** Structural subset of @engine/adapters' CreativeProvider. */
 export interface AssetProvider {
   generateImage(brief: {
@@ -27,13 +38,19 @@ export interface RegenerationCap {
 }
 
 export const DEFAULT_REGENERATION_CAP: RegenerationCap = {
-  maxVariantRowsPerPeriod: 36,
+  maxVariantRowsPerPeriod: 72, // 6 hooks × 3 formats × ~4 refreshes/week
   periodDays: 7,
 };
 
 const copySchema = z.object({
   variants: z
-    .array(z.object({ headline: z.string().min(1), body: z.string().min(1) }))
+    .array(
+      z.object({
+        headline: z.string().min(1),
+        body: z.string().min(1),
+        hook: z.string().optional(),
+      }),
+    )
     .min(1),
 });
 
@@ -62,7 +79,14 @@ export async function generateCreatives(
   const { repos, llm, provider } = deps;
   const scorer = deps.scorer ?? heuristicScorer;
   const cap = opts.cap ?? (await getRegenerationCap(repos));
-  const variantCount = opts.variantCount ?? 3;
+  const variantCount = opts.variantCount ?? HOOK_TYPES.length;
+
+  // Order hooks by what has worked for this vertical (self-updating priors).
+  const playbook = spec.playbookId ? await repos.playbooks.get(spec.playbookId) : undefined;
+  const priors = playbook?.performancePriors ?? {};
+  const orderedHooks = [...HOOK_TYPES].sort(
+    (a, b) => (priors[`hook:${b}`] ?? 0) - (priors[`hook:${a}`] ?? 0),
+  );
 
   // Regeneration cap (operating-cost analogue of runaway ad spend).
   const periodStart = new Date(Date.now() - cap.periodDays * 86_400_000);
@@ -85,6 +109,8 @@ export async function generateCreatives(
       `price: ${product.price ?? "n/a"} ${product.currency ?? ""}`,
       `angle: ${spec.creativeAngle}`,
       `variants: ${variantCount}`,
+      `hooks (one variant per type, in this priority order): ${orderedHooks.slice(0, variantCount).join(", ")}`,
+      `each variant must include a "hook" field naming its hook type`,
     ].join("\n"),
     productId: product.id,
     maxTokens: 1024,
@@ -96,19 +122,20 @@ export async function generateCreatives(
   // 2) Pre-flight policy screening per concept across target platforms.
   const platforms = spec.targetPlatforms;
   const blocked: { headline: string; violations: PolicyViolation[] }[] = [];
-  const passing: { headline: string; body: string; visualDescriptor: string }[] = [];
-  for (const v of variants.slice(0, variantCount)) {
+  const passing: { headline: string; body: string; hook: string; visualDescriptor: string }[] = [];
+  variants.slice(0, variantCount).forEach((v, i) => {
+    const hook = v.hook ?? orderedHooks[i % orderedHooks.length]!;
     const visualDescriptor = `${spec.creativeAngle.replace(/_/g, " ")} shot of ${product.title}`;
     const screening = screenCreative(
       { headline: v.headline, body: v.body, visualDescriptor },
       platforms,
     );
     if (screening.passed) {
-      passing.push({ ...v, visualDescriptor });
+      passing.push({ headline: v.headline, body: v.body, hook, visualDescriptor });
     } else {
       blocked.push({ headline: v.headline, violations: screening.violations });
     }
-  }
+  });
   if (passing.length === 0) return { kind: "all_blocked", blocked };
 
   // 3) Render every passing concept to all placement formats; stamp content_id.
@@ -135,6 +162,7 @@ export async function generateCreatives(
           payload: {
             headline: concept.headline,
             body: concept.body,
+            hookType: concept.hook,
             visualDescriptor: concept.visualDescriptor,
             width: String(asset.width),
             height: String(asset.height),

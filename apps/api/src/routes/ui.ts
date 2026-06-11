@@ -24,7 +24,13 @@ async function productMetrics(
   const conversions = (await repos.conversions.listCanonicalSince(since)).filter(
     (e) => e.contentId === productId,
   );
-  const revenue = conversions.reduce((s, e) => s + (e.value !== null ? Number(e.value) : 0), 0);
+  const product = await repos.products.get(productId);
+  const marginFactor =
+    product?.marginPct !== null && product?.marginPct !== undefined
+      ? Number(product.marginPct) / 100
+      : 1;
+  const revenue =
+    conversions.reduce((s, e) => s + (e.value !== null ? Number(e.value) : 0), 0) * marginFactor;
   return {
     spend7d: adSpend,
     runningCost7d: operatingCost,
@@ -101,7 +107,7 @@ export async function uiRoutes(app: FastifyInstance): Promise<void> {
         conversions7d: conversions.length,
         runningCost7d: operatingCost,
         netReturn: totalCost > 0 ? revenue / totalCost : null,
-        incremental: null, // iROAS placeholder until holdouts complete
+        incremental: (await repos.experiments.latestCompleted())?.readout?.incremental_return ?? null,
         spendSeries: days.map((d) => spendByDay.get(d) ?? 0),
         conversionSeries: days.map((d) => convByDay.get(d) ?? 0),
       },
@@ -139,6 +145,11 @@ export async function uiRoutes(app: FastifyInstance): Promise<void> {
       stage,
       count: events.filter((e) => e.eventName === stage).length,
     }));
+    // Lead-gen products show closed deals (W3.1) as the true bottom of funnel.
+    if (spec?.terminalEvent === "Lead") {
+      const closed = events.filter((e) => e.eventName === "Purchase").length;
+      if (closed > 0) funnel.push({ stage: "ClosedLead", count: closed });
+    }
 
     const decisions = await repos.decisions.list({ productId: product.id, limit: 30 });
     const activity = [];
@@ -213,6 +224,7 @@ export async function uiRoutes(app: FastifyInstance): Promise<void> {
   const intentBody = z.object({
     goal: z.string().optional(),
     daily_budget: z.number().positive().optional(),
+    margin_pct: z.number().min(0).max(100).optional(),
   });
   app.patch<{ Params: { id: string } }>("/internal/products/:id/intent", async (req, reply) => {
     const parsed = intentBody.safeParse(req.body ?? {});
@@ -221,6 +233,11 @@ export async function uiRoutes(app: FastifyInstance): Promise<void> {
     const spec = await repos.specs.byProduct(req.params.id);
     if (!spec) return reply.status(404).send({ error: "no_plan" });
     if (parsed.data.goal) await repos.specs.update(spec.id, { goal: parsed.data.goal });
+    if (parsed.data.margin_pct !== undefined) {
+      await repos.products.update(req.params.id, {
+        marginPct: parsed.data.margin_pct.toFixed(2),
+      });
+    }
 
     const blocked: string[] = [];
     if (parsed.data.daily_budget !== undefined) {

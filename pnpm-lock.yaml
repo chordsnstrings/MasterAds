@@ -26,9 +26,6 @@ importers:
 
   apps/api:
     dependencies:
-      '@engine/adapters':
-        specifier: workspace:*
-        version: link:../../packages/adapters
       '@engine/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -54,6 +51,9 @@ importers:
         specifier: ^3.23.8
         version: 3.25.76
     devDependencies:
+      '@engine/adapters':
+        specifier: workspace:*
+        version: link:../../packages/adapters
       '@types/node':
         specifier: ^22.19.20
         version: 22.19.20

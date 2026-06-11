@@ -55,6 +55,63 @@ export async function internalRoutes(app: FastifyInstance): Promise<void> {
     return reply.status(201).send({ site, key });
   });
 
+  // Incrementality experiments (W3.5): geo holdouts — the causal calibration.
+  app.get("/internal/experiments", async () => ({
+    experiments: await app.repos.experiments.list(),
+  }));
+
+  app.post("/internal/experiments", async (req, reply) => {
+    const body = (req.body ?? {}) as {
+      name?: string;
+      platform?: string;
+      test_region?: string;
+      control_region?: string;
+      starts_at?: string;
+      ends_at?: string;
+    };
+    if (!body.name || !body.test_region || !body.control_region || !body.starts_at || !body.ends_at) {
+      return reply
+        .status(400)
+        .send({ error: "name, test_region, control_region, starts_at, ends_at required" });
+    }
+    const exp = await app.repos.experiments.create({
+      name: body.name,
+      platform: body.platform ?? null,
+      testRegion: body.test_region,
+      controlRegion: body.control_region,
+      startsAt: new Date(body.starts_at),
+      endsAt: new Date(body.ends_at),
+      status: "running",
+    });
+    return reply.status(201).send(exp);
+  });
+
+  app.post<{ Params: { id: string } }>("/internal/experiments/:id/complete", async (req, reply) => {
+    const body = (req.body ?? {}) as {
+      test_conversions?: number;
+      control_conversions?: number;
+      incremental_return?: number;
+    };
+    if (typeof body.test_conversions !== "number" || typeof body.control_conversions !== "number") {
+      return reply.status(400).send({ error: "test_conversions and control_conversions required" });
+    }
+    const lift =
+      body.control_conversions > 0
+        ? ((body.test_conversions - body.control_conversions) / body.control_conversions) * 100
+        : body.test_conversions > 0
+          ? 100
+          : 0;
+    const exp = await app.repos.experiments.complete(req.params.id, {
+      test_conversions: body.test_conversions,
+      control_conversions: body.control_conversions,
+      lift_pct: Math.round(lift * 100) / 100,
+      ...(body.incremental_return !== undefined
+        ? { incremental_return: body.incremental_return }
+        : {}),
+    });
+    return exp;
+  });
+
   // Attention records (UX §7).
   app.get("/internal/attention", async () => ({
     attention: await app.repos.attention.listOpen(),

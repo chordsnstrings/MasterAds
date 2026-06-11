@@ -15,6 +15,7 @@ import { uiRoutes } from "./routes/ui.js";
 import { hostedRoutes } from "./routes/hosted.js";
 import { monitoringRoutes } from "./routes/monitoring.js";
 import { pixelRoutes } from "./routes/pixel.js";
+import { leadsRoutes } from "./routes/leads.js";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -81,6 +82,7 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
   await app.register(hostedRoutes);
   await app.register(monitoringRoutes);
   await app.register(pixelRoutes);
+  await app.register(leadsRoutes);
 
   return app;
 }

@@ -167,9 +167,12 @@ function defaultStubResponder(req: LlmRequest): string {
   if (req.operation === "narration") return "Plain-language summary unavailable in stub mode.";
   return JSON.stringify({
     variants: [
-      { headline: "Made for every day", body: "Quality you can feel. Delivered to your door." },
-      { headline: "Loved by thousands", body: "Join happy customers across the region." },
-      { headline: "Start today", body: "Simple, fast, and built around you." },
+      { hook: "curiosity", headline: "The detail everyone asks about", body: "See why people keep coming back to this one." },
+      { hook: "social_proof", headline: "Loved by thousands", body: "Join happy customers across the region." },
+      { hook: "benefit", headline: "Made for every day", body: "Quality you can feel. Delivered to your door." },
+      { hook: "contrarian", headline: "Skip the usual compromise", body: "Most options make you choose. This one doesn't." },
+      { hook: "urgency", headline: "Ready when you are", body: "Fast delivery while stock lasts." },
+      { hook: "sensory", headline: "Feel the difference", body: "Crafted to look and feel exactly right." },
     ],
   });
 }

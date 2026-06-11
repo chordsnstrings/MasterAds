@@ -203,7 +203,7 @@ export const api = {
   settings: () => request<SettingsData>("GET", "/internal/settings"),
   pause: (id: string) => request("POST", `/internal/products/${id}/pause`),
   resume: (id: string) => request("POST", `/internal/products/${id}/resume`),
-  adjustIntent: (id: string, body: { goal?: string; daily_budget?: number }) =>
+  adjustIntent: (id: string, body: { goal?: string; daily_budget?: number; margin_pct?: number }) =>
     request<{ ok: boolean; blocked: string[] }>("PATCH", `/internal/products/${id}/intent`, body),
   resolveAttention: (id: string) => request("POST", `/internal/attention/${id}/resolve`),
   setKillSwitch: (engaged: boolean) =>

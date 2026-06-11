@@ -47,6 +47,8 @@ export const products = pgTable("products", {
   })
     .notNull()
     .default("draft"),
+  // Margin % of revenue (SW §14: value carries margin where supplied).
+  marginPct: numeric("margin_pct", { precision: 5, scale: 2 }),
   // Products imported together from one feed share a catalog group (FLOW §7).
   catalogGroupId: text("catalog_group_id"),
   rawInput: text("raw_input"), // offer text kept raw for classification (G5)
@@ -494,6 +496,30 @@ export type NewAttentionRecord = typeof attentionRecords.$inferInsert;
 
 export type CoverageSnapshot = typeof clickIdCoverage.$inferSelect;
 export type NewCoverageSnapshot = typeof clickIdCoverage.$inferInsert;
+
+// Incrementality experiments (W3.5): geo holdouts, the causal calibration seam.
+export const experiments = pgTable("experiments", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  kind: text("kind", { enum: ["geo_holdout"] }).notNull().default("geo_holdout"),
+  platform: text("platform"),
+  testRegion: text("test_region").notNull(),
+  controlRegion: text("control_region").notNull(),
+  startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+  endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
+  status: text("status", { enum: ["planned", "running", "complete"] })
+    .notNull()
+    .default("planned"),
+  readout: jsonb("readout").$type<{
+    test_conversions?: number;
+    control_conversions?: number;
+    lift_pct?: number;
+    incremental_return?: number;
+  }>(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export type Experiment = typeof experiments.$inferSelect;
+export type NewExperiment = typeof experiments.$inferInsert;
 
 // Per-site signal-strength snapshots (W2): EMQ-style identifier richness.
 export const signalQuality = pgTable(

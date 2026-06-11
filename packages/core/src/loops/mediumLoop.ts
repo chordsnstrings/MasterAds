@@ -35,7 +35,13 @@ export async function computeSliceMetrics(
     const conversions = (await repos.conversions.listCanonicalSince(since)).filter(
       (e) => e.contentId === spec.productId,
     );
-    const revenue = conversions.reduce((s, e) => s + (e.value !== null ? Number(e.value) : 0), 0);
+    const product = await repos.products.get(spec.productId);
+    const marginFactor =
+      product?.marginPct !== null && product?.marginPct !== undefined
+        ? Number(product.marginPct) / 100
+        : 1;
+    const revenue =
+      conversions.reduce((s, e) => s + (e.value !== null ? Number(e.value) : 0), 0) * marginFactor;
     const totalCost = adSpend + operatingCost;
     if (totalCost <= 0) continue;
     out.push({
