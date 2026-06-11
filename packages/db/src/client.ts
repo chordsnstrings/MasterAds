@@ -8,8 +8,30 @@ export function connectionString(): string {
   return process.env.DATABASE_URL ?? "postgres://postgres:postgres@127.0.0.1:5432/adengine";
 }
 
+/**
+ * TLS settings for managed Postgres (DigitalOcean injects sslmode=require).
+ * With DATABASE_CA_CERT set the server certificate is verified against it;
+ * without it TLS is still used, but managed providers sign with a private CA
+ * node cannot verify, so peer verification is disabled (encrypted transport,
+ * unauthenticated peer). Local URLs without sslmode stay plaintext.
+ */
+export function sslConfig(
+  url: string = connectionString(),
+): { ca: string } | { rejectUnauthorized: false } | undefined {
+  const mode = /[?&]sslmode=([^&\s]+)/.exec(url)?.[1] ?? process.env.PGSSLMODE;
+  if (!mode || mode === "disable") return undefined;
+  const ca = process.env.DATABASE_CA_CERT;
+  return ca ? { ca } : { rejectUnauthorized: false };
+}
+
+/** Strip sslmode from the URL so pg doesn't override the explicit ssl config. */
+function withoutSslmode(url: string): string {
+  return url.replace(/([?&])sslmode=[^&\s]+&?/, "$1").replace(/[?&]$/, "");
+}
+
 export function createDb(url: string = connectionString()): Db {
-  const pool = new pg.Pool({ connectionString: url, max: 10 });
+  const ssl = sslConfig(url);
+  const pool = new pg.Pool({ connectionString: withoutSslmode(url), max: 10, ssl });
   const db = drizzle(pool, { schema }) as unknown as Db;
   db.$pool = pool;
   return db;

@@ -5,11 +5,12 @@ import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+import { sslConfig } from "./client.js";
 
 const MIGRATIONS_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", "migrations");
 
 export async function runMigrations(databaseUrl: string): Promise<string[]> {
-  const client = new pg.Client({ connectionString: databaseUrl });
+  const client = new pg.Client({ connectionString: databaseUrl, ssl: sslConfig(databaseUrl) });
   await client.connect();
   const applied: string[] = [];
   try {

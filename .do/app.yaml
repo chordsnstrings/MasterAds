@@ -268,8 +268,14 @@ workers:
         value: ""
 
 databases:
-  # Managed PostgreSQL; never exposed publicly.
+  # Existing managed PostgreSQL cluster (ads-work), attached by name — the
+  # ${db.DATABASE_URL} bindings above resolve to its credentials at deploy
+  # time, so the connection string never lives in the repo. Connections use
+  # TLS (sslmode=require), handled by @engine/db's sslConfig.
   - name: db
     engine: PG
     version: "16"
     production: true
+    cluster_name: ads-work
+    db_name: defaultdb
+    db_user: doadmin

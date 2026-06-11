@@ -4,7 +4,7 @@
 // after max attempts, and raises an attention record on dead-letter.
 import type PgBoss from "pg-boss";
 import type { ConversionRelay } from "@engine/adapters";
-import { relayQueueName, type RelayJobData } from "@engine/core";
+import { RELAY_PLATFORMS, relayQueueName, type RelayJobData, type RelayPlatform } from "@engine/core";
 import type { RelayRecord, Repos } from "@engine/db";
 
 export interface RelayWorkerOptions {
@@ -130,13 +130,13 @@ export async function startRelayWorker(
 export async function replayWindow(
   boss: Pick<PgBoss, "send">,
   repos: Repos,
-  args: { from: Date; to: Date; platform?: "meta" | "google" | "tiktok" },
+  args: { from: Date; to: Date; platform?: RelayPlatform },
 ): Promise<number> {
   const events = await repos.conversions.listWindow(args.from, args.to);
   let enqueued = 0;
   for (const event of events) {
     if (!event.canonical) continue;
-    const platforms = args.platform ? [args.platform] : (["meta", "google", "tiktok"] as const);
+    const platforms: readonly RelayPlatform[] = args.platform ? [args.platform] : RELAY_PLATFORMS;
     const kept = event.relayedTo.filter(
       (r) => !platforms.includes(r.platform as (typeof platforms)[number]),
     );
