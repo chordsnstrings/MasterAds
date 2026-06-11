@@ -51,6 +51,27 @@ Pass Consent Mode v2 signals when you have a consent banner:
 window.adEngine.track("Purchase", { ..., consent: { ad_user_data: true, ad_personalization: true } });
 ```
 
+## Platform-specific installs
+
+Add the site in **Settings → Connected sites**, pick your platform, and the
+UI renders these exact snippets with your key filled in.
+
+### Shopify
+
+1. **Visits + click-ID capture** — Online Store → Themes → ⋯ → Edit code →
+   `theme.liquid`, paste the pixel snippet just before `</head>`.
+2. **Purchases** — Settings → Customer events → *Add custom pixel*, paste the
+   `checkout_completed` subscriber the UI generates (it posts a `Purchase`
+   with order id as `event_id`, value/currency from the checkout, idempotent
+   on replays). Shopify's sandboxed pixel runtime allows the plain `fetch`.
+
+### WordPress
+
+Paste the pixel snippet into `header.php` before `</head>` (Appearance →
+Theme file editor) or any "insert headers" plugin field. WooCommerce purchase
+events can be posted server-side from a `woocommerce_thankyou` hook using the
+server-to-server call below.
+
 ## Server-to-server (full control)
 
 **One endpoint, one POST per action:**

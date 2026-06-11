@@ -20,6 +20,7 @@ import {
   feedSources,
   intakeJobs,
   notifications,
+  platformConnections,
   playbooks,
   productChangeEvents,
   promos,
@@ -61,6 +62,7 @@ import {
   type NewSignalSnapshot,
   type NewNotification,
   type Notification,
+  type PlatformConnection,
   type Promo,
   type Product,
   type SignalSnapshot,
@@ -490,6 +492,45 @@ export function createRepos(db: Db) {
       },
       async byProduct(productId: string): Promise<Promo[]> {
         return db.select().from(promos).where(eq(promos.productId, productId));
+      },
+    },
+
+    platformConnections: {
+      async upsert(
+        platform: "meta" | "google" | "tiktok" | "snapchat" | "pinterest",
+        credentials: Record<string, string>,
+        adAccountRef?: string,
+      ): Promise<PlatformConnection> {
+        const existing = (
+          await db.select().from(platformConnections).where(eq(platformConnections.platform, platform))
+        )[0];
+        if (existing) {
+          const [r] = await db
+            .update(platformConnections)
+            .set({
+              credentials: { ...existing.credentials, ...credentials },
+              adAccountRef: adAccountRef ?? existing.adAccountRef,
+              updatedAt: new Date(),
+            })
+            .where(eq(platformConnections.platform, platform))
+            .returning();
+          return r!;
+        }
+        const [r] = await db
+          .insert(platformConnections)
+          .values({ id: newId("conn"), platform, credentials, adAccountRef })
+          .returning();
+        return r!;
+      },
+      async get(
+        platform: "meta" | "google" | "tiktok" | "snapchat" | "pinterest",
+      ): Promise<PlatformConnection | undefined> {
+        return (
+          await db.select().from(platformConnections).where(eq(platformConnections.platform, platform))
+        )[0];
+      },
+      async list(): Promise<PlatformConnection[]> {
+        return db.select().from(platformConnections);
       },
     },
 

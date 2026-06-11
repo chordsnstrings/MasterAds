@@ -4,7 +4,7 @@ import { closeDb, createDb, createRepos } from "@engine/db";
 import { createBillingChecker, createEmailSender, createPlatformAdapters } from "@engine/adapters";
 import { runFeedSyncSweep } from "./jobs/feed-sync.js";
 import { runInsightsPull } from "./jobs/insights.js";
-import { applyCalendarPacing, computeAndPersistCoverage, computeAndPersistSignalQuality, dispatchNotifications, expirePromos, processProductChanges, queueAttentionNotifications, queueWeeklyDigest, reevaluateOptimizationEvents, runBillingHealth, runFatigueSweep, runMediumLoopOnce, scoreDecisions, updatePlaybookPriors } from "@engine/core";
+import { applyCalendarPacing, applyStoredConnections, computeAndPersistCoverage, computeAndPersistSignalQuality, dispatchNotifications, expirePromos, processProductChanges, queueAttentionNotifications, queueWeeklyDigest, reevaluateOptimizationEvents, runBillingHealth, runFatigueSweep, runMediumLoopOnce, scoreDecisions, updatePlaybookPriors } from "@engine/core";
 
 function log(msg: string, extra: Record<string, unknown> = {}): void {
   console.log(
@@ -14,6 +14,7 @@ function log(msg: string, extra: Record<string, unknown> = {}): void {
 
 const db = createDb();
 const repos = createRepos(db);
+await applyStoredConnections(repos);
 const platformAdapters = createPlatformAdapters({ repos });
 const emailSender = createEmailSender();
 

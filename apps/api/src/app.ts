@@ -3,7 +3,7 @@ import cors from "@fastify/cors";
 import formbody from "@fastify/formbody";
 import { closeDb, createDb, createRepos, type Db, type Repos } from "@engine/db";
 import { createCreativeProvider, createLlmClient, createPlatformAdapters, type CreativeProvider, type LlmClient, type PlatformAdapter } from "@engine/adapters";
-import { seedPlaybooks, type Platform } from "@engine/core";
+import { applyStoredConnections, seedPlaybooks, type Platform } from "@engine/core";
 import type { JobSender } from "@engine/core";
 import { eventsRoutes } from "./routes/events.js";
 import { internalRoutes } from "./routes/internal.js";
@@ -16,6 +16,7 @@ import { hostedRoutes } from "./routes/hosted.js";
 import { monitoringRoutes } from "./routes/monitoring.js";
 import { pixelRoutes } from "./routes/pixel.js";
 import { leadsRoutes } from "./routes/leads.js";
+import { connectionsRoutes } from "./routes/connections.js";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -54,6 +55,9 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
   }
   app.decorate("jobs", opts.jobs ?? null);
   const repos = createRepos(db);
+  // Credentials saved through the UI feed the same env-var seam as App
+  // Platform secrets (explicit env always wins).
+  await applyStoredConnections(repos);
   app.decorate("llm", opts.llm ?? createLlmClient({ repos }));
   app.decorate("creative", opts.creative ?? createCreativeProvider({ repos }));
   app.decorate("platforms", opts.platforms ?? createPlatformAdapters({ repos }));
@@ -87,6 +91,7 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
   await app.register(monitoringRoutes);
   await app.register(pixelRoutes);
   await app.register(leadsRoutes);
+  await app.register(connectionsRoutes);
 
   return app;
 }

@@ -13,6 +13,10 @@ export default function Settings(): JSX.Element {
   const [newSite, setNewSite] = useState("");
   const [issuedKey, setIssuedKey] = useState<{ site: string; key: string } | null>(null);
   const [connectFor, setConnectFor] = useState<string | null>(null);
+  const [catalog, setCatalog] = useState<Awaited<ReturnType<typeof api.connections>>["platforms"]>([]);
+  const [form, setForm] = useState<Record<string, string>>({});
+  const [connectNote, setConnectNote] = useState<string | null>(null);
+  const [siteType, setSiteType] = useState<"custom" | "shopify" | "wordpress">("custom");
 
   async function reload(): Promise<void> {
     const d = await api.settings();
@@ -20,6 +24,8 @@ export default function Settings(): JSX.Element {
     setKit(d.brandKit);
     const s = await api.sites();
     setSiteList(s.sites);
+    const c = await api.connections();
+    setCatalog(c.platforms);
   }
   useEffect(() => {
     void reload();
@@ -55,7 +61,14 @@ export default function Settings(): JSX.Element {
                 key={c.platform}
                 className="flex min-h-16 items-center justify-between border-b border-hairline/70 px-5 transition-colors duration-150 last:border-b-0 hover:bg-ink/[0.015] dark:border-white/10 dark:hover:bg-white/[0.02]"
               >
-                <span>{STRINGS.platformNames[c.platform] ?? c.platform}</span>
+                <span>
+                  {STRINGS.platformNames[c.platform] ?? c.platform}
+                  {c.accountRef && (
+                    <span className="ml-2 font-mono text-xs text-ink-muted" data-testid="linked-account">
+                      {STRINGS.settings.connectAccount(c.accountRef)}
+                    </span>
+                  )}
+                </span>
                 <span className="flex items-center gap-3 text-sm">
                   {c.connected && c.mode === "stub" ? (
                     <span
@@ -90,19 +103,23 @@ export default function Settings(): JSX.Element {
         {connectFor && (
           <Dialog
             title={STRINGS.settings.connectTitle(STRINGS.platformNames[connectFor] ?? connectFor)}
-            onClose={() => setConnectFor(null)}
+            onClose={() => {
+              setConnectFor(null);
+              setForm({});
+              setConnectNote(null);
+            }}
           >
             <p className="mt-3 text-sm text-ink-muted">{STRINGS.settings.connectIntro}</p>
-            <ol className="mt-3 space-y-3">
+            <ol className="mt-3 space-y-2">
               {[
                 STRINGS.settings.connectStep1,
                 STRINGS.settings.connectStep2,
                 STRINGS.settings.connectStep3,
               ].map((step, i) => (
-                <li key={i} className="flex gap-3 text-sm leading-relaxed">
+                <li key={i} className="flex gap-3 text-xs leading-relaxed text-ink-muted">
                   <span
                     aria-hidden="true"
-                    className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-accent-soft font-mono text-xs text-accent dark:bg-accent/15"
+                    className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-accent-soft font-mono text-[10px] text-accent dark:bg-accent/15"
                   >
                     {i + 1}
                   </span>
@@ -110,16 +127,59 @@ export default function Settings(): JSX.Element {
                 </li>
               ))}
             </ol>
-            <p className="mt-4 rounded-control bg-attention/10 p-3 text-xs leading-relaxed text-attention-deep">
-              {STRINGS.settings.connectTestNote}
-            </p>
-            <button
-              type="button"
-              onClick={() => setConnectFor(null)}
-              className="mt-5 min-h-11 w-full rounded-control bg-accent text-sm font-medium text-white hover:bg-accent-deep"
+            <form
+              className="mt-4 space-y-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void api
+                  .saveConnection(connectFor, form)
+                  .then(() => {
+                    setConnectNote(STRINGS.settings.connectSavedNote);
+                    setForm({});
+                    void reload();
+                  })
+                  .catch(() => setConnectNote(STRINGS.settings.connectMissing));
+              }}
             >
-              {STRINGS.settings.connectClose}
-            </button>
+              {(catalog.find((p) => p.platform === connectFor)?.fields ?? []).map((f) => {
+                const label =
+                  STRINGS.settings.connectFieldLabels[`${connectFor}.${f.key}`] ?? f.key.replace(/_/g, " ");
+                const help = STRINGS.settings.connectFieldHelp[`${connectFor}.${f.key}`];
+                return (
+                  <label key={f.key} className="block text-sm">
+                    <span className="font-medium">{label}</span>
+                    {f.savedMask && (
+                      <span className="ml-2 font-mono text-xs text-ink-muted">{f.savedMask}</span>
+                    )}
+                    <input
+                      type={f.secret ? "password" : "text"}
+                      value={form[f.key] ?? ""}
+                      onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
+                      placeholder={f.savedMask ?? undefined}
+                      autoComplete="off"
+                      data-testid={`connect-field-${f.key}`}
+                      className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 font-mono text-sm dark:bg-surface-dark dark:border-white/15"
+                    />
+                    {help && <span className="mt-1 block text-xs leading-relaxed text-ink-muted">{help}</span>}
+                  </label>
+                );
+              })}
+              {connectNote && (
+                <p className="rounded-control bg-accent-soft p-3 text-xs leading-relaxed text-accent-deep dark:bg-accent/15" data-testid="connect-note">
+                  {connectNote}
+                </p>
+              )}
+              <p className="rounded-control bg-attention/10 p-3 text-xs leading-relaxed text-attention-deep">
+                {STRINGS.settings.connectTestNote}
+              </p>
+              <button
+                type="submit"
+                data-testid="connect-save"
+                className="min-h-11 w-full rounded-control bg-accent text-sm font-medium text-white hover:bg-accent-deep"
+              >
+                {STRINGS.settings.connectSave}
+              </button>
+            </form>
           </Dialog>
         )}
 
@@ -134,6 +194,19 @@ export default function Settings(): JSX.Element {
                 <span className="text-ink-muted">{site.label ?? ""}</span>
               </div>
             ))}
+            <label className="mt-3 block text-sm">
+              {STRINGS.sitesSection.typeLabel}
+              <select
+                value={siteType}
+                onChange={(e) => setSiteType(e.target.value as typeof siteType)}
+                data-testid="site-type"
+                className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 text-sm dark:bg-surface-dark dark:border-white/15"
+              >
+                <option value="custom">{STRINGS.sitesSection.typeCustom}</option>
+                <option value="shopify">{STRINGS.sitesSection.typeShopify}</option>
+                <option value="wordpress">{STRINGS.sitesSection.typeWordpress}</option>
+              </select>
+            </label>
             <div className="mt-3 flex gap-2">
               <input
                 value={newSite}
@@ -147,7 +220,7 @@ export default function Settings(): JSX.Element {
                 type="button"
                 data-testid="add-site-button"
                 onClick={() =>
-                  void api.addSite(newSite.trim()).then((r) => {
+                  void api.addSite(newSite.trim(), siteType).then((r) => {
                     setIssuedKey(r);
                     setNewSite("");
                     void reload();
@@ -163,13 +236,42 @@ export default function Settings(): JSX.Element {
               {STRINGS.sitesSection.addHint}
             </p>
             {issuedKey && (
-              <div className="mt-3 rounded-control bg-accent-soft p-3 text-xs" data-testid="issued-key">
+              <div className="mt-3 space-y-3 rounded-control bg-accent-soft p-3 text-xs dark:bg-accent/10" data-testid="issued-key">
                 <p className="font-medium">{STRINGS.sitesSection.keyNotice}</p>
-                <code className="mt-1 block break-all font-mono">{issuedKey.key}</code>
-                <p className="mt-3 font-medium">{STRINGS.sitesSection.snippetNotice}</p>
-                <code className="mt-1 block break-all font-mono">
+                <code className="block break-all font-mono">{issuedKey.key}</code>
+                <p className="font-medium">
+                  {siteType === "shopify"
+                    ? STRINGS.sitesSection.installShopify1
+                    : siteType === "wordpress"
+                      ? STRINGS.sitesSection.installWordpress
+                      : STRINGS.sitesSection.installCustom}
+                </p>
+                <code className="block break-all font-mono">
                   {`<script src="${window.location.origin}/pixel.js" data-site="${issuedKey.site}" data-key="${issuedKey.key}"></script>`}
                 </code>
+                {siteType === "shopify" && (
+                  <>
+                    <p className="font-medium">{STRINGS.sitesSection.installShopify2}</p>
+                    <code className="block whitespace-pre-wrap break-all font-mono">
+{`analytics.subscribe("checkout_completed", async (event) => {
+  const c = event.data.checkout;
+  await fetch("${window.location.origin}/v1/events", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-api-key": "${issuedKey.key}" },
+    body: JSON.stringify({
+      event_name: "Purchase",
+      event_time: Math.floor(Date.now() / 1000),
+      value: Number(c.totalPrice?.amount ?? 0),
+      currency: c.totalPrice?.currencyCode ?? "AED",
+      content_id: String(c.lineItems?.[0]?.variant?.product?.id ?? "${issuedKey.site}"),
+      event_id: String(c.order?.id ?? c.token),
+      source_site: "${issuedKey.site}",
+    }),
+  });
+});`}
+                    </code>
+                  </>
+                )}
               </div>
             )}
           </Card>

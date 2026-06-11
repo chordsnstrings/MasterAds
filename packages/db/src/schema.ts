@@ -418,6 +418,23 @@ export const adAccounts = pgTable("ad_accounts", {
   lastCheckedAt: timestamp("last_checked_at", { withTimezone: true }),
 });
 
+// Platform credentials entered through the UI (W7). Values are stored as
+// provided and only ever returned masked; env vars take precedence at boot.
+export const platformConnections = pgTable("platform_connections", {
+  id: text("id").primaryKey(),
+  platform: text("platform", {
+    enum: ["meta", "google", "tiktok", "snapchat", "pinterest"],
+  })
+    .notNull()
+    .unique(),
+  credentials: jsonb("credentials").$type<Record<string, string>>().notNull(),
+  adAccountRef: text("ad_account_ref"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type PlatformConnection = typeof platformConnections.$inferSelect;
+
 export type Promo = typeof promos.$inferSelect;
 export type NewPromo = typeof promos.$inferInsert;
 export type AdAccount = typeof adAccounts.$inferSelect;

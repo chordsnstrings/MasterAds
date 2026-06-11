@@ -44,7 +44,11 @@ what to provide, where it plugs in, and what flips.
   per format; CostEvents emitted.
 
 ## P5 — Meta / Google / TikTok / Snapchat / Pinterest ad accounts, tokens, sandbox accounts
-- **Provide (per platform, staging first with sandbox accounts):**
+- **Provide (per platform, staging first with sandbox accounts):** either as
+  encrypted env vars (below) or directly in the UI — **Settings → Connected
+  accounts → Connect** stores them server-side (masked thereafter, env vars
+  win on conflict) and records which exact ad account each channel runs
+  under. Workers pick stored values up at their next start.
   - Meta: `META_ACCESS_TOKEN` (system user, ads_management/ads_read/
     business_management), `META_AD_ACCOUNT_ID`, `META_DATASET_ID`. Requires
     Business app + Marketing API access tier review for production volume.

@@ -1,7 +1,7 @@
 // loops worker — relay queue consumers (G3); fast/medium loops arrive in G8/G10.
 import PgBoss from "pg-boss";
 import { createPlatformAdapters, createRelays } from "@engine/adapters";
-import { runFastLoopOnce } from "@engine/core";
+import { applyStoredConnections, runFastLoopOnce } from "@engine/core";
 import { closeDb, connectionOptions, createDb, createRepos } from "@engine/db";
 import { startRelayWorker } from "./relay-worker.js";
 
@@ -11,6 +11,7 @@ function log(msg: string, extra: Record<string, unknown> = {}): void {
 
 const db = createDb();
 const repos = createRepos(db);
+await applyStoredConnections(repos);
 const boss = new PgBoss(connectionOptions());
 boss.on("error", (err) => log("pg-boss error", { error: String(err) }));
 

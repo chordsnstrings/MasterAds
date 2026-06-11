@@ -89,6 +89,7 @@ export interface SettingsData {
     connected: boolean;
     tokenValid: boolean;
     billingOk: boolean;
+    accountRef: string | null;
   }[];
   coverage: { sourceSite: string; platform: string; coveragePct: string }[];
   signal: { sourceSite: string; avgScore: string; eventsTotal: number }[];
@@ -198,6 +199,27 @@ export const api = {
     ),
   overview: () => request<OverviewData>("GET", "/internal/overview"),
   dismissChecklist: () => request<{ ok: boolean }>("POST", "/internal/checklist/dismiss"),
+  connections: () =>
+    request<{
+      platforms: {
+        platform: string;
+        adAccountRef: string | null;
+        savedAt: string | null;
+        fields: {
+          key: string;
+          secret: boolean;
+          required: boolean;
+          isAccountRef: boolean;
+          savedMask: string | null;
+        }[];
+      }[];
+    }>("GET", "/internal/connections"),
+  saveConnection: (platform: string, credentials: Record<string, string>) =>
+    request<{ platform: string; adAccountRef: string | null; saved: string[] }>(
+      "POST",
+      `/internal/connections/${platform}`,
+      { credentials },
+    ),
   products: () => request<{ products: (ProductCardData & { status: string })[] }>("GET", "/internal/products"),
   product: (id: string) => request<ProductDetailData>("GET", `/internal/products/${id}`),
   activity: (params: { type?: string; productId?: string } = {}) => {

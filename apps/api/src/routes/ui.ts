@@ -352,6 +352,7 @@ export async function uiRoutes(app: FastifyInstance): Promise<void> {
         platform,
         mode,
         connected: acct !== undefined,
+        accountRef: acct?.accountRef ?? null,
         tokenValid: acct?.tokenValid ?? false,
         billingOk: acct?.billingOk ?? false,
         lastCheckedAt: acct?.lastCheckedAt ?? null,

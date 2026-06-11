@@ -152,14 +152,52 @@ export const STRINGS = {
     connectTitle: (name: string): string => `Connect ${name}`,
     connectIntro: "Here's what happens when you connect:",
     connectStep1:
-      "Your developer adds this account's access keys to the server settings. Keys are never typed into this screen, so they can't leak from here.",
+      "Fill in the account details below. They're stored safely on your server and shown only as \u00b7\u00b7\u00b7\u00b7 last digits after saving.",
     connectStep2:
-      "The engine checks the link and billing are healthy. The status here turns green when that check passes \u2014 and it keeps re-checking every few hours.",
+      "The engine checks the link and billing are healthy, and keeps re-checking every few hours. The status here updates automatically.",
     connectStep3:
-      "From then on, your ads run on the real account and results flow back automatically. Nothing else changes \u2014 same screens, same controls.",
+      "Once your developer flips this channel to live, ads run on the real account you named below and results flow back automatically.",
     connectTestNote:
       "Until then this channel runs in test mode: everything works end to end on practice data and no money is spent.",
+    connectSave: "Save connection",
+    connectSavedNote: "Saved. Leave a field blank to keep what's stored.",
+    connectMissing: "Please fill in every field marked required.",
+    connectAccount: (ref: string): string => `Account ${ref}`,
     connectClose: "Got it",
+    connectFieldLabels: {
+      "meta.access_token": "Access key",
+      "meta.ad_account_id": "Ad account number",
+      "meta.dataset_id": "Measurement ID",
+      "google.developer_token": "Developer key",
+      "google.customer_id": "Customer number",
+      "google.oauth_client_id": "Sign-in client ID",
+      "google.oauth_client_secret": "Sign-in client secret",
+      "google.refresh_token": "Sign-in refresh key",
+      "tiktok.access_token": "Access key",
+      "tiktok.advertiser_id": "Advertiser number",
+      "tiktok.pixel_code": "Measurement code",
+      "snapchat.access_token": "Access key",
+      "snapchat.ad_account_id": "Ad account number",
+      "snapchat.pixel_id": "Measurement ID",
+      "pinterest.access_token": "Access key",
+      "pinterest.ad_account_id": "Ad account number",
+    } as Record<string, string>,
+    connectFieldHelp: {
+      "meta.ad_account_id":
+        "Which exact ad account your ads and billing run under \u2014 in Meta Ads Manager it starts with act_.",
+      "meta.dataset_id": "Meta Events Manager \u2192 your data source's ID.",
+      "meta.access_token": "A long-lived system access key from Meta Business settings.",
+      "google.customer_id":
+        "Which exact Google Ads account to use \u2014 the xxx-xxx-xxxx number at the top right of Google Ads.",
+      "tiktok.advertiser_id":
+        "Which exact advertiser account \u2014 shown in TikTok Ads Manager under your business name.",
+      "tiktok.pixel_code": "TikTok Events Manager \u2192 your web events code.",
+      "snapchat.ad_account_id":
+        "Which exact ad account \u2014 Snapchat Ads Manager \u2192 Account settings.",
+      "snapchat.pixel_id": "Snapchat Events Manager \u2192 your web events ID.",
+      "pinterest.ad_account_id":
+        "Which exact ad account \u2014 Pinterest Ads \u2192 Account overview.",
+    } as Record<string, string>,
     tracking: "Results tracking",
     trackingHint: "How reliably your sites tell us what's working.",
     trackingReady: "Reporting well",
@@ -221,6 +259,17 @@ export const STRINGS = {
     addButton: "Add site",
     addHint:
       "You'll get a key and a one-line snippet to paste into your site. Results start appearing here within minutes of installing it.",
+    typeLabel: "What kind of site?",
+    typeCustom: "Any website",
+    typeShopify: "Shopify",
+    typeWordpress: "WordPress",
+    installCustom: "Add this one line to every page, just before </head>:",
+    installShopify1:
+      "In Shopify: Online Store \u2192 Themes \u2192 \u22ef \u2192 Edit code \u2192 theme.liquid \u2014 paste this line just before </head> (counts visits and carries ad details through):",
+    installShopify2:
+      "Then: Settings \u2192 Customer events \u2192 add a custom block and paste this, so completed checkouts are counted as purchases:",
+    installWordpress:
+      "In WordPress: Appearance \u2192 Theme file editor \u2192 header.php \u2014 paste this line just before </head> (or use any \u201cinsert headers\u201d plugin):",
     keyNotice: "Copy this key now — it won't be shown again.",
     snippetNotice: "Then add this one line to your site, and results start flowing:",
     empty: "No sites yet. Add one to start measuring results.",
