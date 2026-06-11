@@ -9,8 +9,11 @@ const ALLOWED: Record<string, string> = {
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
   webp: "image/webp",
+  mp4: "video/mp4",
+  webm: "video/webm",
 };
-const MAX_BYTES = 3 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 25 * 1024 * 1024;
 
 const uploadBody = z.object({
   filename: z.string().min(1),
@@ -33,9 +36,11 @@ export async function mediaRoutes(app: FastifyInstance): Promise<void> {
     const ext = parsed.data.filename.split(".").pop()?.toLowerCase() ?? "";
     const mime = ALLOWED[ext];
     if (!mime) return reply.status(400).send({ error: "unsupported_type", allowed: Object.keys(ALLOWED) });
+    const isVideo = mime.startsWith("video/");
+    const maxBytes = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
     const bytes = Buffer.from(parsed.data.content_base64, "base64");
-    if (bytes.length === 0 || bytes.length > MAX_BYTES) {
-      return reply.status(400).send({ error: "bad_size", maxBytes: MAX_BYTES });
+    if (bytes.length === 0 || bytes.length > maxBytes) {
+      return reply.status(400).send({ error: "bad_size", maxBytes });
     }
 
     const asset = await app.repos.media.insert(product.id, mime, bytes.toString("base64"));
@@ -44,8 +49,9 @@ export async function mediaRoutes(app: FastifyInstance): Promise<void> {
     const creative = await app.repos.creatives.insert({
       productId: product.id,
       variantNo,
-      format: "1:1",
-      assetType: "image",
+      // Vertical short-form is the high-performing video shape (W9).
+      format: isVideo ? "9:16" : "1:1",
+      assetType: isVideo ? "video" : "image",
       assetRef: `/media/${asset.id}`,
       payload: { headline: product.title, body: "", hookType: "uploaded" },
       contentId: product.id,
@@ -56,6 +62,7 @@ export async function mediaRoutes(app: FastifyInstance): Promise<void> {
         id: creative.id,
         variantNo: creative.variantNo,
         format: creative.format,
+        assetType: creative.assetType,
         assetRef: creative.assetRef,
         headline: creative.payload.headline,
         body: creative.payload.body,

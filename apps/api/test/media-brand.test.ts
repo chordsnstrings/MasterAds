@@ -84,6 +84,32 @@ describe("granular launch control (W8)", () => {
     expect(bad.statusCode).toBe(400);
   });
 
+  it("video uploads become 9:16 video variants served with the right mime (W9)", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: `/v1/products/${productId}/media`,
+      payload: { filename: "demo.mp4", content_base64: PNG_1PX },
+    });
+    expect(res.statusCode).toBe(201);
+    const { creative } = res.json() as {
+      creative: { assetType: string; format: string; assetRef: string };
+    };
+    expect(creative.assetType).toBe("video");
+    expect(creative.format).toBe("9:16");
+    const served = await app.inject({ method: "GET", url: creative.assetRef });
+    expect(served.headers["content-type"]).toBe("video/mp4");
+
+    // ~4MB image is over the image cap (bad_size, not a 413 body error).
+    const big = Buffer.alloc(4 * 1024 * 1024, 7).toString("base64");
+    const oversized = await app.inject({
+      method: "POST",
+      url: `/v1/products/${productId}/media`,
+      payload: { filename: "big.png", content_base64: big },
+    });
+    expect(oversized.statusCode).toBe(400);
+    expect((oversized.json() as { error: string }).error).toBe("bad_size");
+  });
+
   it("launch honors explicit selection: unchosen ready ads are held, not launched", async () => {
     const gen = await app.inject({ method: "POST", url: `/v1/specs/${specId}/creatives` });
     expect(gen.statusCode).toBe(201);

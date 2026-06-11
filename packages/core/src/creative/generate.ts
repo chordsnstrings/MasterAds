@@ -29,7 +29,16 @@ export interface AssetProvider {
     prompt: string;
     format: CreativeFormat;
   }): Promise<{ assetRef: string; width: number; height: number }>;
+  generateVideo(brief: {
+    productId: string;
+    prompt: string;
+    format: CreativeFormat;
+    durationSeconds: number;
+  }): Promise<{ assetRef: string; width: number; height: number; durationSeconds?: number }>;
 }
+
+/** Short-form vertical video length (W9) — the high-performing ad shape. */
+export const VIDEO_DURATION_SECONDS = 15;
 
 export interface RegenerationCap {
   /** Max creative rows per product per rolling period (SW §10.2). */
@@ -38,7 +47,7 @@ export interface RegenerationCap {
 }
 
 export const DEFAULT_REGENERATION_CAP: RegenerationCap = {
-  maxVariantRowsPerPeriod: 72, // 6 hooks × 3 formats × ~4 refreshes/week
+  maxVariantRowsPerPeriod: 96, // 6 hooks × (3 images + 1 video) × ~4 refreshes/week
   periodDays: 7,
 };
 
@@ -49,6 +58,7 @@ const copySchema = z.object({
         headline: z.string().min(1),
         body: z.string().min(1),
         hook: z.string().optional(),
+        scenes: z.array(z.string().min(1)).optional(),
       }),
     )
     .min(1),
@@ -89,9 +99,13 @@ export async function generateCreatives(
   );
 
   // Regeneration cap (operating-cost analogue of runaway ad spend).
+  // Short vertical video per concept (W9): video is ~70% of high-performing
+  // mixes; we add one 9:16 video per concept and keep all three image formats.
+  const wantsVideo = spec.formatMix.includes("9:16");
+  const rowsPerConcept = CREATIVE_FORMATS.length + (wantsVideo ? 1 : 0);
   const periodStart = new Date(Date.now() - cap.periodDays * 86_400_000);
   const existing = await repos.creatives.countByProductSince(product.id, periodStart);
-  if (existing + variantCount * CREATIVE_FORMATS.length > cap.maxVariantRowsPerPeriod) {
+  if (existing + variantCount * rowsPerConcept > cap.maxVariantRowsPerPeriod) {
     return {
       kind: "cap_exceeded",
       message: `Creative generation for this product is capped at ${cap.maxVariantRowsPerPeriod} assets per ${cap.periodDays} days; try again later or raise the cap in Settings.`,
@@ -106,7 +120,7 @@ export async function generateCreatives(
   const { text } = await llm.complete({
     operation: "creative_copy",
     system:
-      'You write ad copy. Respond ONLY with JSON {"variants":[{"headline":string,"body":string}]} — no platform jargon, plain confident language.',
+      'You write ad copy. Respond ONLY with JSON {"variants":[{"headline":string,"body":string,"hook":string,"scenes":[string,string,string]}]} — no platform jargon, plain confident language.',
     prompt: [
       `product: ${product.title}`,
       `description: ${product.description ?? product.rawInput ?? ""}`,
@@ -115,6 +129,7 @@ export async function generateCreatives(
       `variants: ${variantCount}`,
       `hooks (one variant per type, in this priority order): ${orderedHooks.slice(0, variantCount).join(", ")}`,
       `each variant must include a "hook" field naming its hook type`,
+      `each variant must include "scenes": three short lines for a 15-second tall video (open, middle, close)`,
       brand.tone ? `brand voice: ${brand.tone}` : "",
     ].join("\n"),
     productId: product.id,
@@ -127,7 +142,13 @@ export async function generateCreatives(
   // 2) Pre-flight policy screening per concept across target platforms.
   const platforms = spec.targetPlatforms;
   const blocked: { headline: string; violations: PolicyViolation[] }[] = [];
-  const passing: { headline: string; body: string; hook: string; visualDescriptor: string }[] = [];
+  const passing: {
+    headline: string;
+    body: string;
+    hook: string;
+    visualDescriptor: string;
+    scenes: string[];
+  }[] = [];
   variants.slice(0, variantCount).forEach((v, i) => {
     const hook = v.hook ?? orderedHooks[i % orderedHooks.length]!;
     const visualDescriptor = `${spec.creativeAngle.replace(/_/g, " ")} shot of ${product.title}`;
@@ -136,7 +157,13 @@ export async function generateCreatives(
       platforms,
     );
     if (screening.passed) {
-      passing.push({ headline: v.headline, body: v.body, hook, visualDescriptor });
+      // Deterministic scene fallback keeps custom responders (tests, older
+      // models) producing valid videos without the scenes field.
+      const scenes =
+        v.scenes && v.scenes.length > 0
+          ? v.scenes
+          : [visualDescriptor, v.headline, "Close on the offer and where to get it"];
+      passing.push({ headline: v.headline, body: v.body, hook, visualDescriptor, scenes });
     } else {
       blocked.push({ headline: v.headline, violations: screening.violations });
     }
@@ -173,6 +200,37 @@ export async function generateCreatives(
             height: String(asset.height),
           },
           contentId: product.id, // threaded through campaign construction (G7)
+          predictedScore: score.toFixed(4),
+          status,
+          priceBearing: /\d/.test(concept.headline + concept.body),
+        }),
+      );
+    }
+    if (wantsVideo) {
+      const video = await provider.generateVideo({
+        productId: product.id,
+        prompt: `${concept.visualDescriptor} — ${concept.headline} — scenes: ${concept.scenes.join(" / ")}`,
+        format: "9:16",
+        durationSeconds: VIDEO_DURATION_SECONDS,
+      });
+      creatives.push(
+        await repos.creatives.insert({
+          productId: product.id,
+          variantNo,
+          format: "9:16",
+          assetType: "video",
+          assetRef: video.assetRef,
+          payload: {
+            headline: concept.headline,
+            body: concept.body,
+            hookType: concept.hook,
+            visualDescriptor: concept.visualDescriptor,
+            scenes: concept.scenes.join("\n"),
+            durationSeconds: String(video.durationSeconds ?? VIDEO_DURATION_SECONDS),
+            width: String(video.width),
+            height: String(video.height),
+          },
+          contentId: product.id,
           predictedScore: score.toFixed(4),
           status,
           priceBearing: /\d/.test(concept.headline + concept.body),

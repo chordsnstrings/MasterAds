@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { STRINGS } from "../strings";
 import { api, type ProductDetailData } from "../api";
-import { ActivityItem, Card, FunnelBars, Money, Num, StatusChip } from "../components";
+import { ActivityItem, AdMedia, Card, FunnelBars, Money, Num, StatusChip } from "../components";
 
 export default function ProductDetail(): JSX.Element {
   const { id } = useParams<{ id: string }>();
@@ -95,6 +95,64 @@ export default function ProductDetail(): JSX.Element {
         <Card className="mt-3 p-6">
           <FunnelBars funnel={funnel} />
         </Card>
+      </section>
+
+      <section className="mt-8">
+        <h2 className="text-lg font-semibold tracking-tight">{STRINGS.ads.title}</h2>
+        {data.winning.length > 0 && (
+          <p className="mt-1 text-sm leading-relaxed text-ink-muted" data-testid="winning-line">
+            {STRINGS.ads.winningLine(
+              STRINGS.ads.hook[data.winning[0]!.hook] ?? data.winning[0]!.hook,
+              data.winning[0]!.sharePct,
+            )}
+          </p>
+        )}
+        {data.ads.length === 0 ? (
+          <Card className="mt-3 p-5">
+            <p className="text-sm text-ink-muted">{STRINGS.ads.empty}</p>
+          </Card>
+        ) : (
+          <>
+            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {data.ads.map((ad) => (
+                <div
+                  key={ad.id}
+                  data-testid="ad-tile"
+                  className="relative rounded-card border border-hairline/70 bg-surface p-3 text-xs shadow-card dark:border-white/10 dark:bg-surface-dark"
+                >
+                  <div className="flex aspect-square items-center justify-center overflow-hidden rounded-control bg-accent-soft text-center font-medium text-accent dark:bg-accent/15">
+                    <AdMedia assetRef={ad.assetRef} assetType={ad.assetType} headline={ad.headline} />
+                  </div>
+                  {ad.assetType === "video" && (
+                    <span className="absolute left-2 top-2 rounded-full bg-ink/70 px-2 py-0.5 text-[10px] font-medium text-white">
+                      {STRINGS.creation.videoBadge}
+                    </span>
+                  )}
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    {ad.hookType && (
+                      <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-medium text-accent dark:bg-accent/15">
+                        {STRINGS.ads.hook[ad.hookType] ?? ad.hookType}
+                      </span>
+                    )}
+                    <span className="rounded-full bg-ink/5 px-2 py-0.5 text-[10px] text-ink-muted-deep dark:bg-white/10 dark:text-ink-muted">
+                      {STRINGS.ads.adStatus[ad.status] ?? ad.status}
+                    </span>
+                    <span className="rounded-full bg-ink/5 px-2 py-0.5 text-[10px] text-ink-muted-deep dark:bg-white/10 dark:text-ink-muted">
+                      {STRINGS.creation.formatTabs[ad.format] ?? ad.format}
+                    </span>
+                  </div>
+                  <p className="mt-1.5 text-[11px] leading-relaxed text-ink-muted">
+                    {STRINGS.ads.fatigue[ad.fatigueState] ?? ad.fatigueState}
+                    {ad.predictedScore !== null && (
+                      <> · {STRINGS.ads.promise(Math.round(ad.predictedScore * 100))}</>
+                    )}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-ink-muted">{STRINGS.ads.honestyNote}</p>
+          </>
+        )}
       </section>
 
       <section className="mt-8">

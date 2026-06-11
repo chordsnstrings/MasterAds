@@ -55,7 +55,16 @@ describe("creative generation (GATE G6)", () => {
     expect([...formats].sort()).toEqual(["16:9", "1:1", "9:16"]);
     for (const c of result.creatives) {
       expect(c.contentId).toBe(product.id);
-      expect(c.assetRef).toMatch(/^stub:\/\/image\//);
+      expect(c.assetRef).toMatch(/^stub:\/\/(image|video)\//);
+    }
+    // W9: one 9:16 video per concept, 15s, with a scene script.
+    const videos = result.creatives.filter((c) => c.assetType === "video");
+    expect(videos.length).toBe(new Set(result.creatives.map((c) => c.variantNo)).size);
+    for (const v of videos) {
+      expect(v.format).toBe("9:16");
+      expect(v.payload.durationSeconds).toBe("15");
+      expect(v.assetRef).toMatch(/\/15s$/);
+      expect((v.payload.scenes ?? "").length).toBeGreaterThan(0);
     }
     // Stub assets carry correct dimensions per format.
     const vertical = result.creatives.find((c) => c.format === "9:16");
@@ -122,6 +131,7 @@ describe("creative generation (GATE G6)", () => {
     const ops = after.slice(0, newRows).map((c) => c.operation);
     expect(ops).toContain("creative_copy");
     expect(ops).toContain("creative_image");
+    expect(ops).toContain("creative_video");
     for (const row of after.slice(0, newRows)) {
       expect(Number(row.amount)).toBeGreaterThan(0);
       expect(row.unitPrice).not.toBeNull();
@@ -131,7 +141,7 @@ describe("creative generation (GATE G6)", () => {
   it("regeneration cap triggers at the configured limit", async () => {
     const llm = createLlmClient({ repos, mode: "stub" });
     const provider = createCreativeProvider({ repos, mode: "stub" });
-    const cap = { maxVariantRowsPerPeriod: 18, periodDays: 7 }; // one 6-hook run
+    const cap = { maxVariantRowsPerPeriod: 24, periodDays: 7 }; // one 6-hook run (3 images + 1 video each)
     const fresh = await repos.products.insert({
       mode: "catalog",
       title: "Capped product",
@@ -160,9 +170,72 @@ describe("creative generation (GATE G6)", () => {
     }
     // Cap is configurable: a bigger cap allows another batch.
     const third = await generateCreatives({ repos, llm, provider }, fresh, freshSpec, {
-      cap: { maxVariantRowsPerPeriod: 72, periodDays: 7 },
+      cap: { maxVariantRowsPerPeriod: 96, periodDays: 7 },
     });
     expect(third.kind).toBe("generated");
+  });
+});
+
+describe("video generation (W9)", () => {
+  it("no 9:16 in the format mix → no video rows", async () => {
+    const llm = createLlmClient({ repos, mode: "stub" });
+    const provider = createCreativeProvider({ repos, mode: "stub" });
+    const fresh = await repos.products.insert({ mode: "catalog", title: "No-video P", images: [] });
+    const noVertical = await repos.specs.insert({
+      productId: fresh.id,
+      playbookId: spec.playbookId,
+      businessModel: "ecommerce",
+      terminalEvent: "Purchase",
+      optimizationEvent: "AddToCart",
+      funnelStages: ["ViewContent", "Purchase"],
+      priceTier: "mid",
+      creativeAngle: "lifestyle",
+      policyCategory: "standard",
+      targetPlatforms: ["meta"],
+      audienceStrategy: "broad_platform_ai",
+      formatMix: ["1:1", "16:9"],
+    });
+    const result = await generateCreatives({ repos, llm, provider }, fresh, noVertical, {
+      variantCount: 2,
+    });
+    expect(result.kind).toBe("generated");
+    if (result.kind !== "generated") return;
+    expect(result.creatives.every((c) => c.assetType === "image")).toBe(true);
+  });
+
+  it("responder without scenes → deterministic fallback script still makes the video", async () => {
+    const llm = createLlmClient({
+      repos,
+      mode: "stub",
+      responder: () =>
+        JSON.stringify({
+          variants: [{ headline: "Comfort you can feel", body: "A sofa built for long evenings." }],
+        }),
+    });
+    const provider = createCreativeProvider({ repos, mode: "stub" });
+    const fresh = await repos.products.insert({ mode: "catalog", title: "Fallback P", images: [] });
+    const vSpec = await repos.specs.insert({
+      productId: fresh.id,
+      playbookId: spec.playbookId,
+      businessModel: "ecommerce",
+      terminalEvent: "Purchase",
+      optimizationEvent: "AddToCart",
+      funnelStages: ["ViewContent", "Purchase"],
+      priceTier: "mid",
+      creativeAngle: "lifestyle",
+      policyCategory: "standard",
+      targetPlatforms: ["meta"],
+      audienceStrategy: "broad_platform_ai",
+      formatMix: ["1:1", "9:16", "16:9"],
+    });
+    const result = await generateCreatives({ repos, llm, provider }, fresh, vSpec, {
+      variantCount: 1,
+    });
+    expect(result.kind).toBe("generated");
+    if (result.kind !== "generated") return;
+    const video = result.creatives.find((c) => c.assetType === "video");
+    expect(video).toBeDefined();
+    expect(video?.payload.scenes).toContain("Comfort you can feel");
   });
 });
 

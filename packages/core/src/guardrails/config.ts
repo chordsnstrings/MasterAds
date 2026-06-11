@@ -17,7 +17,8 @@ export const guardrailConfigSchema = z.object({
   maxObjectsPerDecision: z.number().int().positive().default(5),
   /** Operating-cost caps (USD, AI inference). */
   operatingCostDailyCapUsd: z.number().positive().default(50),
-  perProductOperatingCostDailyCapUsd: z.number().positive().default(10),
+  // Raised W9: a full 6-concept refresh now includes video (~$9.75/run).
+  perProductOperatingCostDailyCapUsd: z.number().positive().default(25),
   /** New-account warm-up (G9): max daily-budget growth on young accounts. */
   warmupAccountAgeDays: z.number().positive().default(30),
   warmupMaxDailyBudget: z.number().positive().default(400),

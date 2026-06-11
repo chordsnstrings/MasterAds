@@ -18,6 +18,7 @@ import { pixelRoutes } from "./routes/pixel.js";
 import { leadsRoutes } from "./routes/leads.js";
 import { connectionsRoutes } from "./routes/connections.js";
 import { mediaRoutes } from "./routes/media.js";
+import { rulesRoutes } from "./routes/rules.js";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -41,6 +42,9 @@ export interface BuildAppOptions {
 
 export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInstance> {
   const app = Fastify({
+    // 25MB video uploads arrive as base64 JSON (~33MB) — Fastify's default
+    // 1MiB limit silently broke even the documented 3MB image uploads.
+    bodyLimit: 40 * 1024 * 1024,
     logger: {
       level: process.env.LOG_LEVEL ?? "info",
     },
@@ -94,6 +98,7 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
   await app.register(leadsRoutes);
   await app.register(connectionsRoutes);
   await app.register(mediaRoutes);
+  await app.register(rulesRoutes);
 
   return app;
 }

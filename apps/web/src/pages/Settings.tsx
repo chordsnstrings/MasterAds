@@ -2,7 +2,7 @@
 // limits incl. the stop-everything switch, brand kit, autonomy + sign-offs.
 import { useEffect, useState } from "react";
 import { STRINGS } from "../strings";
-import { api, type SettingsData } from "../api";
+import { api, type RuleData, type SettingsData } from "../api";
 import { Card, Dialog, Num, PageHeader, Section } from "../components";
 
 export default function Settings(): JSX.Element {
@@ -18,6 +18,17 @@ export default function Settings(): JSX.Element {
   const [form, setForm] = useState<Record<string, string>>({});
   const [connectNote, setConnectNote] = useState<string | null>(null);
   const [siteType, setSiteType] = useState<"custom" | "shopify" | "wordpress">("custom");
+  const [rules, setRules] = useState<RuleData[]>([]);
+  const [ruleForm, setRuleForm] = useState({
+    name: "",
+    scope: "all",
+    product_id: "",
+    metric: "cost_per_result",
+    window_days: 3,
+    comparator: "gt",
+    threshold: "",
+    action: "notify",
+  });
 
   async function reload(): Promise<void> {
     const d = await api.settings();
@@ -28,6 +39,8 @@ export default function Settings(): JSX.Element {
     const c = await api.connections();
     setCatalog(c.platforms);
     setAiCatalog(c.ai);
+    const r = await api.rules();
+    setRules(r.rules);
   }
   useEffect(() => {
     void reload();
@@ -439,6 +452,190 @@ export default function Settings(): JSX.Element {
                 </button>
               </div>
             </div>
+          </Card>
+        </Section>
+
+
+        <Section title={STRINGS.rules.title} hint={STRINGS.rules.hint}>
+          <Card>
+            {rules.length === 0 && (
+              <p className="p-5 text-sm text-ink-muted">{STRINGS.rules.empty}</p>
+            )}
+            {rules.map((r) => (
+              <div
+                key={r.id}
+                data-testid="rule-row"
+                className="flex min-h-14 items-center justify-between gap-3 border-b border-hairline/70 px-5 text-sm last:border-b-0 dark:border-white/10"
+              >
+                <div>
+                  <span className="font-medium">{r.name}</span>
+                  <p className="mt-0.5 text-xs leading-relaxed text-ink-muted">
+                    {STRINGS.rules.sentence(
+                      STRINGS.rules.metrics[r.metric] ?? r.metric,
+                      STRINGS.rules.windowDays(r.windowDays),
+                      STRINGS.rules.comparators[r.comparator] ?? r.comparator,
+                      String(r.threshold),
+                      STRINGS.rules.actions[r.action] ?? r.action,
+                    )}
+                    {r.scope === "product" &&
+                      ` ${STRINGS.rules.scope}: ${data.autonomy.find((a) => a.productId === r.productId)?.title ?? r.productId}.`}
+                  </p>
+                </div>
+                <span className="flex shrink-0 items-center gap-2">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={r.enabled}
+                    aria-label={r.name}
+                    data-testid="rule-toggle"
+                    onClick={() =>
+                      void api.setRuleEnabled(r.id, !r.enabled).then(() =>
+                        setRules(rules.map((x) => (x.id === r.id ? { ...x, enabled: !r.enabled } : x))),
+                      )
+                    }
+                    className={`min-h-11 rounded-full px-4 text-xs font-medium ${
+                      r.enabled
+                        ? "bg-positive/10 text-positive-deep"
+                        : "bg-ink/5 text-ink-muted dark:bg-white/10"
+                    }`}
+                  >
+                    {r.enabled ? STRINGS.rules.on : STRINGS.rules.off}
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="rule-delete"
+                    onClick={() =>
+                      void api.deleteRule(r.id).then(() => setRules(rules.filter((x) => x.id !== r.id)))
+                    }
+                    className="min-h-11 rounded-control px-3 text-xs text-critical hover:bg-critical/10"
+                  >
+                    {STRINGS.rules.remove}
+                  </button>
+                </span>
+              </div>
+            ))}
+            <form
+              className="grid gap-3 border-t border-hairline/70 p-5 sm:grid-cols-2 dark:border-white/10"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!ruleForm.name.trim() || !ruleForm.threshold) return;
+                void api
+                  .addRule({
+                    name: ruleForm.name.trim(),
+                    scope: ruleForm.scope,
+                    product_id: ruleForm.scope === "product" ? ruleForm.product_id : undefined,
+                    metric: ruleForm.metric,
+                    window_days: Number(ruleForm.window_days),
+                    comparator: ruleForm.comparator,
+                    threshold: Number(ruleForm.threshold),
+                    action: ruleForm.action,
+                  })
+                  .then(() => {
+                    setRuleForm({ ...ruleForm, name: "", threshold: "" });
+                    void reload();
+                  });
+              }}
+            >
+              <label className="block text-sm sm:col-span-2">
+                {STRINGS.rules.name}
+                <input
+                  value={ruleForm.name}
+                  onChange={(e) => setRuleForm({ ...ruleForm, name: e.target.value })}
+                  data-testid="rule-name"
+                  className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 dark:bg-surface-dark dark:border-white/15"
+                />
+              </label>
+              <label className="block text-sm">
+                {STRINGS.rules.metric}
+                <select
+                  value={ruleForm.metric}
+                  onChange={(e) => setRuleForm({ ...ruleForm, metric: e.target.value })}
+                  className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 text-sm dark:bg-surface-dark dark:border-white/15"
+                >
+                  {Object.entries(STRINGS.rules.metrics).map(([k, label]) => (
+                    <option key={k} value={k}>{label}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-sm">
+                {STRINGS.rules.window}
+                <select
+                  value={ruleForm.window_days}
+                  onChange={(e) => setRuleForm({ ...ruleForm, window_days: Number(e.target.value) })}
+                  className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 text-sm dark:bg-surface-dark dark:border-white/15"
+                >
+                  {[1, 3, 7].map((n) => (
+                    <option key={n} value={n}>{STRINGS.rules.windowDays(n)}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-sm">
+                {STRINGS.rules.comparator}
+                <select
+                  value={ruleForm.comparator}
+                  onChange={(e) => setRuleForm({ ...ruleForm, comparator: e.target.value })}
+                  className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 text-sm dark:bg-surface-dark dark:border-white/15"
+                >
+                  {Object.entries(STRINGS.rules.comparators).map(([k, label]) => (
+                    <option key={k} value={k}>{label}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-sm">
+                {STRINGS.rules.threshold}
+                <input
+                  type="number"
+                  step="any"
+                  value={ruleForm.threshold}
+                  onChange={(e) => setRuleForm({ ...ruleForm, threshold: e.target.value })}
+                  data-testid="rule-threshold"
+                  className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 font-mono dark:bg-surface-dark dark:border-white/15"
+                />
+              </label>
+              <label className="block text-sm">
+                {STRINGS.rules.action}
+                <select
+                  value={ruleForm.action}
+                  onChange={(e) => setRuleForm({ ...ruleForm, action: e.target.value })}
+                  className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 text-sm dark:bg-surface-dark dark:border-white/15"
+                >
+                  {Object.entries(STRINGS.rules.actions).map(([k, label]) => (
+                    <option key={k} value={k}>{label}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-sm">
+                {STRINGS.rules.scope}
+                <select
+                  value={ruleForm.scope === "all" ? "all" : ruleForm.product_id}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setRuleForm(
+                      v === "all"
+                        ? { ...ruleForm, scope: "all", product_id: "" }
+                        : { ...ruleForm, scope: "product", product_id: v },
+                    );
+                  }}
+                  className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 text-sm dark:bg-surface-dark dark:border-white/15"
+                >
+                  <option value="all">{STRINGS.rules.scopeAll}</option>
+                  {data.autonomy.map((a) => (
+                    <option key={a.productId} value={a.productId}>{a.title}</option>
+                  ))}
+                </select>
+              </label>
+              <div className="sm:col-span-2">
+                <button
+                  type="submit"
+                  data-testid="rule-add"
+                  disabled={!ruleForm.name.trim() || !ruleForm.threshold}
+                  className="min-h-11 rounded-control bg-accent px-5 text-sm font-medium text-white hover:bg-accent-deep disabled:opacity-50"
+                >
+                  {STRINGS.rules.add}
+                </button>
+                <p className="mt-2 text-xs leading-relaxed text-ink-muted">{STRINGS.rules.cooldownHint}</p>
+              </div>
+            </form>
           </Card>
         </Section>
 

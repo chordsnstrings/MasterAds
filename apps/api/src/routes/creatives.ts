@@ -32,6 +32,7 @@ export async function creativesRoutes(app: FastifyInstance): Promise<void> {
         id: c.id,
         variantNo: c.variantNo,
         format: c.format,
+        assetType: c.assetType,
         assetRef: c.assetRef,
         headline: c.payload.headline,
         body: c.payload.body,

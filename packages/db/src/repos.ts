@@ -19,6 +19,7 @@ import {
   experiments,
   feedSources,
   intakeJobs,
+  automationRules,
   mediaAssets,
   notifications,
   platformConnections,
@@ -65,6 +66,8 @@ import {
   type Notification,
   type PlatformConnection,
   type MediaAsset,
+  type AutomationRule,
+  type NewAutomationRule,
   type Promo,
   type Product,
   type SignalSnapshot,
@@ -495,6 +498,33 @@ export function createRepos(db: Db) {
       },
       async byProduct(productId: string): Promise<Promo[]> {
         return db.select().from(promos).where(eq(promos.productId, productId));
+      },
+    },
+
+    automationRules: {
+      async create(
+        row: Omit<NewAutomationRule, "id"> & { id?: string },
+      ): Promise<AutomationRule> {
+        const id = row.id ?? newId("rule");
+        const [r] = await db.insert(automationRules).values({ ...row, id }).returning();
+        if (!r) throw new Error("insert failed");
+        return r;
+      },
+      async list(): Promise<AutomationRule[]> {
+        return db.select().from(automationRules).orderBy(automationRules.createdAt);
+      },
+      async listEnabled(): Promise<AutomationRule[]> {
+        return db.select().from(automationRules).where(eq(automationRules.enabled, true));
+      },
+      async setEnabled(id: string, enabled: boolean): Promise<void> {
+        await db.update(automationRules).set({ enabled }).where(eq(automationRules.id, id));
+      },
+      /** Rules are settings, not audit rows — hard delete is allowed. */
+      async delete(id: string): Promise<void> {
+        await db.delete(automationRules).where(eq(automationRules.id, id));
+      },
+      async markFired(id: string, at: Date): Promise<void> {
+        await db.update(automationRules).set({ lastFiredAt: at }).where(eq(automationRules.id, id));
       },
     },
 

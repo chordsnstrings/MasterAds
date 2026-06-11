@@ -18,3 +18,6 @@ Still parked:
 - Additional channels: LinkedIn, Reddit, X, Amazon/retail media, CTV, DOOH, programmatic DSPs — audit 2026-06 — see docs/audit-2026-06.md channel-fit table; Snapchat + Pinterest were built first.
 - Multi-tenancy / user accounts — audit 2026-06 — single-operator deployment is the current model; OPERATOR_TOKEN gates the UI.
 - Arabic / RTL localization — audit 2026-06 — high value for UAE SMBs; needs full RTL design pass, not just string swaps.
+- Chat-style ops agent (AdAmigo-style natural-language control) — audit 2026-06 round 2 — needs LLM tool-calling surface over the internal API; the guardrail layer already constrains what it could do.
+- Avatar/UGC-style video provider selection (Arcads/Creatify-class) — audit 2026-06 round 2 — the CreativeProvider video seam + per-second pricing is ready; pick provider at P4.
+- Object storage (DO Spaces/CDN) for uploaded media — audit 2026-06 round 2 — in-DB base64 is fine at current volume; move when uploads grow.

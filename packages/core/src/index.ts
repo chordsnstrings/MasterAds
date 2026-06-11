@@ -29,3 +29,4 @@ export { resetAndSeed } from "./e2eSeed.js";
 export * from "./loops/playbookPriors.js";
 export * from "./notifications.js";
 export * from "./connections.js";
+export * from "./automations/customRules.js";

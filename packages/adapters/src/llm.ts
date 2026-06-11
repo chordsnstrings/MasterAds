@@ -167,12 +167,12 @@ function defaultStubResponder(req: LlmRequest): string {
   if (req.operation === "narration") return "Plain-language summary unavailable in stub mode.";
   return JSON.stringify({
     variants: [
-      { hook: "curiosity", headline: "The detail everyone asks about", body: "See why people keep coming back to this one." },
-      { hook: "social_proof", headline: "Loved by thousands", body: "Join happy customers across the region." },
-      { hook: "benefit", headline: "Made for every day", body: "Quality you can feel. Delivered to your door." },
-      { hook: "contrarian", headline: "Skip the usual compromise", body: "Most options make you choose. This one doesn't." },
-      { hook: "urgency", headline: "Ready when you are", body: "Fast delivery while stock lasts." },
-      { hook: "sensory", headline: "Feel the difference", body: "Crafted to look and feel exactly right." },
+      { hook: "curiosity", headline: "The detail everyone asks about", body: "See why people keep coming back to this one.", scenes: ["Close-up on the detail nobody expects", "Pull back to reveal the whole product", "The detail everyone asks about — see it yourself"] },
+      { hook: "social_proof", headline: "Loved by thousands", body: "Join happy customers across the region.", scenes: ["Quick cuts of happy customers using it", "Star ratings and real quotes appear", "Loved by thousands — join them"] },
+      { hook: "benefit", headline: "Made for every day", body: "Quality you can feel. Delivered to your door.", scenes: ["Morning-to-night moments with the product", "The one benefit that changes the day", "Made for every day — delivered to your door"] },
+      { hook: "contrarian", headline: "Skip the usual compromise", body: "Most options make you choose. This one doesn't.", scenes: ["Side-by-side with the usual compromise", "Cross out the trade-off on screen", "Skip the compromise — get both"] },
+      { hook: "urgency", headline: "Ready when you are", body: "Fast delivery while stock lasts.", scenes: ["Box arriving at the door, timer on screen", "Stock counter ticking down", "Ready when you are — while stock lasts"] },
+      { hook: "sensory", headline: "Feel the difference", body: "Crafted to look and feel exactly right.", scenes: ["Macro texture shots in slow motion", "Hands running over the surface", "Feel the difference — up close"] },
     ],
   });
 }

@@ -104,6 +104,39 @@ export const STRINGS = {
     empty: "Nothing here yet. The engine will narrate what it does as it works.",
   },
 
+  ads: {
+    title: "Your ads",
+    empty: "No ads yet.",
+    winningLine: (hook: string, pct: number): string =>
+      `${hook} openings are winning right now \u2014 about ${pct}% of recent results trace back to ads that start that way.`,
+    hook: {
+      curiosity: "Curiosity",
+      social_proof: "Social proof",
+      benefit: "Benefit-led",
+      contrarian: "Against the grain",
+      urgency: "Urgency",
+      sensory: "Look & feel",
+      uploaded: "Your upload",
+    } as Record<string, string>,
+    adStatus: {
+      ready: "Ready",
+      held: "Resting",
+      launched: "Live",
+      retired: "Retired",
+      blocked: "Held back",
+      expired: "Expired",
+      generating: "Being made",
+    } as Record<string, string>,
+    fatigue: {
+      fresh: "Fresh",
+      tiring: "Tiring",
+      fatigued: "Tired \u2014 due for a refresh",
+    } as Record<string, string>,
+    promise: (pct: number): string => `${pct}% promise`,
+    honestyNote:
+      "Results are counted per product; the engine rests tiring ads and puts more behind what wins.",
+  },
+
   funnelStage: {
     ViewContent: "Views",
     AddToCart: "Add to cart",
@@ -252,6 +285,36 @@ export const STRINGS = {
     saved: "Saved",
   },
 
+  rules: {
+    title: "Your rules",
+    hint: "Your own automatic actions, checked every few minutes. They obey your spending limits and the stop-everything switch, and every action they take shows up in Activity.",
+    name: "Name",
+    metric: "Watch",
+    metrics: {
+      spend: "Spend",
+      results: "Results",
+      cost_per_result: "Cost per result",
+      net_return: "Money back per cost",
+    } as Record<string, string>,
+    window: "Over the last",
+    windowDays: (n: number): string => (n === 1 ? "1 day" : `${n} days`),
+    comparator: "When it",
+    comparators: { gt: "goes above", lt: "falls below" } as Record<string, string>,
+    threshold: "Limit",
+    action: "Then",
+    actions: { pause: "Pause it", resume: "Resume it", notify: "Tell me" } as Record<string, string>,
+    scope: "Applies to",
+    scopeAll: "Everything",
+    add: "Add rule",
+    remove: "Remove",
+    on: "On",
+    off: "Off",
+    empty: "No rules yet. Add one and the engine checks it every few minutes.",
+    cooldownHint: "After a rule acts, it waits a day before acting on the same thing again.",
+    sentence: (metric: string, windowLabel: string, comparator: string, threshold: string, action: string): string =>
+      `When ${metric.toLowerCase()} over the last ${windowLabel} ${comparator} ${threshold}, ${action.toLowerCase()}.`,
+  },
+
   platformNames: {
     meta: "Instagram & Facebook",
     google: "Google",
@@ -341,9 +404,14 @@ export const STRINGS = {
     selectHint: "Tap an ad to keep or drop it. Only the highlighted ones go live.",
     selectedCount: (n: number, total: number): string => `${n} of ${total} will go live.`,
     editWordsShort: "Edit",
-    uploadButton: "+ Add your own photos",
-    uploadHint: "PNG, JPG or WebP up to 3MB. Uploads go live alongside the made-for-you ads.",
-    uploadFailed: "That file couldn't be added. PNG, JPG or WebP up to 3MB.",
+    uploadButton: "+ Add your own photos or videos",
+    uploadHint:
+      "PNG, JPG or WebP up to 3MB \u2014 or MP4/WebM video up to 25MB. Uploads go live alongside the made-for-you ads.",
+    uploadFailed:
+      "That file couldn't be added. PNG, JPG, WebP up to 3MB, or MP4/WebM up to 25MB.",
+    videoBadge: "Video",
+    videoNote:
+      "Tall video versions are made automatically \u2014 short video is what works best on TikTok and Snapchat.",
     optimizeNote:
       "After launch, the engine shifts budget toward the ads that perform best and rests the ones that tire.",
     brandTitle: "Brand for this page",

@@ -357,3 +357,40 @@ export function PageSkeleton(): JSX.Element {
     </div>
   );
 }
+
+/** Renders an ad's media: uploaded video/image from /media, else headline text. */
+export function AdMedia({
+  assetRef,
+  assetType,
+  headline,
+  className = "",
+}: {
+  assetRef: string;
+  assetType?: string;
+  headline?: string | null;
+  className?: string;
+}): JSX.Element {
+  if (assetRef.startsWith("/media/")) {
+    if (assetType === "video") {
+      // No autoplay/controls: calm preview, deterministic screenshots.
+      return (
+        <video
+          src={assetRef}
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          className={`h-full w-full rounded-control object-cover ${className}`}
+        />
+      );
+    }
+    return (
+      <img
+        src={assetRef}
+        alt={headline ?? ""}
+        className={`h-full w-full rounded-control object-cover ${className}`}
+      />
+    );
+  }
+  return <>{headline}</>;
+}

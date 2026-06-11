@@ -15,6 +15,7 @@ export default defineConfig(({ mode }) => ({
       "/v1": process.env.API_PROXY_TARGET ?? "http://localhost:3000",
       "/internal": process.env.API_PROXY_TARGET ?? "http://localhost:3000",
       "/hosted": process.env.API_PROXY_TARGET ?? "http://localhost:3000",
+      "/media": process.env.API_PROXY_TARGET ?? "http://localhost:3000",
     },
   },
 }));

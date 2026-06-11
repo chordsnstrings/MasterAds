@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { STRINGS } from "../strings";
 import { api, type CreativePreview, type PlanData, type SettingsData } from "../api";
-import { Card, Money } from "../components";
+import { AdMedia, Card, Money } from "../components";
 
 const C = STRINGS.creation;
 
@@ -488,6 +488,7 @@ export default function AddProduct({
                 </button>
               ))}
             </div>
+            <p className="mt-2 text-xs leading-relaxed text-ink-muted">{C.videoNote}</p>
             <div className="mt-3 grid grid-cols-3 gap-3">
               {creatives
                 .filter((c) => c.format === previewFormat)
@@ -518,11 +519,7 @@ export default function AddProduct({
                             : "aspect-square"
                       }`}
                     >
-                      {c.assetRef.startsWith("/media/") ? (
-                        <img src={c.assetRef} alt={c.headline ?? ""} className="h-full w-full rounded-control object-cover" />
-                      ) : (
-                        c.headline
-                      )}
+                      <AdMedia assetRef={c.assetRef} assetType={c.assetType} headline={c.headline} />
                     </div>
                     <p className="mt-2 text-ink-muted">{c.body}</p>
                   </button>
@@ -532,6 +529,11 @@ export default function AddProduct({
                   >
                     ✓
                   </span>
+                  {c.assetType === "video" && (
+                    <span className="absolute left-2 top-2 rounded-full bg-ink/70 px-2 py-0.5 text-[10px] font-medium text-white">
+                      {C.videoBadge}
+                    </span>
+                  )}
                   <button
                     type="button"
                     onClick={() => {
@@ -557,7 +559,7 @@ export default function AddProduct({
               <input
                 ref={uploadRef}
                 type="file"
-                accept="image/png,image/jpeg,image/webp"
+                accept="image/png,image/jpeg,image/webp,video/mp4,video/webm"
                 multiple
                 className="hidden"
                 data-testid="upload-input"

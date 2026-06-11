@@ -54,7 +54,38 @@ export interface ActivityEntry {
   productTitle?: string | null;
 }
 
+export interface RuleData {
+  id: string;
+  name: string;
+  enabled: boolean;
+  scope: string;
+  productId: string | null;
+  metric: string;
+  windowDays: number;
+  comparator: string;
+  threshold: number;
+  action: string;
+  cooldownHours: number;
+  lastFiredAt: string | null;
+}
+
+export interface AdView {
+  id: string;
+  variantNo: number;
+  format: string;
+  assetType: string;
+  assetRef: string;
+  headline: string | null;
+  hookType: string | null;
+  status: string;
+  fatigueState: string;
+  predictedScore: number | null;
+  durationSeconds: string | null;
+}
+
 export interface ProductDetailData {
+  ads: AdView[];
+  winning: { hook: string; sharePct: number }[];
   product: {
     id: string;
     title: string;
@@ -151,6 +182,7 @@ export interface CreativePreview {
   id: string;
   variantNo: number;
   format: string;
+  assetType?: string;
   assetRef: string;
   headline?: string;
   body?: string;
@@ -236,6 +268,20 @@ export const api = {
         }[];
       }[];
     }>("GET", "/internal/connections"),
+  rules: () => request<{ rules: RuleData[] }>("GET", "/internal/rules"),
+  addRule: (rule: {
+    name: string;
+    scope: string;
+    product_id?: string;
+    metric: string;
+    window_days: number;
+    comparator: string;
+    threshold: number;
+    action: string;
+  }) => request<{ id: string }>("POST", "/internal/rules", rule),
+  setRuleEnabled: (id: string, enabled: boolean) =>
+    request<{ ok: boolean }>("PATCH", `/internal/rules/${id}`, { enabled }),
+  deleteRule: (id: string) => request<{ ok: boolean }>("DELETE", `/internal/rules/${id}`),
   saveConnection: (platform: string, credentials: Record<string, string>) =>
     request<{ platform: string; adAccountRef: string | null; saved: string[] }>(
       "POST",

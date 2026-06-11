@@ -104,3 +104,12 @@ The gold standard for proving ads cause results (not just capture them):
    — lift % is computed; `incremental_return` (incremental revenue ÷ spend in
    the window) feeds the Overview "Incremental return" tile.
 5. Re-run quarterly: incrementality decays as platforms re-learn.
+
+## Custom rules (W9)
+
+User-defined rules (Settings → Your rules) are evaluated every fast-loop
+iteration (deterministic, no LLM). Actions execute through the guardrail
+layer and appear in Activity as "custom_rule" decisions. Each rule waits
+its cooldown (default 24h) after acting. Built-in protections (zero-result
+burn pause, spend anomaly breaker) always run first; the kill switch halts
+rules with everything else.

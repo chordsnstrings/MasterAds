@@ -135,3 +135,24 @@ test("restricted sign-off queue approves from Settings", async ({ page }) => {
   await approve.click();
   await expect(page.getByText("Nothing waiting for approval.")).toBeVisible();
 });
+
+test("product detail shows the per-ad view (W9)", async ({ page }) => {
+  await page.goto("/");
+  await page.locator('[data-testid="product-card"]', { hasText: "Sofa range" }).click();
+  await page.waitForSelector('[data-testid="pause-button"]');
+  await expect(page.locator('[data-testid="ad-tile"]').first()).toBeVisible();
+});
+
+test("custom rules: add, toggle, remove (W9)", async ({ page }) => {
+  await page.goto("/settings");
+  await page.waitForSelector('[data-testid="rule-name"]');
+  await page.locator('[data-testid="rule-name"]').fill("Watch the spend");
+  await page.locator('[data-testid="rule-threshold"]').fill("100");
+  await page.locator('[data-testid="rule-add"]').click();
+  const row = page.locator('[data-testid="rule-row"]', { hasText: "Watch the spend" });
+  await expect(row).toBeVisible();
+  await row.locator('[data-testid="rule-toggle"]').click();
+  await expect(row.locator('[data-testid="rule-toggle"]')).toContainText("Off");
+  await row.locator('[data-testid="rule-delete"]').click();
+  await expect(row).toHaveCount(0);
+});

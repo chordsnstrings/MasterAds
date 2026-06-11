@@ -6,6 +6,8 @@ import { z } from "zod";
 import type { Campaign, CampaignInsight, Repos } from "@engine/db";
 import type { ApprovedAction, PauseResumeAction, Platform } from "../guardrails/approval.js";
 import { guardedExecute } from "../guardrails/execute.js";
+import { runCustomRulesOnce } from "../automations/customRules.js";
+import type { Adapters } from "../automations/index.js";
 
 export const fastLoopConfigSchema = z.object({
   /** Pause when spend ≥ multiplier × daily budget with zero conversions. */
@@ -31,6 +33,9 @@ export interface CampaignPauser {
   pauseCampaign(action: ApprovedAction<PauseResumeAction>): Promise<void>;
 }
 
+/** Full control surface (pause/resume/update) for user rules. */
+export type FastLoopAdapters = Adapters;
+
 export interface FastLoopReport {
   halted: boolean;
   checked: number;
@@ -38,6 +43,9 @@ export interface FastLoopReport {
   anomalies: string[];
   promoted: string[];
   transitions: string[];
+  /** User-rule actions executed this iteration (ruleId:campaignId). */
+  ruleFired: string[];
+  ruleNotified: string[];
   dryRun: boolean;
 }
 
@@ -96,7 +104,7 @@ async function proposePause(
  * flipping it halts all writes and inference within one iteration.
  */
 export async function runFastLoopOnce(
-  deps: { repos: Repos; adapters: Partial<Record<Platform, CampaignPauser>> },
+  deps: { repos: Repos; adapters: Adapters },
   opts: { dryRun?: boolean; now?: Date } = {},
 ): Promise<FastLoopReport> {
   const { repos, adapters } = deps;
@@ -109,6 +117,8 @@ export async function runFastLoopOnce(
     anomalies: [],
     promoted: [],
     transitions: [],
+    ruleFired: [],
+    ruleNotified: [],
     dryRun,
   };
 
@@ -253,6 +263,12 @@ export async function runFastLoopOnce(
       report.promoted.push(campaign.id);
     }
   }
+
+  // User-defined rules (W9): deterministic, guardrail-gated, after the
+  // built-in protections so anomaly pauses always run first.
+  const rules = await runCustomRulesOnce({ repos, adapters }, { now, dryRun });
+  report.ruleFired = rules.fired;
+  report.ruleNotified = rules.notified;
 
   if (!dryRun) await rollUpProductStatuses(repos);
   return report;

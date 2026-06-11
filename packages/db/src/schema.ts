@@ -438,6 +438,33 @@ export const platformConnections = pgTable("platform_connections", {
 
 export type PlatformConnection = typeof platformConnections.$inferSelect;
 
+// User-defined automation rules (W9): settings-class rows evaluated inside
+// the deterministic fast loop; their actions run through the guardrail layer.
+export const automationRules = pgTable(
+  "automation_rules",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    enabled: boolean("enabled").notNull().default(true),
+    scope: text("scope", { enum: ["all", "product"] }).notNull().default("all"),
+    productId: text("product_id").references(() => products.id),
+    metric: text("metric", {
+      enum: ["spend", "results", "cost_per_result", "net_return"],
+    }).notNull(),
+    windowDays: integer("window_days").notNull().default(3),
+    comparator: text("comparator", { enum: ["gt", "lt"] }).notNull(),
+    threshold: numeric("threshold", { precision: 14, scale: 4 }).notNull(),
+    action: text("action", { enum: ["pause", "resume", "notify"] }).notNull(),
+    cooldownHours: integer("cooldown_hours").notNull().default(24),
+    lastFiredAt: timestamp("last_fired_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("automation_rules_enabled_idx").on(t.enabled)],
+);
+
+export type AutomationRule = typeof automationRules.$inferSelect;
+export type NewAutomationRule = typeof automationRules.$inferInsert;
+
 // Owner-uploaded ad media (W8), served from /media/:id.
 export const mediaAssets = pgTable(
   "media_assets",

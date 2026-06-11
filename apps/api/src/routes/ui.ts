@@ -177,6 +177,31 @@ export async function uiRoutes(app: FastifyInstance): Promise<void> {
       activity.push(decisionView(d, await repos.decisions.outcomesFor(d.id)));
     }
 
+    // Per-ad view (W9): honest ad-level facts from creative rows; "what's
+    // winning" from playbook share-of-credit priors — never fabricated
+    // per-creative platform metrics.
+    const creativeRows = await repos.creatives.byProduct(product.id);
+    const ads = creativeRows
+      .filter((c) => ["launched", "held", "ready", "retired"].includes(c.status))
+      .map((c) => ({
+        id: c.id,
+        variantNo: c.variantNo,
+        format: c.format,
+        assetType: c.assetType,
+        assetRef: c.assetRef,
+        headline: c.payload.headline ?? null,
+        hookType: c.payload.hookType ?? null,
+        status: c.status,
+        fatigueState: c.fatigueState,
+        predictedScore: c.predictedScore !== null ? Number(c.predictedScore) : null,
+        durationSeconds: c.payload.durationSeconds ?? null,
+      }));
+    const playbook = spec?.playbookId ? await repos.playbooks.get(spec.playbookId) : undefined;
+    const winning = Object.entries(playbook?.performancePriors ?? {})
+      .filter(([k, v]) => k.startsWith("hook:") && v > 0)
+      .sort(([, a], [, b]) => b - a)
+      .map(([k, v]) => ({ hook: k.slice(5), sharePct: Math.round(v * 100) }));
+
     return {
       product,
       spec: spec ?? null,
@@ -184,7 +209,8 @@ export async function uiRoutes(app: FastifyInstance): Promise<void> {
       metrics: { ...m, netReturn: m.spend7d + m.runningCost7d > 0 ? m.revenue7d / (m.spend7d + m.runningCost7d) : null },
       funnel,
       activity,
-      creatives: await repos.creatives.byProduct(product.id),
+      ads,
+      winning,
     };
   });
 
@@ -327,6 +353,8 @@ export async function uiRoutes(app: FastifyInstance): Promise<void> {
         promote_allocation_authority: "status",
         deepen_optimization_event: "check",
         token_refreshed: "check",
+        custom_rule: "status",
+        custom_rule_notify: "check",
       };
       const items = [];
       for (const d of decisions) {
