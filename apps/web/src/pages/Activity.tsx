@@ -35,7 +35,7 @@ export default function Activity(): JSX.Element {
             className={`min-h-11 rounded-control px-4 text-sm ${
               filter === f.key
                 ? "bg-accent text-white"
-                : "border border-hairline bg-surface text-ink-muted dark:bg-surface-dark dark:border-ink-muted/30"
+                : "border border-hairline bg-surface text-ink-muted dark:bg-surface-dark dark:border-white/15"
             }`}
           >
             {f.label}

@@ -181,7 +181,7 @@ export default function AddProduct({
           <button
             type="button"
             onClick={() => navigate(productId ? `/products/${productId}` : "/")}
-            className="mt-8 min-h-11 rounded-control bg-accent px-6 text-sm font-medium text-white"
+            className="mt-8 min-h-11 rounded-control bg-accent px-6 text-sm font-medium text-white hover:bg-accent-deep"
           >
             {C.seeHow}
           </button>
@@ -212,7 +212,7 @@ export default function AddProduct({
                   setStep({ kind: "reading" });
                   void buildPlanAndReview(step.productId, kind);
                 }}
-                className="min-h-12 flex-1 rounded-control border border-hairline bg-surface px-5 font-medium hover:border-accent dark:bg-surface-dark dark:border-ink-muted/30"
+                className="min-h-12 flex-1 rounded-control border border-hairline bg-surface px-5 font-medium hover:border-accent dark:bg-surface-dark dark:border-white/15"
               >
                 {label}
               </button>
@@ -423,7 +423,7 @@ export default function AddProduct({
                     type="button"
                     data-testid="use-this"
                     onClick={() => void applyDestination()}
-                    className="min-h-11 rounded-control bg-accent px-5 text-sm font-medium text-white"
+                    className="min-h-11 rounded-control bg-accent px-5 text-sm font-medium text-white hover:bg-accent-deep"
                   >
                     {C.useThis}
                   </button>
@@ -527,7 +527,7 @@ export default function AddProduct({
                         setEditing(null);
                       })
                   }
-                  className="mt-3 min-h-11 rounded-control bg-accent px-4 text-sm text-white"
+                  className="mt-3 min-h-11 rounded-control bg-accent px-4 text-sm text-white hover:bg-accent-deep"
                 >
                   {STRINGS.product.save}
                 </button>
@@ -550,7 +550,7 @@ export default function AddProduct({
               data-testid="launch-button"
               disabled={busy}
               onClick={() => void handleLaunch()}
-              className="min-h-12 w-full rounded-control bg-accent text-base font-semibold text-white disabled:opacity-60"
+              className="min-h-12 w-full rounded-control bg-accent text-base font-semibold text-white hover:bg-accent-deep disabled:opacity-60"
             >
               {busy ? C.settingUp : restricted ? C.submitForReview : C.launch}
             </button>
@@ -579,7 +579,7 @@ export default function AddProduct({
           rows={3}
           aria-label={C.addTitle}
           data-testid="add-input"
-          className="w-full resize-none rounded-control border border-hairline bg-surface p-3 text-base dark:border-ink-muted/30 dark:bg-surface-dark"
+          className="w-full resize-none rounded-control border border-hairline bg-surface p-3 text-base dark:border-white/15 dark:bg-surface-dark"
         />
         <div className="mt-3 flex flex-wrap justify-center gap-4 text-sm">
           <button type="button" onClick={() => inputRef.current?.focus()} className="min-h-11 text-accent">
@@ -616,7 +616,7 @@ export default function AddProduct({
           <select
             value={goal}
             onChange={(e) => setGoal(e.target.value)}
-            className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 text-ink dark:bg-surface-dark dark:text-white dark:border-ink-muted/30"
+            className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 text-ink dark:bg-surface-dark dark:text-white dark:border-white/15"
           >
             <option value="best">{C.goalDefault}</option>
             {Object.entries(STRINGS.goals)
@@ -635,7 +635,7 @@ export default function AddProduct({
             value={budget}
             onChange={(e) => setBudget(e.target.value)}
             placeholder={C.budgetDefault}
-            className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 font-mono text-ink dark:bg-surface-dark dark:text-white dark:border-ink-muted/30"
+            className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 font-mono text-ink dark:bg-surface-dark dark:text-white dark:border-white/15"
           />
         </label>
       </div>
@@ -646,7 +646,7 @@ export default function AddProduct({
           data-testid="continue-button"
           disabled={!input.trim()}
           onClick={() => void handleContinue()}
-          className="min-h-12 w-full rounded-control bg-accent text-base font-semibold text-white disabled:opacity-50 sm:w-auto sm:px-8"
+          className="min-h-12 w-full rounded-control bg-accent text-base font-semibold text-white hover:bg-accent-deep disabled:opacity-50 sm:w-auto sm:px-8"
         >
           {C.continue} →
         </button>

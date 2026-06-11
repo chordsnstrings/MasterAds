@@ -7,7 +7,7 @@ import { STRINGS } from "../strings";
 export default function Unlock({ onUnlocked }: { onUnlocked: () => void }): JSX.Element {
   const [key, setKey] = useState("");
   return (
-    <div className="mx-auto max-w-sm pt-16">
+    <div className="mx-auto max-w-sm pt-16 motion-safe:animate-scale-in">
       <Card className="p-8">
         <h1 className="text-xl font-semibold">{STRINGS.unlock.title}</h1>
         <p className="mt-2 text-sm text-ink-muted">{STRINGS.unlock.hint}</p>
@@ -29,7 +29,7 @@ export default function Unlock({ onUnlocked }: { onUnlocked: () => void }): JSX.
           />
           <button
             type="submit"
-            className="mt-4 min-h-11 w-full rounded-control bg-accent text-sm font-medium text-white"
+            className="mt-4 min-h-11 w-full rounded-control bg-accent text-sm font-medium text-white hover:bg-accent-deep"
           >
             {STRINGS.unlock.submit}
           </button>

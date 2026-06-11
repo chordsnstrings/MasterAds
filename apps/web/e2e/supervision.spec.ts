@@ -18,6 +18,19 @@ const SCREENS = [
 ];
 
 async function checkA11y(page: Page): Promise<void> {
+  // Entrance animations fade text in; let finite animations finish so axe
+  // measures contrast at the settled state (infinite pulses are decorative).
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((a) => {
+          const t = a.effect?.getTiming();
+          return t !== undefined && t.iterations !== Infinity;
+        })
+        .map((a) => a.finished.catch(() => null)),
+    ),
+  );
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa"])
     .analyze();

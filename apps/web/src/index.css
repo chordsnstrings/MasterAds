@@ -6,6 +6,35 @@
   body {
     @apply bg-canvas text-ink antialiased;
   }
+
+  ::selection {
+    @apply bg-accent/15;
+  }
+
+  /* One consistent, visible focus treatment everywhere. */
+  :focus-visible {
+    @apply rounded-control outline-none ring-2 ring-accent/60 ring-offset-2 ring-offset-canvas dark:ring-offset-canvas-dark;
+  }
+
+  /* Micro-interactions: every control responds to hover and press. */
+  button,
+  [role="tab"] {
+    @apply transition-all duration-150;
+  }
+  button:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  input,
+  textarea,
+  select {
+    @apply transition-shadow duration-150;
+  }
+  input:focus,
+  textarea:focus,
+  select:focus {
+    @apply border-accent/50 outline-none shadow-[0_0_0_3px_rgb(79_70_229_/_0.12)];
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

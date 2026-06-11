@@ -118,7 +118,7 @@ export default function ProductDetail(): JSX.Element {
               <select
                 value={goal}
                 onChange={(e) => setGoal(e.target.value)}
-                className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 dark:bg-surface-dark dark:border-ink-muted/30"
+                className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 dark:bg-surface-dark dark:border-white/15"
               >
                 {Object.entries(STRINGS.goals).map(([k, label]) => (
                   <option key={k} value={k}>
@@ -133,7 +133,7 @@ export default function ProductDetail(): JSX.Element {
                 type="number"
                 value={budget}
                 onChange={(e) => setBudget(e.target.value)}
-                className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 font-mono dark:bg-surface-dark dark:border-ink-muted/30"
+                className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 font-mono dark:bg-surface-dark dark:border-white/15"
               />
             </label>
             <label className="block text-sm">
@@ -143,7 +143,7 @@ export default function ProductDetail(): JSX.Element {
                 value={margin}
                 onChange={(e) => setMargin(e.target.value)}
                 placeholder="100"
-                className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 font-mono dark:bg-surface-dark dark:border-ink-muted/30"
+                className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 font-mono dark:bg-surface-dark dark:border-white/15"
               />
               <span className="mt-1 block text-xs text-ink-muted">{STRINGS.product.marginHint}</span>
             </label>
@@ -152,7 +152,7 @@ export default function ProductDetail(): JSX.Element {
             <button
               type="button"
               onClick={() => void saveIntent()}
-              className="min-h-11 rounded-control bg-accent px-5 text-sm font-medium text-white"
+              className="min-h-11 rounded-control bg-accent px-5 text-sm font-medium text-white hover:bg-accent-deep"
             >
               {STRINGS.product.save}
             </button>
@@ -171,14 +171,14 @@ export default function ProductDetail(): JSX.Element {
             type="button"
             data-testid="pause-button"
             onClick={() => void togglePause()}
-            className="min-h-11 flex-1 rounded-control border border-hairline bg-surface px-5 text-sm font-medium sm:flex-none dark:bg-surface-dark dark:border-ink-muted/30"
+            className="min-h-11 flex-1 rounded-control border border-hairline bg-surface px-5 text-sm font-medium sm:flex-none dark:bg-surface-dark dark:border-white/15"
           >
             {paused ? STRINGS.product.resume : STRINGS.product.pause}
           </button>
           <button
             type="button"
             onClick={() => setAdjusting(true)}
-            className="min-h-11 flex-1 rounded-control bg-accent px-5 text-sm font-medium text-white sm:flex-none"
+            className="min-h-11 flex-1 rounded-control bg-accent px-5 text-sm font-medium text-white hover:bg-accent-deep sm:flex-none"
           >
             {STRINGS.product.adjust}
           </button>

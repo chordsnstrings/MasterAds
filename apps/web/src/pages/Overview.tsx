@@ -71,15 +71,16 @@ function FirstRunChecklist({
 export function ProductGrid({ products }: { products: OverviewData["products"] }): JSX.Element {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {products.map((p) => (
+      {products.map((p, i) => (
         <Link
           key={p.id}
           to={`/products/${p.id}`}
           data-testid="product-card"
-          className="rounded-card border border-hairline bg-surface p-6 transition-shadow hover:shadow-sm dark:border-ink-muted/20 dark:bg-surface-dark"
+          className="rounded-card border border-hairline/70 bg-surface p-6 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover motion-safe:animate-fade-up dark:border-white/10 dark:bg-surface-dark"
+          style={{ animationDelay: `${Math.min(i, 8) * 45}ms` }}
         >
           <div className="flex items-start justify-between gap-2">
-            <h3 className="font-medium">{p.title}</h3>
+            <h3 className="font-medium tracking-tight">{p.title}</h3>
             <StatusChip status={p.status} />
           </div>
           <div className="mt-4 flex items-baseline justify-between text-sm">
@@ -91,7 +92,7 @@ export function ProductGrid({ products }: { products: OverviewData["products"] }
             </span>
           </div>
           {STRINGS.statusNote[p.status] && (
-            <p className="mt-2 text-xs text-ink-muted">{STRINGS.statusNote[p.status]}</p>
+            <p className="mt-2 text-xs leading-relaxed text-ink-muted">{STRINGS.statusNote[p.status]}</p>
           )}
         </Link>
       ))}
@@ -120,7 +121,7 @@ export default function Overview({
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold" data-testid="status-headline">
+      <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl" data-testid="status-headline">
         {empty ? STRINGS.headline.empty : STRINGS.headline[data.headline]}
       </h1>
       {!empty && (
@@ -136,31 +137,41 @@ export default function Overview({
       {empty && <FirstRunChecklist checklist={data.checklist} />}
 
       <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-5">
-        <KpiTile label={STRINGS.kpi.spend} value={<Money value={kpis.spend7d} />} series={kpis.spendSeries} />
-        <KpiTile
-          label={STRINGS.kpi.results}
-          value={<Num value={kpis.conversions7d.toLocaleString()} />}
-          series={kpis.conversionSeries}
-        />
-        <KpiTile
-          label={STRINGS.kpi.netReturn}
-          value={kpis.netReturn !== null ? <Num value={`${kpis.netReturn.toFixed(1)}×`} /> : <span className="text-ink-muted text-base">{STRINGS.kpi.noData}</span>}
-        />
-        <KpiTile
-          label={STRINGS.kpi.runningCost}
-          value={<Money value={kpis.runningCost7d} currency="USD" />}
-          hint={STRINGS.kpi.runningCostHint}
-        />
-        <KpiTile
-          label={STRINGS.kpi.incremental}
-          value={
-            kpis.incremental !== null ? (
-              <Num value={`${kpis.incremental.toFixed(1)}×`} />
-            ) : (
-              <span className="text-base text-ink-muted">{STRINGS.kpi.incrementalPending}</span>
-            )
-          }
-        />
+        {[
+          <KpiTile key="spend" label={STRINGS.kpi.spend} value={<Money value={kpis.spend7d} />} series={kpis.spendSeries} />,
+          <KpiTile
+            key="results"
+            label={STRINGS.kpi.results}
+            value={<Num value={kpis.conversions7d.toLocaleString()} />}
+            series={kpis.conversionSeries}
+          />,
+          <KpiTile
+            key="net"
+            label={STRINGS.kpi.netReturn}
+            value={kpis.netReturn !== null ? <Num value={`${kpis.netReturn.toFixed(1)}×`} /> : <span className="text-ink-muted text-base">{STRINGS.kpi.noData}</span>}
+          />,
+          <KpiTile
+            key="cost"
+            label={STRINGS.kpi.runningCost}
+            value={<Money value={kpis.runningCost7d} currency="USD" />}
+            hint={STRINGS.kpi.runningCostHint}
+          />,
+          <KpiTile
+            key="incremental"
+            label={STRINGS.kpi.incremental}
+            value={
+              kpis.incremental !== null ? (
+                <Num value={`${kpis.incremental.toFixed(1)}×`} />
+              ) : (
+                <span className="text-base text-ink-muted">{STRINGS.kpi.incrementalPending}</span>
+              )
+            }
+          />,
+        ].map((tile, i) => (
+          <div key={i} className="motion-safe:animate-fade-up" style={{ animationDelay: `${i * 45}ms` }}>
+            {tile}
+          </div>
+        ))}
       </div>
 
       {/* Attention area collapses entirely when empty (UX §6.1). */}

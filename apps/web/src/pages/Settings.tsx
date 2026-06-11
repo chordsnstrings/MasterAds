@@ -52,7 +52,7 @@ export default function Settings(): JSX.Element {
             {data.connections.map((c) => (
               <div
                 key={c.platform}
-                className="flex min-h-14 items-center justify-between border-b border-hairline px-4 last:border-b-0 dark:border-ink-muted/20"
+                className="flex min-h-14 items-center justify-between border-b border-hairline px-4 last:border-b-0 dark:border-white/10"
               >
                 <span>{STRINGS.platformNames[c.platform] ?? c.platform}</span>
                 <span className="flex items-center gap-3 text-sm">
@@ -99,7 +99,7 @@ export default function Settings(): JSX.Element {
                 aria-label={STRINGS.sitesSection.addLabel}
                 placeholder={STRINGS.sitesSection.addLabel}
                 data-testid="add-site-input"
-                className="min-h-11 flex-1 rounded-control border border-hairline bg-surface px-3 font-mono text-sm dark:bg-surface-dark dark:border-ink-muted/30"
+                className="min-h-11 flex-1 rounded-control border border-hairline bg-surface px-3 font-mono text-sm dark:bg-surface-dark dark:border-white/15"
               />
               <button
                 type="button"
@@ -112,7 +112,7 @@ export default function Settings(): JSX.Element {
                   })
                 }
                 disabled={!newSite.trim()}
-                className="min-h-11 rounded-control bg-accent px-4 text-sm font-medium text-white disabled:opacity-50"
+                className="min-h-11 rounded-control bg-accent px-4 text-sm font-medium text-white hover:bg-accent-deep disabled:opacity-50"
               >
                 {STRINGS.sitesSection.addButton}
               </button>
@@ -198,12 +198,12 @@ export default function Settings(): JSX.Element {
                   type="number"
                   defaultValue={Number(data.guardrails[key])}
                   onBlur={(e) => void patchGuardrail(key, Number(e.target.value))}
-                  className="min-h-11 w-32 rounded-control border border-hairline bg-surface px-3 font-mono dark:bg-surface-dark dark:border-ink-muted/30"
+                  className="min-h-11 w-32 rounded-control border border-hairline bg-surface px-3 font-mono dark:bg-surface-dark dark:border-white/15"
                   aria-label={label}
                 />
               </label>
             ))}
-            <div className="border-t border-hairline pt-4 dark:border-ink-muted/20">
+            <div className="border-t border-hairline pt-4 dark:border-white/10">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-sm font-medium">{STRINGS.settings.killSwitch}</div>
@@ -248,7 +248,7 @@ export default function Settings(): JSX.Element {
                 <input
                   value={kit[key] ?? ""}
                   onChange={(e) => setKit({ ...kit, [key]: e.target.value })}
-                  className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 dark:bg-surface-dark dark:border-ink-muted/30"
+                  className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 dark:bg-surface-dark dark:border-white/15"
                 />
               </label>
             ))}
@@ -260,7 +260,7 @@ export default function Settings(): JSX.Element {
                   setTimeout(() => setSaved(false), 2000);
                 })
               }
-              className="min-h-11 rounded-control bg-accent px-5 text-sm font-medium text-white"
+              className="min-h-11 rounded-control bg-accent px-5 text-sm font-medium text-white hover:bg-accent-deep"
             >
               {saved ? STRINGS.settings.saved : STRINGS.settings.save}
             </button>
@@ -272,7 +272,7 @@ export default function Settings(): JSX.Element {
             {data.autonomy.map((a) => (
               <div
                 key={a.productId}
-                className="flex min-h-12 items-center justify-between border-b border-hairline px-4 text-sm last:border-b-0 dark:border-ink-muted/20"
+                className="flex min-h-12 items-center justify-between border-b border-hairline px-4 text-sm last:border-b-0 dark:border-white/10"
               >
                 <span>{a.title}</span>
                 <span className={a.autonomous ? "text-positive" : "text-ink-muted"}>
@@ -289,14 +289,14 @@ export default function Settings(): JSX.Element {
               data.pendingSignoffs.map((p) => (
                 <div
                   key={p.id}
-                  className="flex min-h-12 items-center justify-between border-b border-hairline px-4 text-sm last:border-b-0 dark:border-ink-muted/20"
+                  className="flex min-h-12 items-center justify-between border-b border-hairline px-4 text-sm last:border-b-0 dark:border-white/10"
                 >
                   <span>{p.vertical.replace(/_/g, " ")}</span>
                   <button
                     type="button"
                     data-testid="signoff-approve"
                     onClick={() => void api.signOffPlaybook(p.id).then(reload)}
-                    className="min-h-11 rounded-control bg-accent px-4 text-sm font-medium text-white"
+                    className="min-h-11 rounded-control bg-accent px-4 text-sm font-medium text-white hover:bg-accent-deep"
                   >
                     {STRINGS.settings.signoffApprove}
                   </button>
