@@ -9,11 +9,16 @@ export default function Settings(): JSX.Element {
   const [data, setData] = useState<SettingsData | null>(null);
   const [saved, setSaved] = useState(false);
   const [kit, setKit] = useState<Record<string, string>>({});
+  const [siteList, setSiteList] = useState<{ sourceSite: string; label: string | null }[]>([]);
+  const [newSite, setNewSite] = useState("");
+  const [issuedKey, setIssuedKey] = useState<{ site: string; key: string } | null>(null);
 
   async function reload(): Promise<void> {
     const d = await api.settings();
     setData(d);
     setKit(d.brandKit);
+    const s = await api.sites();
+    setSiteList(s.sites);
   }
   useEffect(() => {
     void reload();
@@ -64,6 +69,51 @@ export default function Settings(): JSX.Element {
                 </span>
               </div>
             ))}
+          </Card>
+        </Section>
+
+        <Section title={STRINGS.sitesSection.title} hint={STRINGS.sitesSection.hint}>
+          <Card className="p-4">
+            {siteList.length === 0 && (
+              <p className="text-sm text-ink-muted">{STRINGS.sitesSection.empty}</p>
+            )}
+            {siteList.map((site) => (
+              <div key={site.sourceSite} className="flex min-h-11 items-center justify-between text-sm">
+                <span className="font-mono">{site.sourceSite}</span>
+                <span className="text-ink-muted">{site.label ?? ""}</span>
+              </div>
+            ))}
+            <div className="mt-3 flex gap-2">
+              <input
+                value={newSite}
+                onChange={(e) => setNewSite(e.target.value)}
+                aria-label={STRINGS.sitesSection.addLabel}
+                placeholder={STRINGS.sitesSection.addLabel}
+                data-testid="add-site-input"
+                className="min-h-11 flex-1 rounded-control border border-hairline bg-surface px-3 font-mono text-sm dark:bg-surface-dark dark:border-ink-muted/30"
+              />
+              <button
+                type="button"
+                data-testid="add-site-button"
+                onClick={() =>
+                  void api.addSite(newSite.trim()).then((r) => {
+                    setIssuedKey(r);
+                    setNewSite("");
+                    void reload();
+                  })
+                }
+                disabled={!newSite.trim()}
+                className="min-h-11 rounded-control bg-accent px-4 text-sm font-medium text-white disabled:opacity-50"
+              >
+                {STRINGS.sitesSection.addButton}
+              </button>
+            </div>
+            {issuedKey && (
+              <div className="mt-3 rounded-control bg-accent-soft p-3 text-xs" data-testid="issued-key">
+                <p className="font-medium">{STRINGS.sitesSection.keyNotice}</p>
+                <code className="mt-1 block break-all font-mono">{issuedKey.key}</code>
+              </div>
+            )}
           </Card>
         </Section>
 

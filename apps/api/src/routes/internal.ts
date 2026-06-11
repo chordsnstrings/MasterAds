@@ -41,6 +41,19 @@ export async function internalRoutes(app: FastifyInstance): Promise<void> {
     return setGuardrailConfig(app.repos, (req.body ?? {}) as Record<string, number>);
   });
 
+  // Site onboarding (W1.3): create returns the key ONCE; list never shows keys.
+  app.get("/internal/sites", async () => ({ sites: await app.repos.siteKeys.list() }));
+
+  app.post<{ Body: { site?: string; label?: string } }>("/internal/sites", async (req, reply) => {
+    const body = (req.body ?? {}) as { site?: string; label?: string };
+    const site = body.site?.trim().toLowerCase().replace(/[^a-z0-9-_.]/g, "-");
+    if (!site) return reply.status(400).send({ error: "site name required" });
+    const { randomBytes } = await import("node:crypto");
+    const key = `sk_${randomBytes(24).toString("hex")}`;
+    await app.repos.siteKeys.create(site, key, body.label);
+    return reply.status(201).send({ site, key });
+  });
+
   // Attention records (UX §7).
   app.get("/internal/attention", async () => ({
     attention: await app.repos.attention.listOpen(),

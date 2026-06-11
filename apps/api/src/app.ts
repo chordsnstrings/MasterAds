@@ -57,6 +57,17 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
   app.decorate("platforms", opts.platforms ?? createPlatformAdapters({ repos }));
   await seedPlaybooks(repos);
 
+  // Operator auth (W1): when OPERATOR_TOKEN is set, every /internal/* request
+  // must carry it in x-operator-key. Unset = open (dev/stub environments).
+  app.addHook("onRequest", async (req, reply) => {
+    const token = process.env.OPERATOR_TOKEN;
+    if (!token) return;
+    if (!req.url.startsWith("/internal")) return;
+    if (req.headers["x-operator-key"] !== token) {
+      return reply.status(401).send({ error: "operator_key_required" });
+    }
+  });
+
   app.get("/health", async () => ({ status: "ok", service: "api" }));
 
   await app.register(eventsRoutes);

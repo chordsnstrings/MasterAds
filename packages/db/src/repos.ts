@@ -732,6 +732,10 @@ export function createRepos(db: Db) {
             set: { keyHash: hashSiteKey(rawKey), label },
           });
       },
+      async list(): Promise<{ sourceSite: string; label: string | null; createdAt: Date }[]> {
+        const rows = await db.select().from(siteKeys).orderBy(desc(siteKeys.createdAt));
+        return rows.map((r) => ({ sourceSite: r.sourceSite, label: r.label, createdAt: r.createdAt }));
+      },
       async verify(sourceSite: string, rawKey: string): Promise<boolean> {
         const row = (
           await db.select().from(siteKeys).where(eq(siteKeys.sourceSite, sourceSite))

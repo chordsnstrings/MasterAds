@@ -165,6 +165,22 @@ export const STRINGS = {
     currency: "AED",
   },
 
+  unlock: {
+    title: "Enter your access key",
+    hint: "This screen is protected. Paste the access key you were given to continue.",
+    submit: "Continue",
+  },
+
+  sitesSection: {
+    title: "Connected sites",
+    hint: "Sites that report results to the engine.",
+    addLabel: "Site name",
+    addButton: "Add site",
+    keyNotice: "Copy this key now — it won't be shown again.",
+    snippetNotice: "Add this to your site so results reach the engine:",
+    empty: "No sites yet. Add one to start measuring results.",
+  },
+
   // Creation flow — FLOW §12 strings, used verbatim (binding).
   creation: {
     addTitle: "Add something to advertise",

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { api, type AttentionItem, type OverviewData } from "./api";
+import { api, ApiError, type AttentionItem, type OverviewData } from "./api";
 import { AppShell } from "./shell";
 import { STRINGS } from "./strings";
 import Overview from "./pages/Overview";
@@ -9,12 +9,20 @@ import ProductDetail from "./pages/ProductDetail";
 import Activity from "./pages/Activity";
 import Settings from "./pages/Settings";
 import AddProduct from "./pages/AddProduct";
+import Unlock from "./pages/Unlock";
 
 export default function App(): JSX.Element {
   const [overview, setOverview] = useState<OverviewData | null>(null);
+  const [locked, setLocked] = useState(false);
 
   const reload = useCallback(async () => {
-    setOverview(await api.overview());
+    try {
+      setOverview(await api.overview());
+      setLocked(false);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) setLocked(true);
+      else throw err;
+    }
   }, []);
 
   useEffect(() => {
@@ -28,6 +36,10 @@ export default function App(): JSX.Element {
     },
     [reload],
   );
+
+  if (locked) {
+    return <Unlock onUnlocked={() => void reload()} />;
+  }
 
   return (
     <BrowserRouter>

@@ -9,6 +9,15 @@ import { enqueueRelay, ingestConversion } from "@engine/core";
 
 const HOSTED_SOURCE = "hosted-pages";
 
+function escapeHtml(v: string | null | undefined): string {
+  return String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function sha256(v: string): string {
   return createHash("sha256").update(v).digest("hex");
 }
@@ -87,13 +96,13 @@ export async function hostedRoutes(app: FastifyInstance): Promise<void> {
       const qs = new URLSearchParams(
         Object.entries(clickIdsFromQuery(req.query)) as [string, string][],
       ).toString();
-      const img = product.images[0] ? `<img src="${product.images[0]}" alt="">` : "";
+      const img = product.images[0] ? `<img src="${escapeHtml(product.images[0])}" alt="">` : "";
       return reply.type("text/html").send(
         pageShell(
-          product.title,
-          `<div class="card">${img}<h1>${product.title}</h1>
+          escapeHtml(product.title),
+          `<div class="card">${img}<h1>${escapeHtml(product.title)}</h1>
            ${product.price ? `<div class="price">${product.currency ?? "AED"} ${Number(product.price)}</div>` : ""}
-           <p>${product.description ?? ""}</p>
+           <p>${escapeHtml(product.description)}</p>
            <a class="btn" href="/hosted/f/${product.id}${qs ? `?${qs}` : ""}">Get in touch</a></div>`,
         ),
       );
@@ -113,8 +122,8 @@ export async function hostedRoutes(app: FastifyInstance): Promise<void> {
         .join("");
       return reply.type("text/html").send(
         pageShell(
-          product.title,
-          `<div class="card"><h1>${product.title}</h1><p>${product.description ?? ""}</p>
+          escapeHtml(product.title),
+          `<div class="card"><h1>${escapeHtml(product.title)}</h1><p>${escapeHtml(product.description)}</p>
            <form method="post" action="/hosted/f/${product.id}/submit" data-testid="hosted-form">
              ${hidden}
              <label>Your name<input name="name" required></label>
@@ -160,7 +169,7 @@ export async function hostedRoutes(app: FastifyInstance): Promise<void> {
         .send(
           pageShell(
             product.title,
-            `<div class="card"><h1>Thanks — we'll be in touch.</h1><p data-testid="form-thanks">Your message about ${product.title} was sent.</p></div>`,
+            `<div class="card"><h1>Thanks — we'll be in touch.</h1><p data-testid="form-thanks">Your message about ${escapeHtml(product.title)} was sent.</p></div>`,
           ),
         );
     },

@@ -93,13 +93,34 @@ export interface SettingsData {
   pendingSignoffs: { id: string; vertical: string }[];
 }
 
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message);
+  }
+}
+
+export function getOperatorKey(): string | null {
+  return localStorage.getItem("operatorKey");
+}
+
+export function setOperatorKey(key: string): void {
+  localStorage.setItem("operatorKey", key);
+}
+
 async function request<T>(method: string, url: string, body?: unknown): Promise<T> {
+  const headers: Record<string, string> = {};
+  if (body !== undefined) headers["content-type"] = "application/json";
+  const operatorKey = getOperatorKey();
+  if (operatorKey) headers["x-operator-key"] = operatorKey;
   const res = await fetch(url, {
     method,
-    headers: body !== undefined ? { "content-type": "application/json" } : undefined,
+    headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
-  if (!res.ok) throw new Error(`${method} ${url} → ${res.status}`);
+  if (!res.ok) throw new ApiError(`${method} ${url} → ${res.status}`, res.status);
   return (await res.json()) as T;
 }
 
@@ -190,4 +211,8 @@ export const api = {
     request("PATCH", "/internal/guardrails", patch),
   saveBrandKit: (kit: Record<string, string>) => request("PUT", "/internal/settings/brand-kit", kit),
   signOffPlaybook: (id: string) => request("POST", `/internal/playbooks/${id}/signoff`, {}),
+  sites: () =>
+    request<{ sites: { sourceSite: string; label: string | null }[] }>("GET", "/internal/sites"),
+  addSite: (site: string, label?: string) =>
+    request<{ site: string; key: string }>("POST", "/internal/sites", { site, label }),
 };
