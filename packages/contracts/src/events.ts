@@ -60,6 +60,8 @@ export const clickIdsSchema = z
     gclid: z.string().min(1).optional(),
     gbraid: z.string().min(1).optional(),
     wbraid: z.string().min(1).optional(),
+    sccid: z.string().min(1).optional(),
+    epik: z.string().min(1).optional(),
   })
   .strict();
 export type ClickIdsPayload = z.infer<typeof clickIdsSchema>;
@@ -68,6 +70,12 @@ export const hashedIdentifiersSchema = z
   .object({
     email_sha256: sha256Hex.optional(),
     phone_sha256: sha256Hex.optional(),
+    first_name_sha256: sha256Hex.optional(),
+    last_name_sha256: sha256Hex.optional(),
+    city_sha256: sha256Hex.optional(),
+    zip_sha256: sha256Hex.optional(),
+    country_sha256: sha256Hex.optional(),
+    external_id_sha256: sha256Hex.optional(),
   })
   .strict();
 export type HashedIdentifiersPayload = z.infer<typeof hashedIdentifiersSchema>;
@@ -103,6 +111,17 @@ export const conversionPayloadSchema = z
     event_id: z.string().min(1),
     source_site: z.string().min(1),
     consent_granted: z.boolean().default(true),
+    // Consent Mode v2 signals (Google): granular ads-data / personalization.
+    consent: z
+      .object({
+        ad_user_data: z.boolean().optional(),
+        ad_personalization: z.boolean().optional(),
+      })
+      .strict()
+      .optional(),
+    // Plain (non-hashed) browser/network signals for match quality.
+    client_ip_address: z.string().min(3).max(64).optional(),
+    client_user_agent: z.string().min(3).max(512).optional(),
   })
   .strict()
   .superRefine((p, ctx) => {

@@ -27,6 +27,12 @@ export async function eventsRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(403).send({ error: "invalid_api_key_for_source_site" });
     }
 
+    // Auto-enrich match-quality signals from the transport when absent —
+    // browser-posted events get ip/user_agent without site work.
+    if (!payload.client_ip_address && req.ip) payload.client_ip_address = req.ip;
+    if (!payload.client_user_agent && typeof req.headers["user-agent"] === "string") {
+      payload.client_user_agent = req.headers["user-agent"].slice(0, 512);
+    }
     const result = await ingestConversion(app.repos, payload);
     // Fan out to the platform relay queues — once per canonical conversion.
     if (app.jobs && !result.duplicate && result.canonical) {

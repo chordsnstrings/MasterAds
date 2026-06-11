@@ -201,8 +201,21 @@ export type ClickIds = {
   gclid?: string;
   gbraid?: string;
   wbraid?: string;
+  sccid?: string;
+  epik?: string;
 };
-export type HashedIdentifiers = { email_sha256?: string; phone_sha256?: string };
+export type HashedIdentifiers = {
+  email_sha256?: string;
+  phone_sha256?: string;
+  first_name_sha256?: string;
+  last_name_sha256?: string;
+  city_sha256?: string;
+  zip_sha256?: string;
+  country_sha256?: string;
+  external_id_sha256?: string;
+};
+export type ClientInfo = { ip?: string; user_agent?: string };
+export type ConsentSignals = { ad_user_data?: boolean; ad_personalization?: boolean };
 export type RelayRecord = {
   platform: "meta" | "google" | "tiktok";
   status: "pending" | "sent" | "failed" | "dead_letter" | "skipped";
@@ -225,6 +238,8 @@ export const conversionEvents = pgTable(
     eventId: text("event_id").notNull(),
     sourceSite: text("source_site").notNull(),
     consentGranted: boolean("consent_granted").notNull().default(true),
+    clientInfo: jsonb("client_info").$type<ClientInfo>().notNull().default({}),
+    consentSignals: jsonb("consent_signals").$type<ConsentSignals>().notNull().default({}),
     relayedTo: jsonb("relayed_to").$type<RelayRecord[]>().notNull().default([]),
     dedupKey: text("dedup_key").notNull(),
     // Cross-platform reconciliation (SW §8.5): rows sharing a reconciliation
@@ -479,6 +494,22 @@ export type NewAttentionRecord = typeof attentionRecords.$inferInsert;
 
 export type CoverageSnapshot = typeof clickIdCoverage.$inferSelect;
 export type NewCoverageSnapshot = typeof clickIdCoverage.$inferInsert;
+
+// Per-site signal-strength snapshots (W2): EMQ-style identifier richness.
+export const signalQuality = pgTable(
+  "signal_quality",
+  {
+    id: text("id").primaryKey(),
+    sourceSite: text("source_site").notNull(),
+    avgScore: numeric("avg_score", { precision: 5, scale: 2 }).notNull(),
+    eventsTotal: integer("events_total").notNull(),
+    windowDays: integer("window_days").notNull(),
+    computedAt: timestamp("computed_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("signal_quality_site_idx").on(t.sourceSite, t.computedAt)],
+);
+export type SignalSnapshot = typeof signalQuality.$inferSelect;
+export type NewSignalSnapshot = typeof signalQuality.$inferInsert;
 
 export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;

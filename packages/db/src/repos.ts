@@ -22,6 +22,7 @@ import {
   productChangeEvents,
   promos,
   products,
+  signalQuality,
   siteKeys,
   systemSettings,
   type AdAccount,
@@ -53,8 +54,10 @@ import {
   type NewProduct,
   type NewPromo,
   type Playbook,
+  type NewSignalSnapshot,
   type Promo,
   type Product,
+  type SignalSnapshot,
   type RelayRecord,
 } from "./schema.js";
 
@@ -653,6 +656,32 @@ export function createRepos(db: Db) {
           .from(attentionRecords)
           .where(eq(attentionRecords.status, "open"))
           .orderBy(desc(attentionRecords.createdAt));
+      },
+    },
+
+    signalQuality: {
+      async insert(row: Omit<NewSignalSnapshot, "id"> & { id?: string }): Promise<SignalSnapshot> {
+        const id = row.id ?? newId("sig");
+        const [r] = await db.insert(signalQuality).values({ ...row, id }).returning();
+        if (!r) throw new Error("insert failed");
+        return r;
+      },
+      /** Latest snapshot per source site. */
+      async latest(): Promise<SignalSnapshot[]> {
+        const rows = await db
+          .select()
+          .from(signalQuality)
+          .orderBy(desc(signalQuality.computedAt))
+          .limit(200);
+        const seen = new Set<string>();
+        const out: SignalSnapshot[] = [];
+        for (const r of rows) {
+          if (!seen.has(r.sourceSite)) {
+            seen.add(r.sourceSite);
+            out.push(r);
+          }
+        }
+        return out;
       },
     },
 

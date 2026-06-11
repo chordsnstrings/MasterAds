@@ -4,6 +4,55 @@ Your site tells the engine when something good happens — a page viewed, an ite
 added to a cart, a purchase, an enquiry. The engine uses these reports to learn
 what's working and to spend money on the ads that cause them.
 
+## Easiest path: the pixel snippet
+
+Add one line before `</body>` (get your site name and key from Settings →
+Connected sites):
+
+```html
+<script src="https://<your-engine-host>/pixel.js" data-site="my-shop" data-key="sk_..."></script>
+```
+
+The snippet automatically captures every ad click ID (`fbclid`, `gclid`,
+`gbraid`, `wbraid`, `ttclid`, `sccid`, `epik`) plus the `_fbp` cookie on
+landing, stores them for **180 days**, and sends a `ViewContent` for each page
+view. Report anything else from your own code:
+
+```js
+// On purchase confirmation:
+window.adEngine.track("Purchase", {
+  value: 2400,
+  currency: "AED",
+  content_id: "sofa-3seat-linen",
+  event_id: "order-10293", // your order id — retries never double-count
+  hashed_identifiers: { email_sha256: "..." }, // see "match quality" below
+});
+```
+
+Add `data-manual="true"` to the script tag to disable the automatic page view.
+
+### Match quality — why richer identifiers mean cheaper results
+
+Channels match your reported results to ad viewers using the identifiers you
+send. More identifiers → more matches → the channels' AI learns faster →
+**15–25% better cost per result** in industry measurements. Send as many of
+these as you have (each SHA-256 hashed, lowercase/trimmed before hashing):
+`email_sha256`, `phone_sha256` (E.164), `first_name_sha256`,
+`last_name_sha256`, `city_sha256`, `zip_sha256`, `country_sha256` (2-letter),
+`external_id_sha256` (your customer id). IP and user agent are captured
+automatically. Your Settings screen shows a live **Signal strength** score per
+site.
+
+### Consent (EU/UK)
+
+Pass Consent Mode v2 signals when you have a consent banner:
+
+```js
+window.adEngine.track("Purchase", { ..., consent: { ad_user_data: true, ad_personalization: true } });
+```
+
+## Server-to-server (full control)
+
 **One endpoint, one POST per action:**
 
 ```

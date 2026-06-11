@@ -28,6 +28,9 @@ export const tiktokEventsSchema = z
               .object({
                 email: z.string().regex(/^[a-f0-9]{64}$/).optional(),
                 phone: z.string().regex(/^[a-f0-9]{64}$/).optional(),
+                external_id: z.string().regex(/^[a-f0-9]{64}$/).optional(),
+                ip: z.string().optional(),
+                user_agent: z.string().optional(),
                 ttclid: z.string().optional(),
               })
               .strict(),
@@ -62,6 +65,11 @@ export function createTikTokRelay(opts?: { mode?: DriverMode }): ConversionRelay
       const user: Record<string, unknown> = {};
       if (email_sha256) user.email = email_sha256.toLowerCase();
       if (phone_sha256) user.phone = phone_sha256.toLowerCase();
+      if (event.hashedIdentifiers.external_id_sha256) {
+        user.external_id = event.hashedIdentifiers.external_id_sha256.toLowerCase();
+      }
+      if (event.clientInfo.ip) user.ip = event.clientInfo.ip;
+      if (event.clientInfo.user_agent) user.user_agent = event.clientInfo.user_agent;
       if (ttclid) user.ttclid = ttclid;
       const properties: Record<string, unknown> = { content_id: event.contentId };
       if (event.value !== null) properties.value = Number(event.value);

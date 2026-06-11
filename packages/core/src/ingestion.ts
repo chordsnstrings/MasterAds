@@ -45,6 +45,11 @@ export async function ingestConversion(
     eventId: payload.event_id,
     sourceSite: payload.source_site,
     consentGranted: payload.consent_granted,
+    clientInfo: {
+      ...(payload.client_ip_address ? { ip: payload.client_ip_address } : {}),
+      ...(payload.client_user_agent ? { user_agent: payload.client_user_agent } : {}),
+    },
+    consentSignals: payload.consent ?? {},
     dedupKey: dedupKey(payload),
     reconciliationKey: reconKey,
     canonical: isCanonical,

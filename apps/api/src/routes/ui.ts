@@ -333,6 +333,7 @@ export async function uiRoutes(app: FastifyInstance): Promise<void> {
     return {
       connections,
       coverage: await repos.coverage.latest(),
+      signal: await repos.signalQuality.latest(),
       guardrails: await getGuardrailConfig(repos),
       killSwitch: await repos.killSwitch.isEngaged(),
       brandKit:

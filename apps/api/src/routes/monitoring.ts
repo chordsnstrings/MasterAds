@@ -42,6 +42,7 @@ export async function monitoringRoutes(app: FastifyInstance): Promise<void> {
 
     return {
       coverage: await repos.coverage.latest(),
+      signalQuality: await repos.signalQuality.latest(),
       learning,
       // Event Match Quality is platform-reported; populated once live
       // credentials exist (P5). Kept visible so the gap is explicit.

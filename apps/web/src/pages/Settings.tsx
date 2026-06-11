@@ -112,6 +112,10 @@ export default function Settings(): JSX.Element {
               <div className="mt-3 rounded-control bg-accent-soft p-3 text-xs" data-testid="issued-key">
                 <p className="font-medium">{STRINGS.sitesSection.keyNotice}</p>
                 <code className="mt-1 block break-all font-mono">{issuedKey.key}</code>
+                <p className="mt-3 font-medium">{STRINGS.sitesSection.snippetNotice}</p>
+                <code className="mt-1 block break-all font-mono">
+                  {`<script src="${window.location.origin}/pixel.js" data-site="${issuedKey.site}" data-key="${issuedKey.key}"></script>`}
+                </code>
               </div>
             )}
           </Card>
@@ -130,12 +134,33 @@ export default function Settings(): JSX.Element {
                   : avg >= 40
                     ? STRINGS.settings.trackingPartial
                     : STRINGS.settings.trackingPoor;
+              const sig = data.signal.find((x) => x.sourceSite === site);
+              const sigScore = sig ? Number(sig.avgScore) : null;
+              const sigLabel =
+                sigScore === null
+                  ? null
+                  : sigScore >= 7
+                    ? STRINGS.sitesSection.signalStrong
+                    : sigScore >= 4
+                      ? STRINGS.sitesSection.signalOk
+                      : STRINGS.sitesSection.signalWeak;
               return (
                 <div key={site} className="mb-3 last:mb-0">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium">{site}</span>
                     <span className={avg >= 75 ? "text-positive" : "text-attention-deep"}>{readiness}</span>
                   </div>
+                  {sigLabel && (
+                    <div className="mt-1 flex items-center justify-between text-xs" data-testid="signal-strength">
+                      <span className="text-ink-muted">{STRINGS.sitesSection.signalTitle}</span>
+                      <span className={sigScore! >= 7 ? "text-positive" : "text-attention-deep"}>
+                        {sigLabel} · <span className="font-mono">{sigScore!.toFixed(1)}/10</span>
+                      </span>
+                    </div>
+                  )}
+                  {sigScore !== null && sigScore < 7 && (
+                    <p className="mt-1 text-xs text-ink-muted">{STRINGS.sitesSection.signalTip}</p>
+                  )}
                   <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-ink-muted">
                     {rows.map((r) => (
                       <div key={r.platform}>

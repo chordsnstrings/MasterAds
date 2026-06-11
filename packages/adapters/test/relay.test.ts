@@ -19,6 +19,8 @@ const fixtureEvent: ConversionEvent = {
   eventId: "order-1",
   sourceSite: "shop-a",
   consentGranted: true,
+  clientInfo: {},
+  consentSignals: {},
   relayedTo: [],
   dedupKey: "shop-a:order-1",
   reconciliationKey: `Purchase:order-1:${"a".repeat(64)}`,
@@ -83,6 +85,44 @@ describe("relay payload mapping (GATE G3 snapshots)", () => {
     const noConsent = { ...fixtureEvent, consentGranted: false };
     const built = createMetaRelay({ mode: "stub" }).buildPayload(noConsent);
     expect(built.kind).toBe("skip");
+  });
+
+  it("rich identifiers + consent v2 reach the platform payloads (W2)", () => {
+    const rich: ConversionEvent = {
+      ...fixtureEvent,
+      hashedIdentifiers: {
+        email_sha256: "a".repeat(64),
+        phone_sha256: "b".repeat(64),
+        first_name_sha256: "c".repeat(64),
+        last_name_sha256: "d".repeat(64),
+        city_sha256: "e".repeat(64),
+        zip_sha256: "f".repeat(64),
+        country_sha256: "0".repeat(64),
+        external_id_sha256: "1".repeat(64),
+      },
+      clientInfo: { ip: "203.0.113.7", user_agent: "Mozilla/5.0 test" },
+      consentSignals: { ad_user_data: true, ad_personalization: false },
+    };
+    const meta = createMetaRelay({ mode: "stub" }).buildPayload(rich);
+    if (meta.kind !== "send") throw new Error("expected send");
+    const ud = (meta.payload.data as { user_data: Record<string, unknown> }[])[0]!.user_data;
+    expect(ud.fn).toEqual(["c".repeat(64)]);
+    expect(ud.external_id).toEqual(["1".repeat(64)]);
+    expect(ud.client_ip_address).toBe("203.0.113.7");
+
+    const g = createGoogleRelay({ mode: "stub" }).buildPayload(rich);
+    if (g.kind !== "send") throw new Error("expected send");
+    const conv = (g.payload.conversions as Record<string, unknown>[])[0]!;
+    expect(conv.consent).toEqual({ ad_user_data: "GRANTED", ad_personalization: "DENIED" });
+    expect(
+      (conv.user_identifiers as Record<string, unknown>[]).some((i) => "address_info" in i),
+    ).toBe(true);
+
+    const tt = createTikTokRelay({ mode: "stub" }).buildPayload(rich);
+    if (tt.kind !== "send") throw new Error("expected send");
+    const user = (tt.payload.data as { user: Record<string, unknown> }[])[0]!.user;
+    expect(user.external_id).toBe("1".repeat(64));
+    expect(user.ip).toBe("203.0.113.7");
   });
 
   it("event name mapping per platform (Appendix A)", () => {

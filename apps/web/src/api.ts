@@ -86,6 +86,7 @@ export interface SettingsData {
     billingOk: boolean;
   }[];
   coverage: { sourceSite: string; platform: string; coveragePct: string }[];
+  signal: { sourceSite: string; avgScore: string; eventsTotal: number }[];
   guardrails: Record<string, number | string>;
   killSwitch: boolean;
   brandKit: Record<string, string>;

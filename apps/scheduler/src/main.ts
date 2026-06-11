@@ -4,7 +4,7 @@ import { closeDb, createDb, createRepos } from "@engine/db";
 import { createBillingChecker, createPlatformAdapters } from "@engine/adapters";
 import { runFeedSyncSweep } from "./jobs/feed-sync.js";
 import { runInsightsPull } from "./jobs/insights.js";
-import { applyCalendarPacing, expirePromos, processProductChanges, reevaluateOptimizationEvents, runBillingHealth, runFatigueSweep, runMediumLoopOnce, scoreDecisions } from "@engine/core";
+import { applyCalendarPacing, computeAndPersistCoverage, computeAndPersistSignalQuality, expirePromos, processProductChanges, reevaluateOptimizationEvents, runBillingHealth, runFatigueSweep, runMediumLoopOnce, scoreDecisions } from "@engine/core";
 
 function log(msg: string, extra: Record<string, unknown> = {}): void {
   console.log(
@@ -32,6 +32,15 @@ interface ScheduledJob {
 }
 
 const jobs: ScheduledJob[] = [
+  {
+    name: "measurement-snapshots",
+    intervalMs: 6 * 60 * 60_000, // coverage + signal strength for the UI
+    lastRun: 0,
+    run: async () => {
+      await computeAndPersistCoverage(repos);
+      await computeAndPersistSignalQuality(repos);
+    },
+  },
   {
     name: "insights-pull",
     intervalMs: 60 * 60_000, // hourly; rows are idempotent per (campaign, day)

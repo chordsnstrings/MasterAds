@@ -177,8 +177,14 @@ export const STRINGS = {
     addLabel: "Site name",
     addButton: "Add site",
     keyNotice: "Copy this key now — it won't be shown again.",
-    snippetNotice: "Add this to your site so results reach the engine:",
+    snippetNotice: "Then add this one line to your site, and results start flowing:",
     empty: "No sites yet. Add one to start measuring results.",
+    signalTitle: "Signal strength",
+    signalStrong: "Strong — results carry rich detail",
+    signalOk: "OK — could be stronger",
+    signalWeak: "Weak — add more detail so results connect to ads",
+    signalTip:
+      "Send what you know with each result (email, phone, name — securely scrambled). Richer detail means the channels find more of your buyers.",
   },
 
   // Creation flow — FLOW §12 strings, used verbatim (binding).

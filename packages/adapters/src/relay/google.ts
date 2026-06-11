@@ -35,9 +35,26 @@ export const googleConversionSchema = z
                   .object({
                     hashed_email: z.string().regex(/^[a-f0-9]{64}$/).optional(),
                     hashed_phone_number: z.string().regex(/^[a-f0-9]{64}$/).optional(),
+                    address_info: z
+                      .object({
+                        hashed_first_name: z.string().regex(/^[a-f0-9]{64}$/).optional(),
+                        hashed_last_name: z.string().regex(/^[a-f0-9]{64}$/).optional(),
+                        city: z.string().optional(),
+                        postal_code: z.string().optional(),
+                        country_code: z.string().optional(),
+                      })
+                      .strict()
+                      .optional(),
                   })
                   .strict(),
               )
+              .optional(),
+            consent: z
+              .object({
+                ad_user_data: z.enum(["GRANTED", "DENIED"]).optional(),
+                ad_personalization: z.enum(["GRANTED", "DENIED"]).optional(),
+              })
+              .strict()
               .optional(),
             cart_data: z
               .object({ items: z.array(z.object({ product_id: z.string() }).strict()) })
@@ -79,10 +96,31 @@ export function createGoogleRelay(opts?: { mode?: DriverMode }): ConversionRelay
       if (wbraid) conversion.wbraid = wbraid;
       if (event.value !== null) conversion.conversion_value = Number(event.value);
       if (event.currency !== null) conversion.currency_code = event.currency;
-      const identifiers: Record<string, string>[] = [];
+      const identifiers: Record<string, unknown>[] = [];
       if (email_sha256) identifiers.push({ hashed_email: email_sha256.toLowerCase() });
       if (phone_sha256) identifiers.push({ hashed_phone_number: phone_sha256.toLowerCase() });
+      const ids = event.hashedIdentifiers;
+      if (ids.first_name_sha256 && ids.last_name_sha256) {
+        identifiers.push({
+          address_info: {
+            hashed_first_name: ids.first_name_sha256.toLowerCase(),
+            hashed_last_name: ids.last_name_sha256.toLowerCase(),
+          },
+        });
+      }
       if (identifiers.length > 0) conversion.user_identifiers = identifiers;
+      // Consent Mode v2 signals when the site provided them.
+      const cs = event.consentSignals;
+      if (cs.ad_user_data !== undefined || cs.ad_personalization !== undefined) {
+        conversion.consent = {
+          ...(cs.ad_user_data !== undefined
+            ? { ad_user_data: cs.ad_user_data ? "GRANTED" : "DENIED" }
+            : {}),
+          ...(cs.ad_personalization !== undefined
+            ? { ad_personalization: cs.ad_personalization ? "GRANTED" : "DENIED" }
+            : {}),
+        };
+      }
       return {
         kind: "send",
         payload: { conversions: [conversion], partial_failure: true },

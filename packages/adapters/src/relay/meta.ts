@@ -29,6 +29,14 @@ export const metaCapiSchema = z
               .object({
                 em: z.array(z.string().regex(/^[a-f0-9]{64}$/)).optional(),
                 ph: z.array(z.string().regex(/^[a-f0-9]{64}$/)).optional(),
+                fn: z.array(z.string().regex(/^[a-f0-9]{64}$/)).optional(),
+                ln: z.array(z.string().regex(/^[a-f0-9]{64}$/)).optional(),
+                ct: z.array(z.string().regex(/^[a-f0-9]{64}$/)).optional(),
+                zp: z.array(z.string().regex(/^[a-f0-9]{64}$/)).optional(),
+                country: z.array(z.string().regex(/^[a-f0-9]{64}$/)).optional(),
+                external_id: z.array(z.string().regex(/^[a-f0-9]{64}$/)).optional(),
+                client_ip_address: z.string().optional(),
+                client_user_agent: z.string().optional(),
                 fbc: z.string().optional(),
                 fbp: z.string().optional(),
               })
@@ -70,9 +78,18 @@ export function createMetaRelay(opts?: { mode?: DriverMode }): ConversionRelay {
       if (!fbc && !fbp && !email_sha256 && !phone_sha256) {
         return { kind: "skip", reason: "no attribution keys (fbc/fbp/hashed identifiers)" };
       }
+      const ids = event.hashedIdentifiers;
       const user_data: Record<string, unknown> = {};
       if (email_sha256) user_data.em = [email_sha256.toLowerCase()];
       if (phone_sha256) user_data.ph = [phone_sha256.toLowerCase()];
+      if (ids.first_name_sha256) user_data.fn = [ids.first_name_sha256.toLowerCase()];
+      if (ids.last_name_sha256) user_data.ln = [ids.last_name_sha256.toLowerCase()];
+      if (ids.city_sha256) user_data.ct = [ids.city_sha256.toLowerCase()];
+      if (ids.zip_sha256) user_data.zp = [ids.zip_sha256.toLowerCase()];
+      if (ids.country_sha256) user_data.country = [ids.country_sha256.toLowerCase()];
+      if (ids.external_id_sha256) user_data.external_id = [ids.external_id_sha256.toLowerCase()];
+      if (event.clientInfo.ip) user_data.client_ip_address = event.clientInfo.ip;
+      if (event.clientInfo.user_agent) user_data.client_user_agent = event.clientInfo.user_agent;
       if (fbc) user_data.fbc = fbc;
       if (fbp) user_data.fbp = fbp;
       const custom_data: Record<string, unknown> = { content_ids: [event.contentId] };
