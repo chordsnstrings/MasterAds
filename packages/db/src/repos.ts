@@ -19,6 +19,7 @@ import {
   experiments,
   feedSources,
   intakeJobs,
+  mediaAssets,
   notifications,
   platformConnections,
   playbooks,
@@ -63,6 +64,7 @@ import {
   type NewNotification,
   type Notification,
   type PlatformConnection,
+  type MediaAsset,
   type Promo,
   type Product,
   type SignalSnapshot,
@@ -98,6 +100,7 @@ export function createRepos(db: Db) {
             | "currency"
             | "availability"
             | "status"
+            | "brandKit"
             | "vertical"
             | "category"
             | "images"
@@ -492,6 +495,20 @@ export function createRepos(db: Db) {
       },
       async byProduct(productId: string): Promise<Promo[]> {
         return db.select().from(promos).where(eq(promos.productId, productId));
+      },
+    },
+
+    media: {
+      async insert(productId: string, mime: string, dataBase64: string): Promise<MediaAsset> {
+        const [r] = await db
+          .insert(mediaAssets)
+          .values({ id: newId("med"), productId, mime, dataBase64 })
+          .returning();
+        if (!r) throw new Error("insert failed");
+        return r;
+      },
+      async get(id: string): Promise<MediaAsset | undefined> {
+        return (await db.select().from(mediaAssets).where(eq(mediaAssets.id, id)))[0];
       },
     },
 

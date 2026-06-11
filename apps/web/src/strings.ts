@@ -233,8 +233,9 @@ export const STRINGS = {
     killSwitchHint: "Halts all spending and activity immediately. You can turn it back on any time.",
     killSwitchOn: "Stopped — nothing is being spent",
     killSwitchOff: "Running normally",
-    brandKit: "Brand kit",
-    brandKitHint: "Used in every ad we create. Changes apply from the next batch onward.",
+    brandKit: "Default brand",
+    brandKitHint:
+      "The starting brand for new pages. Every product page can carry its own brand \u2014 set it when you create the page or on the product's page later.",
     brandLogo: "Logo address",
     brandColor: "Main color",
     brandFont: "Font",
@@ -326,6 +327,28 @@ export const STRINGS = {
     lowBudgetNote:
       "Below about AED 150 a day it's harder for us to learn what works, so results may be slower.",
     yourAds: "Your ads",
+    understoodAs: "Understood as",
+    understoodKinds: {
+      ecommerce: "A product people buy online",
+      lead_generation: "A service people enquire about",
+      app: "An app people install",
+      subscription: "A subscription people sign up for",
+      booking: "Something people book",
+    } as Record<string, string>,
+    understoodWrong: "Not right? Choose:",
+    understoodProduct: "It's a product",
+    understoodService: "It's a service",
+    selectHint: "Tap an ad to keep or drop it. Only the highlighted ones go live.",
+    selectedCount: (n: number, total: number): string => `${n} of ${total} will go live.`,
+    editWordsShort: "Edit",
+    uploadButton: "+ Add your own photos",
+    uploadHint: "PNG, JPG or WebP up to 3MB. Uploads go live alongside the made-for-you ads.",
+    uploadFailed: "That file couldn't be added. PNG, JPG or WebP up to 3MB.",
+    optimizeNote:
+      "After launch, the engine shifts budget toward the ads that perform best and rests the ones that tire.",
+    brandTitle: "Brand for this page",
+    brandHint:
+      "Each page carries its own brand \u2014 logo, color and voice. Leave blank to use your default brand from Settings.",
     formatTabs: {
       "1:1": "Square",
       "9:16": "Tall",

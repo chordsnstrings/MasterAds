@@ -49,6 +49,9 @@ export const products = pgTable("products", {
     .default("draft"),
   // Margin % of revenue (SW §14: value carries margin where supplied).
   marginPct: numeric("margin_pct", { precision: 5, scale: 2 }),
+  // Per-product brand (W8): logoUrl/primaryColor/font/tone — falls back to
+  // the global brand kit in system settings when unset.
+  brandKit: jsonb("brand_kit").$type<Record<string, string>>(),
   // Products imported together from one feed share a catalog group (FLOW §7).
   catalogGroupId: text("catalog_group_id"),
   rawInput: text("raw_input"), // offer text kept raw for classification (G5)
@@ -434,6 +437,23 @@ export const platformConnections = pgTable("platform_connections", {
 });
 
 export type PlatformConnection = typeof platformConnections.$inferSelect;
+
+// Owner-uploaded ad media (W8), served from /media/:id.
+export const mediaAssets = pgTable(
+  "media_assets",
+  {
+    id: text("id").primaryKey(),
+    productId: text("product_id")
+      .notNull()
+      .references(() => products.id),
+    mime: text("mime").notNull(),
+    dataBase64: text("data_base64").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("media_assets_product_idx").on(t.productId)],
+);
+
+export type MediaAsset = typeof mediaAssets.$inferSelect;
 
 export type Promo = typeof promos.$inferSelect;
 export type NewPromo = typeof promos.$inferInsert;

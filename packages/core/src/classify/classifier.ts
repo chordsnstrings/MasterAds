@@ -110,6 +110,22 @@ export async function classifyProduct(
     return { kind: "needs_disambiguation", question: DISAMBIGUATION_QUESTION };
   }
 
+  // The owner's correction is binding (W8): it overrides the model, not just
+  // hints at it — "Understood as" in Review must obey the human.
+  if (opts.disambiguation === "product" && parsed.business_model !== "ecommerce") {
+    parsed.business_model = "ecommerce";
+    parsed.terminal_event = "Purchase";
+    parsed.funnel_stages = ["ViewContent", "AddToCart", "InitiateCheckout", "Purchase"];
+  } else if (
+    opts.disambiguation === "service" &&
+    parsed.business_model !== "lead_generation" &&
+    parsed.business_model !== "booking"
+  ) {
+    parsed.business_model = "lead_generation";
+    parsed.terminal_event = "Lead";
+    parsed.funnel_stages = ["ViewContent", "Lead"];
+  }
+
   const priceTier = priceTierOf(product.price !== null ? Number(product.price) : undefined);
   return {
     kind: "classified",

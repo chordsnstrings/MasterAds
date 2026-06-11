@@ -47,6 +47,8 @@ export async function planRoutes(app: FastifyInstance): Promise<void> {
 
     return reply.status(201).send({
       specId: spec.id,
+      understoodAs: spec.businessModel,
+      vertical: result.classification.vertical,
       goal: spec.goal,
       platforms: spec.targetPlatforms,
       perDay: Number(spec.dailyBudget),

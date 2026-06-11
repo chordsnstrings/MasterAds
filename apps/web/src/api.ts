@@ -133,6 +133,8 @@ async function request<T>(method: string, url: string, body?: unknown): Promise<
 
 export interface PlanData {
   specId: string;
+  understoodAs?: string;
+  vertical?: string;
   goal: string | null;
   platforms: string[];
   perDay: number;
@@ -192,11 +194,19 @@ export const api = {
   ) => request<PlanData>("PATCH", `/v1/specs/${specId}`, body),
   editCreative: (id: string, body: { headline?: string; body?: string }) =>
     request("PATCH", `/v1/creatives/${id}`, body),
-  launch: (specId: string) =>
+  launch: (specId: string, creativeIds?: string[]) =>
     request<{ status: "live" | "in_review"; dailyCap?: number; currency?: string }>(
       "POST",
       `/v1/specs/${specId}/launch`,
+      creativeIds && creativeIds.length > 0 ? { creative_ids: creativeIds } : undefined,
     ),
+  uploadMedia: (productId: string, filename: string, contentBase64: string) =>
+    request<{ creative: CreativePreview }>("POST", `/v1/products/${productId}/media`, {
+      filename,
+      content_base64: contentBase64,
+    }),
+  setBrand: (productId: string, kit: Record<string, string>) =>
+    request<{ brandKit: Record<string, string> }>("POST", `/v1/products/${productId}/brand`, kit),
   overview: () => request<OverviewData>("GET", "/internal/overview"),
   dismissChecklist: () => request<{ ok: boolean }>("POST", "/internal/checklist/dismiss"),
   connections: () =>

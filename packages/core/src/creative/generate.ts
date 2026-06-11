@@ -98,6 +98,10 @@ export async function generateCreatives(
     };
   }
 
+  // Per-product brand voice (W8); the global kit is only the default.
+  const globalKit = await repos.settings.get<Record<string, string>>("brand_kit");
+  const brand = { ...(globalKit ?? {}), ...(product.brandKit ?? {}) };
+
   // 1) Copy variants from the LLM (CostEvent emitted inside the adapter).
   const { text } = await llm.complete({
     operation: "creative_copy",
@@ -111,6 +115,7 @@ export async function generateCreatives(
       `variants: ${variantCount}`,
       `hooks (one variant per type, in this priority order): ${orderedHooks.slice(0, variantCount).join(", ")}`,
       `each variant must include a "hook" field naming its hook type`,
+      brand.tone ? `brand voice: ${brand.tone}` : "",
     ].join("\n"),
     productId: product.id,
     maxTokens: 1024,

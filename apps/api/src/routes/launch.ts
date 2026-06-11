@@ -8,6 +8,21 @@ export async function launchRoutes(app: FastifyInstance): Promise<void> {
     const spec = await app.repos.specs.get(req.params.id);
     if (!spec) return reply.status(404).send({ error: "not_found" });
 
+    // Explicit selection (W8): only the chosen ads go live; the rest are held
+    // (kept, reusable later) rather than silently launched.
+    const chosen = (req.body as { creative_ids?: string[] } | null)?.creative_ids;
+    if (Array.isArray(chosen) && chosen.length > 0) {
+      const all = await app.repos.creatives.byProduct(spec.productId);
+      for (const c of all) {
+        if (c.status === "ready" && !chosen.includes(c.id)) {
+          await app.repos.creatives.setStatus(c.id, "held");
+        }
+        if (c.status === "held" && chosen.includes(c.id)) {
+          await app.repos.creatives.setStatus(c.id, "ready");
+        }
+      }
+    }
+
     const result = await launchProduct(
       { repos: app.repos, adapters: app.platforms },
       spec.id,

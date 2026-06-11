@@ -35,12 +35,16 @@ export default function AddProduct({
   const [catalogCount, setCatalogCount] = useState(0);
   const [plan, setPlan] = useState<PlanData | null>(null);
   const [creatives, setCreatives] = useState<CreativePreview[]>([]);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  // Selection is per ad concept (variant) — all three shapes travel together.
+  const [selected, setSelected] = useState<Set<number>>(new Set());
   const [editing, setEditing] = useState<string | null>(null);
   const [editHeadline, setEditHeadline] = useState("");
   const [editBody, setEditBody] = useState("");
   const [editLine, setEditLine] = useState<"goal" | "platforms" | "budget" | "destination" | null>(null);
   const [previewFormat, setPreviewFormat] = useState<"1:1" | "9:16" | "16:9">("1:1");
+  const [brand, setBrand] = useState<Record<string, string>>({});
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const uploadRef = useRef<HTMLInputElement>(null);
   const [destKind, setDestKind] = useState("hosted_form");
   const [destValue, setDestValue] = useState("");
   const [connections, setConnections] = useState<SettingsData["connections"]>([]);
@@ -68,7 +72,7 @@ export default function AddProduct({
     setProductTitle(detail.product.title);
     const gen = await api.generateCreatives(result.specId);
     setCreatives(gen.creatives);
-    setSelected(new Set(gen.creatives.filter((c) => c.format === "1:1").map((c) => c.id)));
+    setSelected(new Set(gen.creatives.map((c) => c.variantNo)));
     setStep({ kind: "review" });
   }
 
@@ -125,7 +129,8 @@ export default function AddProduct({
     }
     setBusy(true);
     try {
-      const result = await api.launch(plan.specId);
+      const chosenIds = creatives.filter((c) => selected.has(c.variantNo)).map((c) => c.id);
+      const result = await api.launch(plan.specId, chosenIds);
       await onLaunched();
       if (result.status === "in_review") setStep({ kind: "submitted" });
       else
@@ -251,6 +256,37 @@ export default function AddProduct({
         </p>
 
         <Card className="mt-6 divide-y divide-hairline dark:divide-ink-muted/20">
+          {/* How the engine understood it — always shown, always correctable (W8). */}
+          <div className="p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="text-sm">
+                <span className="text-ink-muted">{C.understoodAs}</span>{" "}
+                <span className="ml-3 font-medium" data-testid="understood-as">
+                  {C.understoodKinds[plan.understoodAs ?? ""] ?? plan.understoodAs ?? "—"}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-ink-muted">{C.understoodWrong}</span>
+                <button
+                  type="button"
+                  data-testid="understood-product"
+                  onClick={() => productId && void buildPlanAndReview(productId, "product")}
+                  className={`min-h-11 rounded-control border px-3 ${plan.understoodAs === "ecommerce" ? "border-accent bg-accent-soft dark:bg-accent/15" : "border-hairline"}`}
+                >
+                  {C.understoodProduct}
+                </button>
+                <button
+                  type="button"
+                  data-testid="understood-service"
+                  onClick={() => productId && void buildPlanAndReview(productId, "service")}
+                  className={`min-h-11 rounded-control border px-3 ${plan.understoodAs === "lead_generation" || plan.understoodAs === "booking" ? "border-accent bg-accent-soft dark:bg-accent/15" : "border-hairline"}`}
+                >
+                  {C.understoodService}
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Goal */}
           <div className="p-4">
             <div className="flex items-center justify-between">
@@ -456,41 +492,110 @@ export default function AddProduct({
               {creatives
                 .filter((c) => c.format === previewFormat)
                 .map((c) => (
-                <button
+                <div
                   key={c.id}
-                  type="button"
                   data-testid="creative-tile"
-                  onClick={() => {
-                    setEditing(c.id);
-                    setEditHeadline(c.headline ?? "");
-                    setEditBody(c.body ?? "");
-                  }}
-                  className={`rounded-card border p-3 text-left text-xs ${selected.has(c.id) ? "border-accent" : "border-hairline"} bg-accent-soft/40`}
+                  className={`relative rounded-card border p-3 text-left text-xs transition-all duration-150 ${selected.has(c.variantNo) ? "border-accent shadow-card" : "border-hairline opacity-60"} bg-accent-soft/40`}
                 >
-                  <div
-                    className={`flex items-center justify-center rounded-control bg-accent-soft text-center font-medium text-accent ${
-                      previewFormat === "9:16"
-                        ? "mx-auto aspect-[9/16] w-2/3"
-                        : previewFormat === "16:9"
-                          ? "aspect-video"
-                          : "aspect-square"
-                    }`}
+                  <button
+                    type="button"
+                    aria-pressed={selected.has(c.variantNo)}
+                    aria-label={c.headline ?? "ad"}
+                    onClick={() => {
+                      const next = new Set(selected);
+                      if (next.has(c.variantNo)) next.delete(c.variantNo);
+                      else next.add(c.variantNo);
+                      setSelected(next);
+                    }}
+                    className="block w-full text-left"
                   >
-                    {c.headline}
-                  </div>
-                  <p className="mt-2 text-ink-muted">{c.body}</p>
-                </button>
+                    <div
+                      className={`flex items-center justify-center overflow-hidden rounded-control bg-accent-soft text-center font-medium text-accent ${
+                        previewFormat === "9:16"
+                          ? "mx-auto aspect-[9/16] w-2/3"
+                          : previewFormat === "16:9"
+                            ? "aspect-video"
+                            : "aspect-square"
+                      }`}
+                    >
+                      {c.assetRef.startsWith("/media/") ? (
+                        <img src={c.assetRef} alt={c.headline ?? ""} className="h-full w-full rounded-control object-cover" />
+                      ) : (
+                        c.headline
+                      )}
+                    </div>
+                    <p className="mt-2 text-ink-muted">{c.body}</p>
+                  </button>
+                  <span
+                    aria-hidden="true"
+                    className={`absolute right-2 top-2 grid h-5 w-5 place-items-center rounded-full text-[10px] ${selected.has(c.variantNo) ? "bg-accent text-white" : "bg-ink/10 text-ink-muted"}`}
+                  >
+                    ✓
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditing(c.id);
+                      setEditHeadline(c.headline ?? "");
+                      setEditBody(c.body ?? "");
+                    }}
+                    className="mt-1 min-h-11 px-1 text-xs text-accent"
+                  >
+                    {C.editWordsShort}
+                  </button>
+                </div>
               ))}
             </div>
-            <p className="mt-2 text-sm text-ink-muted">
-              {C.creativeHelp(creatives.filter((c) => c.format === previewFormat).length)}
+            <p className="mt-2 text-sm text-ink-muted">{C.selectHint}</p>
+            <p className="mt-1 text-sm font-medium" data-testid="selected-count">
+              {C.selectedCount(
+                creatives.filter((c) => c.format === previewFormat && selected.has(c.variantNo)).length,
+                creatives.filter((c) => c.format === previewFormat).length,
+              )}
             </p>
+            <div className="mt-3">
+              <input
+                ref={uploadRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                multiple
+                className="hidden"
+                data-testid="upload-input"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files ?? []);
+                  setUploadError(null);
+                  for (const file of files) {
+                    void file.arrayBuffer().then((buf) => {
+                      const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+                      return api
+                        .uploadMedia(productId!, file.name, b64)
+                        .then((r) => {
+                          setCreatives((cs) => [...cs, r.creative]);
+                          setSelected((sel) => new Set([...sel, r.creative.variantNo]));
+                        })
+                        .catch(() => setUploadError(C.uploadFailed));
+                    });
+                  }
+                  e.target.value = "";
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => uploadRef.current?.click()}
+                className="min-h-11 rounded-control border border-dashed border-accent/60 px-4 text-sm text-accent hover:bg-accent-soft dark:hover:bg-accent/15"
+              >
+                {C.uploadButton}
+              </button>
+              <p className="mt-1 text-xs text-ink-muted">{C.uploadHint}</p>
+              {uploadError && <p className="mt-1 text-xs text-critical">{uploadError}</p>}
+            </div>
+            <p className="mt-3 text-xs leading-relaxed text-ink-muted">{C.optimizeNote}</p>
             <button
               type="button"
               onClick={() =>
                 void api.generateCreatives(plan.specId).then((g) => {
                   setCreatives(g.creatives);
-                  setSelected(new Set(g.creatives.filter((c) => c.format === "1:1").map((c) => c.id)));
+                  setSelected(new Set(g.creatives.map((c) => c.variantNo)));
                 })
               }
               className="mt-1 min-h-11 text-sm text-accent"
@@ -535,6 +640,32 @@ export default function AddProduct({
             )}
           </section>
         )}
+
+        {/* Per-page brand (W8): every page can carry a different brand. */}
+        <section className="mt-6">
+          <h2 className="text-lg font-semibold tracking-tight">{C.brandTitle}</h2>
+          <p className="mt-1 text-sm leading-relaxed text-ink-muted">{C.brandHint}</p>
+          <Card className="mt-3 grid gap-3 p-5 sm:grid-cols-3">
+            {(
+              [
+                ["logoUrl", STRINGS.settings.brandLogo],
+                ["primaryColor", STRINGS.settings.brandColor],
+                ["tone", STRINGS.settings.brandTone],
+              ] as const
+            ).map(([key, label]) => (
+              <label key={key} className="block text-sm">
+                {label}
+                <input
+                  value={brand[key] ?? ""}
+                  onChange={(e) => setBrand({ ...brand, [key]: e.target.value })}
+                  onBlur={() => productId && void api.setBrand(productId, brand)}
+                  data-testid={`brand-${key}`}
+                  className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 dark:bg-surface-dark dark:border-white/15"
+                />
+              </label>
+            ))}
+          </Card>
+        </section>
 
         {restricted && (
           <p className="mt-6 rounded-card border border-attention/40 bg-attention/10 p-4 text-sm" data-testid="restricted-notice">
