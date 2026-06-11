@@ -14,6 +14,7 @@ export default function Settings(): JSX.Element {
   const [issuedKey, setIssuedKey] = useState<{ site: string; key: string } | null>(null);
   const [connectFor, setConnectFor] = useState<string | null>(null);
   const [catalog, setCatalog] = useState<Awaited<ReturnType<typeof api.connections>>["platforms"]>([]);
+  const [aiCatalog, setAiCatalog] = useState<Awaited<ReturnType<typeof api.connections>>["ai"] | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
   const [connectNote, setConnectNote] = useState<string | null>(null);
   const [siteType, setSiteType] = useState<"custom" | "shopify" | "wordpress">("custom");
@@ -26,6 +27,7 @@ export default function Settings(): JSX.Element {
     setSiteList(s.sites);
     const c = await api.connections();
     setCatalog(c.platforms);
+    setAiCatalog(c.ai);
   }
   useEffect(() => {
     void reload();
@@ -97,12 +99,43 @@ export default function Settings(): JSX.Element {
                 </span>
               </div>
             ))}
+            <div className="flex min-h-16 items-center justify-between border-t border-hairline/70 px-5 transition-colors duration-150 hover:bg-ink/[0.015] dark:border-white/10 dark:hover:bg-white/[0.02]">
+              <span>
+                {STRINGS.settings.aiName}
+                {aiCatalog?.provider && (
+                  <span className="ml-2 font-mono text-xs text-ink-muted" data-testid="ai-provider">
+                    {STRINGS.settings.aiProviders[aiCatalog.provider] ?? aiCatalog.provider}
+                  </span>
+                )}
+              </span>
+              <span className="flex items-center gap-3 text-sm">
+                {aiCatalog?.savedAt && aiCatalog.mode === "live" ? (
+                  <span className="text-positive">{STRINGS.settings.connectionOk}</span>
+                ) : (
+                  <span className="text-attention-deep" title={STRINGS.settings.connectionTestHint}>
+                    {STRINGS.settings.connectionTest}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  data-testid="connect-ai"
+                  onClick={() => setConnectFor("ai")}
+                  className="min-h-11 rounded-control px-3 text-accent hover:bg-accent-soft dark:hover:bg-accent/15"
+                >
+                  {aiCatalog?.savedAt ? STRINGS.settings.reconnect : STRINGS.settings.connect}
+                </button>
+              </span>
+            </div>
           </Card>
         </Section>
 
         {connectFor && (
           <Dialog
-            title={STRINGS.settings.connectTitle(STRINGS.platformNames[connectFor] ?? connectFor)}
+            title={STRINGS.settings.connectTitle(
+              connectFor === "ai"
+                ? STRINGS.settings.aiName
+                : STRINGS.platformNames[connectFor] ?? connectFor,
+            )}
             onClose={() => {
               setConnectFor(null);
               setForm({});
@@ -141,25 +174,54 @@ export default function Settings(): JSX.Element {
                   .catch(() => setConnectNote(STRINGS.settings.connectMissing));
               }}
             >
-              {(catalog.find((p) => p.platform === connectFor)?.fields ?? []).map((f) => {
+              {(connectFor === "ai"
+                ? (aiCatalog?.fields ?? []).map((f) => ({ ...f, choices: f.choices }))
+                : (catalog.find((p) => p.platform === connectFor)?.fields ?? []).map((f) => ({
+                    ...f,
+                    choices: null as string[] | null,
+                  }))
+              ).map((f) => {
                 const label =
-                  STRINGS.settings.connectFieldLabels[`${connectFor}.${f.key}`] ?? f.key.replace(/_/g, " ");
+                  connectFor === "ai"
+                    ? STRINGS.settings.aiFieldLabels[f.key] ?? f.key.replace(/_/g, " ")
+                    : STRINGS.settings.connectFieldLabels[`${connectFor}.${f.key}`] ??
+                      f.key.replace(/_/g, " ");
                 const help = STRINGS.settings.connectFieldHelp[`${connectFor}.${f.key}`];
+                const choiceLabels =
+                  f.key === "provider" ? STRINGS.settings.aiProviders : STRINGS.settings.aiModeChoices;
                 return (
                   <label key={f.key} className="block text-sm">
                     <span className="font-medium">{label}</span>
                     {f.savedMask && (
                       <span className="ml-2 font-mono text-xs text-ink-muted">{f.savedMask}</span>
                     )}
-                    <input
-                      type={f.secret ? "password" : "text"}
-                      value={form[f.key] ?? ""}
-                      onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
-                      placeholder={f.savedMask ?? undefined}
-                      autoComplete="off"
-                      data-testid={`connect-field-${f.key}`}
-                      className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 font-mono text-sm dark:bg-surface-dark dark:border-white/15"
-                    />
+                    {f.choices ? (
+                      <select
+                        value={form[f.key] ?? f.savedMask ?? ""}
+                        onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
+                        data-testid={`connect-field-${f.key}`}
+                        className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 text-sm dark:bg-surface-dark dark:border-white/15"
+                      >
+                        <option value="" disabled>
+                          —
+                        </option>
+                        {f.choices.map((c) => (
+                          <option key={c} value={c}>
+                            {choiceLabels[c] ?? c}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type={f.secret ? "password" : "text"}
+                        value={form[f.key] ?? ""}
+                        onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
+                        placeholder={f.savedMask ?? undefined}
+                        autoComplete="off"
+                        data-testid={`connect-field-${f.key}`}
+                        className="mt-1 block w-full min-h-11 rounded-control border border-hairline bg-surface px-3 font-mono text-sm dark:bg-surface-dark dark:border-white/15"
+                      />
+                    )}
                     {help && <span className="mt-1 block text-xs leading-relaxed text-ink-muted">{help}</span>}
                   </label>
                 );

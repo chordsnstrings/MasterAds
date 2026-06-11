@@ -197,7 +197,27 @@ export const STRINGS = {
       "snapchat.pixel_id": "Snapchat Events Manager \u2192 your web events ID.",
       "pinterest.ad_account_id":
         "Which exact ad account \u2014 Pinterest Ads \u2192 Account overview.",
+      "ai.api_key": "From your AI provider's dashboard (kept on your server, shown only masked).",
+      "ai.model": "Optional \u2014 a specific model name; a sensible default is used otherwise.",
+      "ai.base_url": "Only for Llama-style hosts: the address of your compatible server.",
+      "ai.mode":
+        "Test writes practice copy for free. Live uses your key for real writing and decisions.",
     } as Record<string, string>,
+    aiName: "AI writing & decisions",
+    aiFieldLabels: {
+      provider: "Provider",
+      api_key: "API key",
+      model: "Model (optional)",
+      base_url: "Server address (Llama hosts)",
+      mode: "How to run",
+    } as Record<string, string>,
+    aiProviders: {
+      anthropic: "Anthropic (Claude)",
+      openai: "OpenAI",
+      deepseek: "DeepSeek",
+      llama: "Llama (compatible host)",
+    } as Record<string, string>,
+    aiModeChoices: { test: "Test \u2014 practice copy, free", live: "Live \u2014 use my key" } as Record<string, string>,
     tracking: "Results tracking",
     trackingHint: "How reliably your sites tell us what's working.",
     trackingReady: "Reporting well",

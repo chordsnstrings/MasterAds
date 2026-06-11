@@ -201,6 +201,18 @@ export const api = {
   dismissChecklist: () => request<{ ok: boolean }>("POST", "/internal/checklist/dismiss"),
   connections: () =>
     request<{
+      ai: {
+        savedAt: string | null;
+        provider: string | null;
+        mode: string;
+        fields: {
+          key: string;
+          secret: boolean;
+          required: boolean;
+          choices: string[] | null;
+          savedMask: string | null;
+        }[];
+      };
       platforms: {
         platform: string;
         adAccountRef: string | null;

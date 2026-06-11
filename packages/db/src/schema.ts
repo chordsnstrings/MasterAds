@@ -423,7 +423,7 @@ export const adAccounts = pgTable("ad_accounts", {
 export const platformConnections = pgTable("platform_connections", {
   id: text("id").primaryKey(),
   platform: text("platform", {
-    enum: ["meta", "google", "tiktok", "snapchat", "pinterest"],
+    enum: ["meta", "google", "tiktok", "snapchat", "pinterest", "ai"],
   })
     .notNull()
     .unique(),

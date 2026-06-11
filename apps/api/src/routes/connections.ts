@@ -5,10 +5,12 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import {
+  AI_CONNECTION_FIELDS,
   CONNECTION_FIELDS,
   CONNECTION_PLATFORMS,
   accountRefField,
   maskCredential,
+  missingAiRequired,
   missingRequired,
   type Platform,
 } from "@engine/core";
@@ -20,7 +22,25 @@ const saveBody = z.object({
 export async function connectionsRoutes(app: FastifyInstance): Promise<void> {
   app.get("/internal/connections", async () => {
     const saved = await app.repos.platformConnections.list();
+    const aiRow = saved.find((r) => r.platform === "ai");
     return {
+      ai: {
+        savedAt: aiRow?.updatedAt ?? null,
+        provider: aiRow?.credentials.provider ?? null,
+        mode: aiRow?.credentials.mode ?? "test",
+        fields: AI_CONNECTION_FIELDS.map((f) => ({
+          key: f.key,
+          secret: f.secret,
+          required: f.required,
+          choices: f.choices ?? null,
+          savedMask:
+            aiRow?.credentials[f.key] !== undefined
+              ? f.secret
+                ? maskCredential(aiRow.credentials[f.key]!)
+                : aiRow.credentials[f.key]!
+              : null,
+        })),
+      },
       platforms: CONNECTION_PLATFORMS.map((platform) => {
         const row = saved.find((r) => r.platform === platform);
         return {
@@ -42,25 +62,37 @@ export async function connectionsRoutes(app: FastifyInstance): Promise<void> {
   app.post<{ Params: { platform: string } }>(
     "/internal/connections/:platform",
     async (req, reply) => {
-      const platform = req.params.platform as Platform;
-      if (!CONNECTION_PLATFORMS.includes(platform)) {
+      const platform = req.params.platform as Platform | "ai";
+      if (platform !== "ai" && !CONNECTION_PLATFORMS.includes(platform)) {
         return reply.status(404).send({ error: "unknown_platform" });
       }
       const body = saveBody.safeParse(req.body);
       if (!body.success) return reply.status(400).send({ error: "invalid_body" });
 
       // Blank values mean "keep what's saved": merge onto the existing row.
+      const validKeys =
+        platform === "ai"
+          ? AI_CONNECTION_FIELDS.map((f) => f.key as string)
+          : CONNECTION_FIELDS[platform].map((f) => f.key);
       const existing = await app.repos.platformConnections.get(platform);
       const incoming = Object.fromEntries(
         Object.entries(body.data.credentials)
-          .map(([k, v]) => [k, v.trim()])
-          .filter(([k, v]) => v !== "" && CONNECTION_FIELDS[platform].some((f) => f.key === k)),
+          .map(([k, v]) => [k, v.trim()] as [string, string])
+          .filter(([k, v]) => v !== "" && validKeys.includes(k)),
       ) as Record<string, string>;
       const merged = { ...(existing?.credentials ?? {}), ...incoming };
 
-      const missing = missingRequired(platform, merged);
+      const missing = platform === "ai" ? missingAiRequired(merged) : missingRequired(platform, merged);
       if (missing.length > 0) {
         return reply.status(400).send({ error: "missing_fields", missing });
+      }
+
+      if (platform === "ai") {
+        await app.repos.platformConnections.upsert("ai", merged);
+        // Available to this process now; workers on next start.
+        const { applyStoredConnections } = await import("@engine/core");
+        await applyStoredConnections(app.repos);
+        return { platform: "ai", adAccountRef: null, saved: Object.keys(merged) };
       }
 
       const refKey = accountRefField(platform)?.key;

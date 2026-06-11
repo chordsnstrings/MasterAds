@@ -99,6 +99,41 @@ describe("platform connections (W7)", () => {
     expect(applied).not.toContain("SNAPCHAT_PIXEL_ID");
   });
 
+  it("AI provider connects through the same path (provider + key, masked, applied)", async () => {
+    delete process.env.LLM_PROVIDER;
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.LLM_MODE;
+    const bad = await app.inject({
+      method: "POST",
+      url: "/internal/connections/ai",
+      payload: { credentials: { provider: "openai" } },
+    });
+    expect(bad.statusCode).toBe(400);
+    expect((bad.json() as { missing: string[] }).missing).toContain("api_key");
+
+    const ok = await app.inject({
+      method: "POST",
+      url: "/internal/connections/ai",
+      payload: {
+        credentials: { provider: "openai", api_key: "sk-test-openai-9876", mode: "live" },
+      },
+    });
+    expect(ok.statusCode).toBe(200);
+    // Applied to the running process (env precedence rules unchanged).
+    expect(process.env.LLM_PROVIDER).toBe("openai");
+    expect(process.env.OPENAI_API_KEY).toBe("sk-test-openai-9876");
+    expect(process.env.LLM_MODE).toBe("live");
+    // Masked on read.
+    const res = await app.inject({ method: "GET", url: "/internal/connections" });
+    const ai = (res.json() as { ai: { provider: string; fields: { key: string; savedMask: string | null }[] } }).ai;
+    expect(ai.provider).toBe("openai");
+    expect(ai.fields.find((f) => f.key === "api_key")?.savedMask).toBe("····9876");
+    expect(JSON.stringify(res.json())).not.toContain("sk-test-openai-9876");
+    delete process.env.LLM_PROVIDER;
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.LLM_MODE;
+  });
+
   it("unknown platform → 404", async () => {
     const res = await app.inject({
       method: "POST",

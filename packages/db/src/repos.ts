@@ -497,7 +497,7 @@ export function createRepos(db: Db) {
 
     platformConnections: {
       async upsert(
-        platform: "meta" | "google" | "tiktok" | "snapchat" | "pinterest",
+        platform: "meta" | "google" | "tiktok" | "snapchat" | "pinterest" | "ai",
         credentials: Record<string, string>,
         adAccountRef?: string,
       ): Promise<PlatformConnection> {
@@ -523,7 +523,7 @@ export function createRepos(db: Db) {
         return r!;
       },
       async get(
-        platform: "meta" | "google" | "tiktok" | "snapchat" | "pinterest",
+        platform: "meta" | "google" | "tiktok" | "snapchat" | "pinterest" | "ai",
       ): Promise<PlatformConnection | undefined> {
         return (
           await db.select().from(platformConnections).where(eq(platformConnections.platform, platform))

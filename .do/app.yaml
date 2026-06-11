@@ -69,9 +69,6 @@ services:
       - key: PINTEREST_MODE
         scope: RUN_TIME
         value: stub
-      - key: LLM_MODE
-        scope: RUN_TIME
-        value: stub
       - key: CREATIVE_MODE
         scope: RUN_TIME
         value: stub
@@ -129,9 +126,6 @@ workers:
         scope: RUN_TIME
         value: stub
       - key: PINTEREST_MODE
-        scope: RUN_TIME
-        value: stub
-      - key: LLM_MODE
         scope: RUN_TIME
         value: stub
       - key: CREATIVE_MODE
@@ -244,9 +238,6 @@ workers:
         scope: RUN_TIME
         value: stub
       - key: PINTEREST_MODE
-        scope: RUN_TIME
-        value: stub
-      - key: LLM_MODE
         scope: RUN_TIME
         value: stub
       - key: CREATIVE_MODE
