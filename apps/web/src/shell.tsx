@@ -2,8 +2,30 @@
 // indicator. Bottom tab bar under 640px (UX §12). Frosted-glass chrome with
 // gentle motion; route changes cross-fade (collapses under reduced-motion).
 import { NavLink, Link, useLocation } from "react-router-dom";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { STRINGS } from "./strings";
+
+/** Light is the default look; dark is an explicit, persisted choice. */
+function ThemeToggle(): JSX.Element {
+  const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
+  const toggle = (): void => {
+    const next = !dark;
+    document.documentElement.classList.toggle("dark", next);
+    localStorage.setItem("theme", next ? "dark" : "light");
+    setDark(next);
+  };
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label={dark ? STRINGS.common.themeToLight : STRINGS.common.themeToDark}
+      title={dark ? STRINGS.common.themeToLight : STRINGS.common.themeToDark}
+      className="grid h-11 w-11 place-items-center rounded-full text-ink-muted hover:bg-ink/[0.04] hover:text-ink dark:hover:bg-white/5 dark:hover:text-white"
+    >
+      <span aria-hidden="true">{dark ? "☀" : "☾"}</span>
+    </button>
+  );
+}
 
 const DESTINATIONS = [
   { to: "/", label: STRINGS.nav.overview, end: true },
@@ -58,12 +80,15 @@ export function AppShell({
               ))}
             </nav>
           </div>
-          <Link
-            to="/add"
-            className="min-h-11 inline-flex items-center rounded-full bg-accent px-5 text-sm font-medium text-white transition-all duration-200 hover:-translate-y-px hover:bg-accent-deep hover:shadow-pop"
-          >
-            {STRINGS.nav.addProduct}
-          </Link>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Link
+              to="/add"
+              className="min-h-11 inline-flex items-center rounded-full bg-accent px-5 text-sm font-medium text-white transition-all duration-200 hover:-translate-y-px hover:bg-accent-deep hover:shadow-pop"
+            >
+              {STRINGS.nav.addProduct}
+            </Link>
+          </div>
         </div>
       </header>
 

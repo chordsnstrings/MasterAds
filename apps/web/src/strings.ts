@@ -184,6 +184,8 @@ export const STRINGS = {
   common: {
     loading: "Loading…",
     currency: "AED",
+    themeToDark: "Switch to dark look",
+    themeToLight: "Switch to light look",
   },
 
   unlock: {
