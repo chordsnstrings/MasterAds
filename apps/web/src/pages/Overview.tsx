@@ -70,7 +70,7 @@ function FirstRunChecklist({
 
 export function ProductGrid({ products }: { products: OverviewData["products"] }): JSX.Element {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {products.map((p, i) => (
         <Link
           key={p.id}
@@ -136,7 +136,7 @@ export default function Overview({
 
       {empty && <FirstRunChecklist checklist={data.checklist} />}
 
-      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-5">
+      <div className="mt-8 grid grid-cols-2 gap-5 lg:grid-cols-5">
         {[
           <KpiTile key="spend" label={STRINGS.kpi.spend} value={<Money value={kpis.spend7d} />} series={kpis.spendSeries} />,
           <KpiTile
@@ -176,8 +176,8 @@ export default function Overview({
 
       {/* Attention area collapses entirely when empty (UX §6.1). */}
       {data.attention.length > 0 && (
-        <section className="mt-8" data-testid="attention-area">
-          <h2 className="text-lg font-semibold">{STRINGS.attention.title}</h2>
+        <section className="mt-10" data-testid="attention-area">
+          <h2 className="text-lg font-semibold tracking-tight">{STRINGS.attention.title}</h2>
           <Card className="mt-3">
             {data.attention.map((a) => (
               <AttentionCard key={a.id} item={a} onFix={handleFix} />
@@ -186,9 +186,9 @@ export default function Overview({
         </section>
       )}
 
-      <section className="mt-8">
+      <section className="mt-10">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{STRINGS.nav.products}</h2>
+          <h2 className="text-lg font-semibold tracking-tight">{STRINGS.nav.products}</h2>
           <Link to="/add" className="min-h-11 inline-flex items-center rounded-control px-3 text-sm text-accent">
             {STRINGS.nav.addShort}
           </Link>

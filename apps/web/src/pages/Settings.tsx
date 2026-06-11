@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { STRINGS } from "../strings";
 import { api, type SettingsData } from "../api";
-import { Card, Num, Section } from "../components";
+import { Card, Dialog, Num, PageHeader, Section } from "../components";
 
 export default function Settings(): JSX.Element {
   const [data, setData] = useState<SettingsData | null>(null);
@@ -12,6 +12,7 @@ export default function Settings(): JSX.Element {
   const [siteList, setSiteList] = useState<{ sourceSite: string; label: string | null }[]>([]);
   const [newSite, setNewSite] = useState("");
   const [issuedKey, setIssuedKey] = useState<{ site: string; key: string } | null>(null);
+  const [connectFor, setConnectFor] = useState<string | null>(null);
 
   async function reload(): Promise<void> {
     const d = await api.settings();
@@ -45,14 +46,14 @@ export default function Settings(): JSX.Element {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">{STRINGS.settings.title}</h1>
-      <div className="mt-6 max-w-2xl">
+      <PageHeader title={STRINGS.settings.title} intro={STRINGS.pageIntro.settings} />
+      <div className="max-w-2xl">
         <Section title={STRINGS.settings.connections}>
           <Card>
             {data.connections.map((c) => (
               <div
                 key={c.platform}
-                className="flex min-h-14 items-center justify-between border-b border-hairline px-4 last:border-b-0 dark:border-white/10"
+                className="flex min-h-16 items-center justify-between border-b border-hairline/70 px-5 transition-colors duration-150 last:border-b-0 hover:bg-ink/[0.015] dark:border-white/10 dark:hover:bg-white/[0.02]"
               >
                 <span>{STRINGS.platformNames[c.platform] ?? c.platform}</span>
                 <span className="flex items-center gap-3 text-sm">
@@ -72,7 +73,12 @@ export default function Settings(): JSX.Element {
                         : STRINGS.settings.notConnected}
                     </span>
                   )}
-                  <button type="button" className="min-h-11 rounded-control px-3 text-accent">
+                  <button
+                    type="button"
+                    data-testid="connect-button"
+                    onClick={() => setConnectFor(c.platform)}
+                    className="min-h-11 rounded-control px-3 text-accent hover:bg-accent-soft dark:hover:bg-accent/15"
+                  >
                     {c.connected && c.mode === "live" ? STRINGS.settings.reconnect : STRINGS.settings.connect}
                   </button>
                 </span>
@@ -81,8 +87,44 @@ export default function Settings(): JSX.Element {
           </Card>
         </Section>
 
+        {connectFor && (
+          <Dialog
+            title={STRINGS.settings.connectTitle(STRINGS.platformNames[connectFor] ?? connectFor)}
+            onClose={() => setConnectFor(null)}
+          >
+            <p className="mt-3 text-sm text-ink-muted">{STRINGS.settings.connectIntro}</p>
+            <ol className="mt-3 space-y-3">
+              {[
+                STRINGS.settings.connectStep1,
+                STRINGS.settings.connectStep2,
+                STRINGS.settings.connectStep3,
+              ].map((step, i) => (
+                <li key={i} className="flex gap-3 text-sm leading-relaxed">
+                  <span
+                    aria-hidden="true"
+                    className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-accent-soft font-mono text-xs text-accent dark:bg-accent/15"
+                  >
+                    {i + 1}
+                  </span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+            <p className="mt-4 rounded-control bg-attention/10 p-3 text-xs leading-relaxed text-attention-deep">
+              {STRINGS.settings.connectTestNote}
+            </p>
+            <button
+              type="button"
+              onClick={() => setConnectFor(null)}
+              className="mt-5 min-h-11 w-full rounded-control bg-accent text-sm font-medium text-white hover:bg-accent-deep"
+            >
+              {STRINGS.settings.connectClose}
+            </button>
+          </Dialog>
+        )}
+
         <Section title={STRINGS.sitesSection.title} hint={STRINGS.sitesSection.hint}>
-          <Card className="p-4">
+          <Card className="p-5">
             {siteList.length === 0 && (
               <p className="text-sm text-ink-muted">{STRINGS.sitesSection.empty}</p>
             )}
@@ -117,6 +159,9 @@ export default function Settings(): JSX.Element {
                 {STRINGS.sitesSection.addButton}
               </button>
             </div>
+            <p className="mt-2 text-xs leading-relaxed text-ink-muted">
+              {STRINGS.sitesSection.addHint}
+            </p>
             {issuedKey && (
               <div className="mt-3 rounded-control bg-accent-soft p-3 text-xs" data-testid="issued-key">
                 <p className="font-medium">{STRINGS.sitesSection.keyNotice}</p>
@@ -131,7 +176,7 @@ export default function Settings(): JSX.Element {
         </Section>
 
         <Section title={STRINGS.settings.tracking} hint={STRINGS.settings.trackingHint}>
-          <Card className="p-4">
+          <Card className="p-5">
             {coverageBySite.size === 0 && (
               <p className="text-sm text-ink-muted">{STRINGS.kpi.noData}</p>
             )}
@@ -184,7 +229,7 @@ export default function Settings(): JSX.Element {
         </Section>
 
         <Section title={STRINGS.settings.guardrails} hint={STRINGS.settings.guardrailsHint}>
-          <Card className="space-y-4 p-4">
+          <Card className="space-y-4 p-5">
             {(
               [
                 ["globalDailyCap", STRINGS.settings.globalCap],
@@ -233,8 +278,8 @@ export default function Settings(): JSX.Element {
           </Card>
         </Section>
 
-        <Section title={STRINGS.settings.brandKit}>
-          <Card className="space-y-3 p-4">
+        <Section title={STRINGS.settings.brandKit} hint={STRINGS.settings.brandKitHint}>
+          <Card className="space-y-3 p-5">
             {(
               [
                 ["logoUrl", STRINGS.settings.brandLogo],
@@ -272,7 +317,7 @@ export default function Settings(): JSX.Element {
             {data.autonomy.map((a) => (
               <div
                 key={a.productId}
-                className="flex min-h-12 items-center justify-between border-b border-hairline px-4 text-sm last:border-b-0 dark:border-white/10"
+                className="flex min-h-14 items-center justify-between border-b border-hairline/70 px-5 text-sm last:border-b-0 dark:border-white/10"
               >
                 <span>{a.title}</span>
                 <span className={a.autonomous ? "text-positive" : "text-ink-muted"}>
@@ -289,7 +334,7 @@ export default function Settings(): JSX.Element {
               data.pendingSignoffs.map((p) => (
                 <div
                   key={p.id}
-                  className="flex min-h-12 items-center justify-between border-b border-hairline px-4 text-sm last:border-b-0 dark:border-white/10"
+                  className="flex min-h-14 items-center justify-between border-b border-hairline/70 px-5 text-sm last:border-b-0 dark:border-white/10"
                 >
                   <span>{p.vertical.replace(/_/g, " ")}</span>
                   <button

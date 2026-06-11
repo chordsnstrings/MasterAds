@@ -14,6 +14,12 @@ export const STRINGS = {
     addShort: "+ Add",
   },
 
+  pageIntro: {
+    products: "Everything you're advertising, in one place.",
+    activity: "Every move the engine makes, in plain words — tap \u201cwhy\u201d for the evidence.",
+    settings: "Where ads show, how results are counted, and the limits the engine can never cross.",
+  },
+
   headline: {
     running: "Everything is running.",
     learning: "Learning what works.",
@@ -80,6 +86,7 @@ export const STRINGS = {
     activityTitle: "What the engine did",
     why: "why",
     pause: "Pause",
+    pauseHint: "Stops spending within minutes. Everything is kept, so you can resume any time.",
     resume: "Resume",
     adjust: "Adjust goal & budget",
     spent: "spent",
@@ -142,13 +149,25 @@ export const STRINGS = {
     notConnected: "Not connected",
     reconnect: "Reconnect",
     connect: "Connect",
+    connectTitle: (name: string): string => `Connect ${name}`,
+    connectIntro: "Here's what happens when you connect:",
+    connectStep1:
+      "Your developer adds this account's access keys to the server settings. Keys are never typed into this screen, so they can't leak from here.",
+    connectStep2:
+      "The engine checks the link and billing are healthy. The status here turns green when that check passes \u2014 and it keeps re-checking every few hours.",
+    connectStep3:
+      "From then on, your ads run on the real account and results flow back automatically. Nothing else changes \u2014 same screens, same controls.",
+    connectTestNote:
+      "Until then this channel runs in test mode: everything works end to end on practice data and no money is spent.",
+    connectClose: "Got it",
     tracking: "Results tracking",
     trackingHint: "How reliably your sites tell us what's working.",
     trackingReady: "Reporting well",
     trackingPartial: "Partial — some results can't be tied to their ads",
     trackingPoor: "Weak — connect your site so we can see what's working",
     guardrails: "Spending limits",
-    guardrailsHint: "Hard limits the engine can never cross.",
+    guardrailsHint:
+      "Hard limits the engine can never cross. Saved when you click away; they apply to every decision immediately.",
     globalCap: "Daily limit across everything",
     perProductCap: "Daily limit per product",
     maxStep: "Biggest single change",
@@ -157,6 +176,7 @@ export const STRINGS = {
     killSwitchOn: "Stopped — nothing is being spent",
     killSwitchOff: "Running normally",
     brandKit: "Brand kit",
+    brandKitHint: "Used in every ad we create. Changes apply from the next batch onward.",
     brandLogo: "Logo address",
     brandColor: "Main color",
     brandFont: "Font",
@@ -199,6 +219,8 @@ export const STRINGS = {
     hint: "Sites that report results to the engine.",
     addLabel: "Site name",
     addButton: "Add site",
+    addHint:
+      "You'll get a key and a one-line snippet to paste into your site. Results start appearing here within minutes of installing it.",
     keyNotice: "Copy this key now — it won't be shown again.",
     snippetNotice: "Then add this one line to your site, and results start flowing:",
     empty: "No sites yet. Add one to start measuring results.",

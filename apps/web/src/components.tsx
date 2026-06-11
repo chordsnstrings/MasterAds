@@ -1,6 +1,6 @@
 // Component library — minimal modern surface, monospace numerics, gentle
 // motion (all animation collapses under prefers-reduced-motion).
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { STRINGS } from "./strings";
 import type { ActivityEntry, AttentionItem } from "./api";
 
@@ -95,9 +95,9 @@ export function KpiTile({
   series?: number[];
 }): JSX.Element {
   return (
-    <div className="rounded-card border border-hairline/70 bg-surface p-5 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover dark:border-white/10 dark:bg-surface-dark">
+    <div className="h-full rounded-card border border-hairline/70 bg-surface p-6 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover dark:border-white/10 dark:bg-surface-dark">
       <div className="text-[13px] font-medium text-ink-muted">{label}</div>
-      <div className="mt-1.5 text-2xl font-semibold tracking-tight">{value}</div>
+      <div className="mt-2 text-3xl font-semibold tracking-tight">{value}</div>
       {hint && <div className="mt-1 text-xs leading-relaxed text-ink-muted">{hint}</div>}
       {series && <Sparkline series={series} />}
     </div>
@@ -251,6 +251,109 @@ export function Card({ children, className = "" }: { children: ReactNode; classN
       className={`rounded-card border border-hairline/70 bg-surface shadow-card dark:border-white/10 dark:bg-surface-dark ${className}`}
     >
       {children}
+    </div>
+  );
+}
+
+/** Consistent page header: large title, one-line intro, optional actions. */
+export function PageHeader({
+  title,
+  intro,
+  actions,
+  titleTestId,
+}: {
+  title: string;
+  intro?: string;
+  actions?: ReactNode;
+  titleTestId?: string;
+}): JSX.Element {
+  return (
+    <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <div className="max-w-2xl">
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl" data-testid={titleTestId}>
+          {title}
+        </h1>
+        {intro && <p className="mt-2 text-sm leading-relaxed text-ink-muted">{intro}</p>}
+      </div>
+      {actions && <div className="flex shrink-0 items-center gap-3">{actions}</div>}
+    </div>
+  );
+}
+
+/** Friendly empty state with a single clear next step. */
+export function EmptyState({
+  message,
+  action,
+}: {
+  message: string;
+  action?: ReactNode;
+}): JSX.Element {
+  return (
+    <Card className="grid place-items-center gap-4 p-14 text-center motion-safe:animate-fade-up">
+      <span
+        aria-hidden="true"
+        className="grid h-12 w-12 place-items-center rounded-full bg-accent-soft text-xl text-accent dark:bg-accent/15"
+      >
+        ◐
+      </span>
+      <p className="max-w-sm text-sm leading-relaxed text-ink-muted">{message}</p>
+      {action}
+    </Card>
+  );
+}
+
+/** Accessible modal: overlay click and Escape close it; focus moves inside. */
+export function Dialog({
+  title,
+  onClose,
+  children,
+}: {
+  title: string;
+  onClose: () => void;
+  children: ReactNode;
+}): JSX.Element {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    ref.current?.focus();
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return (
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-ink/30 p-4 backdrop-blur-sm motion-safe:animate-fade-in dark:bg-black/50"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        ref={ref}
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md rounded-card border border-hairline/70 bg-surface p-6 shadow-card-hover outline-none motion-safe:animate-scale-in dark:border-white/10 dark:bg-surface-dark"
+      >
+        <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** Loading placeholder mirroring the page rhythm (decorative; aria-busy). */
+export function PageSkeleton(): JSX.Element {
+  return (
+    <div aria-busy="true" className="motion-safe:animate-fade-in">
+      <span className="sr-only">{STRINGS.common.loading}</span>
+      <div className="h-9 w-72 animate-pulse rounded-control bg-ink/5 dark:bg-white/5" />
+      <div className="mt-8 grid grid-cols-2 gap-5 lg:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="h-28 animate-pulse rounded-card bg-ink/5 dark:bg-white/5" />
+        ))}
+      </div>
+      <div className="mt-8 h-64 animate-pulse rounded-card bg-ink/5 dark:bg-white/5" />
     </div>
   );
 }

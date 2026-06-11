@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { api, ApiError, type AttentionItem, type OverviewData } from "./api";
 import { AppShell } from "./shell";
-import { STRINGS } from "./strings";
+import { PageSkeleton } from "./components";
 import Overview from "./pages/Overview";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
@@ -45,7 +45,7 @@ export default function App(): JSX.Element {
     <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "")}>
       <AppShell attentionCount={overview?.attention.length ?? 0}>
         {overview === null ? (
-          <p className="text-ink-muted">{STRINGS.common.loading}</p>
+          <PageSkeleton />
         ) : (
           <Routes>
             <Route path="/" element={<Overview data={overview} onResolve={resolveAttention} />} />

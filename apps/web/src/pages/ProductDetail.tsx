@@ -27,7 +27,7 @@ export default function ProductDetail(): JSX.Element {
     void reload();
   }, [id]);
 
-  if (!data) return <p className="text-ink-muted">{STRINGS.common.loading}</p>;
+  if (!data) return <p aria-busy="true" className="text-ink-muted">{STRINGS.common.loading}</p>;
   const { product, metrics, funnel, activity, spec } = data;
   const paused = product.status === "paused";
 
@@ -57,8 +57,8 @@ export default function ProductDetail(): JSX.Element {
           ← {STRINGS.nav.products}
         </Link>
       </nav>
-      <div className="mt-2 flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">{product.title}</h1>
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{product.title}</h1>
         <StatusChip status={product.status} />
       </div>
 
@@ -166,12 +166,14 @@ export default function ProductDetail(): JSX.Element {
           </div>
         </Card>
       ) : (
-        <div className="sticky bottom-14 mt-8 flex gap-3 bg-canvas/90 py-3 backdrop-blur sm:bottom-0 dark:bg-canvas-dark/90">
+        <div className="sticky bottom-14 mt-8 bg-canvas/90 py-3 backdrop-blur sm:bottom-0 dark:bg-canvas-dark/90">
+          <div className="flex gap-3">
           <button
             type="button"
             data-testid="pause-button"
             onClick={() => void togglePause()}
-            className="min-h-11 flex-1 rounded-control border border-hairline bg-surface px-5 text-sm font-medium sm:flex-none dark:bg-surface-dark dark:border-white/15"
+            title={STRINGS.product.pauseHint}
+            className="min-h-11 flex-1 rounded-control border border-hairline bg-surface px-5 text-sm font-medium transition-colors hover:border-ink/20 sm:flex-none dark:bg-surface-dark dark:border-white/15 dark:hover:border-white/30"
           >
             {paused ? STRINGS.product.resume : STRINGS.product.pause}
           </button>
@@ -182,6 +184,8 @@ export default function ProductDetail(): JSX.Element {
           >
             {STRINGS.product.adjust}
           </button>
+          </div>
+          <p className="mt-2 text-xs text-ink-muted">{STRINGS.product.pauseHint}</p>
         </div>
       )}
     </div>

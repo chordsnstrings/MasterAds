@@ -49,7 +49,12 @@ export function AppShell({
         : "text-ink-muted hover:bg-ink/[0.04] hover:text-ink dark:hover:bg-white/5 dark:hover:text-white"
     }`;
   return (
-    <div className="min-h-screen bg-canvas text-ink dark:bg-canvas-dark dark:text-white">
+    <div className="relative min-h-screen bg-canvas text-ink dark:bg-canvas-dark dark:text-white">
+      {/* Ambient glow behind the header — pure decoration. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(60%_100%_at_50%_0%,rgb(79_70_229_/_0.06),transparent)] dark:bg-[radial-gradient(60%_100%_at_50%_0%,rgb(79_70_229_/_0.12),transparent)]"
+      />
       {/* Top bar (hidden on phones) */}
       <header className="sticky top-0 z-10 hidden border-b border-hairline/70 bg-canvas/80 backdrop-blur-xl sm:block dark:border-white/10 dark:bg-canvas-dark/80">
         <div className="mx-auto flex max-w-[1200px] items-center justify-between px-6 py-3">
@@ -94,7 +99,7 @@ export function AppShell({
 
       <main
         key={pathname}
-        className="mx-auto max-w-[1200px] px-4 pb-28 pt-6 motion-safe:animate-fade-in sm:px-6 sm:pb-12 sm:pt-8"
+        className="relative mx-auto max-w-[1200px] px-5 pb-28 pt-6 motion-safe:animate-fade-in sm:px-8 sm:pb-16 sm:pt-10"
       >
         {children}
       </main>

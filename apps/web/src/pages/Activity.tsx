@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { STRINGS } from "../strings";
 import { api, type ActivityEntry } from "../api";
-import { ActivityItem, Card } from "../components";
+import { ActivityItem, Card, PageHeader } from "../components";
 
 const FILTERS = [
   { key: "", label: STRINGS.activity.filterAll },
@@ -23,8 +23,12 @@ export default function Activity(): JSX.Element {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">{STRINGS.activity.title}</h1>
-      <div className="mt-4 flex flex-wrap gap-2" role="tablist" aria-label="Filter">
+      <PageHeader title={STRINGS.activity.title} intro={STRINGS.pageIntro.activity} />
+      <div
+        className="inline-flex max-w-full flex-wrap gap-1 rounded-full bg-ink/[0.04] p-1 dark:bg-white/5"
+        role="tablist"
+        aria-label="Filter"
+      >
         {FILTERS.map((f) => (
           <button
             key={f.key}
@@ -32,17 +36,17 @@ export default function Activity(): JSX.Element {
             role="tab"
             aria-selected={filter === f.key}
             onClick={() => setFilter(f.key)}
-            className={`min-h-11 rounded-control px-4 text-sm ${
+            className={`min-h-11 rounded-full px-4 text-sm ${
               filter === f.key
-                ? "bg-accent text-white"
-                : "border border-hairline bg-surface text-ink-muted dark:bg-surface-dark dark:border-white/15"
+                ? "bg-surface font-medium text-ink shadow-card dark:bg-surface-dark dark:text-white"
+                : "text-ink-muted hover:text-ink dark:hover:text-white"
             }`}
           >
             {f.label}
           </button>
         ))}
       </div>
-      <Card className="mt-4">
+      <Card className="mt-5">
         {items.length === 0 ? (
           <p className="p-4 text-sm text-ink-muted">{STRINGS.activity.empty}</p>
         ) : (
