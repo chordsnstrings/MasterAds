@@ -1,5 +1,6 @@
 // Platform campaign adapters (SW §5.5, §7.3, §12) for the AI campaign types:
-// Meta Advantage+, Google Performance Max, TikTok Smart+. Live/stub drivers.
+// Meta Advantage+, Google Performance Max, TikTok Smart+, Snapchat automated
+// (auto-bid), Pinterest Performance+. Live/stub drivers.
 //
 // Invariants enforced here, in every write method:
 //  - assertApproved(action): only guardrail-approved action objects execute.
@@ -86,6 +87,37 @@ const TIKTOK_OBJECTIVES: Record<CreateCampaignAction["payload"]["objective"], st
   installs: "APP_PROMOTION",
   visits: "TRAFFIC",
 };
+const SNAP_OPT_EVENTS: Record<string, string> = {
+  Purchase: "PIXEL_PURCHASE",
+  InitiateCheckout: "PIXEL_START_CHECKOUT",
+  AddToCart: "PIXEL_ADD_TO_CART",
+  ViewContent: "PIXEL_PAGE_VIEW",
+  Lead: "LEAD_FORM_SUBMISSIONS",
+  CompleteRegistration: "PIXEL_SIGNUP",
+  Install: "APP_INSTALLS",
+};
+const SNAP_OBJECTIVES: Record<CreateCampaignAction["payload"]["objective"], string> = {
+  purchases: "WEB_CONVERSION",
+  leads: "LEAD_GENERATION",
+  registrations: "WEB_CONVERSION",
+  installs: "APP_INSTALL",
+  visits: "WEB_VIEW",
+};
+const PINTEREST_CONVERSION_EVENTS: Record<string, string> = {
+  Purchase: "CHECKOUT",
+  InitiateCheckout: "CHECKOUT",
+  AddToCart: "ADD_TO_CART",
+  ViewContent: "PAGE_VISIT",
+  Lead: "LEAD",
+  CompleteRegistration: "SIGNUP",
+};
+const PINTEREST_OBJECTIVES: Record<CreateCampaignAction["payload"]["objective"], string> = {
+  purchases: "WEB_CONVERSION",
+  leads: "WEB_CONVERSION",
+  registrations: "WEB_CONVERSION",
+  installs: "WEB_CONVERSION",
+  visits: "WEB_SESSIONS",
+};
 const GOOGLE_CONVERSION_GOALS: Record<string, string> = {
   Purchase: "purchase",
   InitiateCheckout: "begin_checkout",
@@ -146,6 +178,35 @@ const tiktokCreateSchema = z
     creative_asset_ids: z.array(z.string()),
     landing_page_url: z.string().url(),
     product_ids: z.array(z.string()),
+  })
+  .strict();
+
+const snapchatCreateSchema = z
+  .object({
+    name: z.string(),
+    status: z.literal("PAUSED"),
+    objective: z.string(),
+    auto_bid: z.literal(true),
+    daily_budget_micro: z.number().int().positive(),
+    optimization_goal: z.string(),
+    creative_ids: z.array(z.string()),
+    web_view_url: z.string().url(),
+    item_ids: z.array(z.string()),
+    regulated_content: z.boolean(),
+  })
+  .strict();
+
+const pinterestCreateSchema = z
+  .object({
+    name: z.string(),
+    status: z.literal("PAUSED"),
+    objective_type: z.string(),
+    is_performance_plus: z.literal(true),
+    daily_spend_cap: z.number().int().positive(), // microcurrency
+    conversion_event: z.string(),
+    creative_ids: z.array(z.string()),
+    destination_url: z.string().url(),
+    content_ids: z.array(z.string()),
   })
   .strict();
 
@@ -347,6 +408,51 @@ export function createTikTokPlatform(opts: PlatformAdapterOptions): PlatformAdap
   );
 }
 
+export function createSnapchatPlatform(opts: PlatformAdapterOptions): PlatformAdapter {
+  return makeAdapter(
+    "snapchat",
+    { ...opts, mode: opts.mode ?? driverMode("SNAPCHAT_MODE") },
+    (a) => ({
+      name: a.payload.name,
+      status: "PAUSED",
+      objective: SNAP_OBJECTIVES[a.payload.objective],
+      auto_bid: true,
+      daily_budget_micro: Math.round(a.payload.dailyBudget * 1_000_000),
+      optimization_goal: SNAP_OPT_EVENTS[a.payload.optimizationEvent] ?? "PIXEL_PURCHASE",
+      creative_ids: a.payload.creativeIds,
+      web_view_url: a.payload.destinationUrl,
+      item_ids: a.payload.contentIds,
+      regulated_content: a.payload.policyCategory === "restricted",
+    }),
+    snapchatCreateSchema,
+    async () => {
+      throw new Error("snapchat live create requires P5 credentials (see BLOCKED.md)");
+    },
+  );
+}
+
+export function createPinterestPlatform(opts: PlatformAdapterOptions): PlatformAdapter {
+  return makeAdapter(
+    "pinterest",
+    { ...opts, mode: opts.mode ?? driverMode("PINTEREST_MODE") },
+    (a) => ({
+      name: a.payload.name,
+      status: "PAUSED",
+      objective_type: PINTEREST_OBJECTIVES[a.payload.objective],
+      is_performance_plus: true,
+      daily_spend_cap: Math.round(a.payload.dailyBudget * 1_000_000),
+      conversion_event: PINTEREST_CONVERSION_EVENTS[a.payload.optimizationEvent] ?? "CHECKOUT",
+      creative_ids: a.payload.creativeIds,
+      destination_url: a.payload.destinationUrl,
+      content_ids: a.payload.contentIds,
+    }),
+    pinterestCreateSchema,
+    async () => {
+      throw new Error("pinterest live create requires P5 credentials (see BLOCKED.md)");
+    },
+  );
+}
+
 export function createPlatformAdapters(
   opts: PlatformAdapterOptions,
 ): Record<Platform, PlatformAdapter> {
@@ -354,5 +460,7 @@ export function createPlatformAdapters(
     meta: createMetaPlatform(opts),
     google: createGooglePlatform(opts),
     tiktok: createTikTokPlatform(opts),
+    snapchat: createSnapchatPlatform(opts),
+    pinterest: createPinterestPlatform(opts),
   };
 }

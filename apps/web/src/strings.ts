@@ -161,6 +161,8 @@ export const STRINGS = {
     meta: "Instagram & Facebook",
     google: "Google",
     tiktok: "TikTok",
+    snapchat: "Snapchat",
+    pinterest: "Pinterest",
   } as Record<string, string>,
 
   common: {

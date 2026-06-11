@@ -5,7 +5,7 @@
 // The mutation-path audit (GATE G8) verifies `approveAction(` is called only here
 // and in guardrails/execute.ts.
 
-export type Platform = "meta" | "google" | "tiktok";
+export type Platform = "meta" | "google" | "tiktok" | "snapchat" | "pinterest";
 
 export interface CreateCampaignAction {
   type: "create_campaign";

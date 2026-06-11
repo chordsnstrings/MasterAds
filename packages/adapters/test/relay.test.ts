@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { ConversionEvent } from "@engine/db";
-import { createGoogleRelay, createMetaRelay, createTikTokRelay } from "../src/index.js";
+import {
+  createGoogleRelay,
+  createMetaRelay,
+  createPinterestRelay,
+  createSnapchatRelay,
+  createTikTokRelay,
+} from "../src/index.js";
 
 const fixtureEvent: ConversionEvent = {
   id: "evt_fixture_1",
@@ -14,6 +20,8 @@ const fixtureEvent: ConversionEvent = {
     fbp: "fb.1.1700000000.111",
     gclid: "g-click-1",
     ttclid: "tt-click-1",
+    sccid: "sc-click-1",
+    epik: "pin-click-1",
   },
   hashedIdentifiers: { email_sha256: "a".repeat(64), phone_sha256: "b".repeat(64) },
   eventId: "order-1",
@@ -56,6 +64,29 @@ describe("relay payload mapping (GATE G3 snapshots)", () => {
     );
   });
 
+  it("snapchat Conversions API payload is byte-correct (W4)", () => {
+    const built = createSnapchatRelay({ mode: "stub" }).buildPayload(fixtureEvent);
+    expect(built.kind).toBe("send");
+    if (built.kind !== "send") return;
+    expect(JSON.stringify(built.payload)).toMatchInlineSnapshot(`"{"pixel_id":"stub-snap-pixel","event_type":"PURCHASE","event_conversion_type":"WEB","timestamp":1780315200000,"client_dedup_id":"order-1","hashed_email":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","hashed_phone_number":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","click_id":"sc-click-1","price":250,"currency":"AED","item_ids":["prod_x"]}"`);
+  });
+
+  it("pinterest Conversions API payload is byte-correct (W4)", () => {
+    const built = createPinterestRelay({ mode: "stub" }).buildPayload(fixtureEvent);
+    expect(built.kind).toBe("send");
+    if (built.kind !== "send") return;
+    expect(JSON.stringify(built.payload)).toMatchInlineSnapshot(`"{"data":[{"event_name":"checkout","action_source":"web","event_time":1780315200,"event_id":"order-1","user_data":{"em":["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"],"ph":["bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"],"click_id":"pin-click-1"},"custom_data":{"content_ids":["prod_x"],"value":"250","currency":"AED"}}]}"`);
+  });
+
+  it("snapchat/pinterest stub sends validate against the recorded schemas", async () => {
+    for (const relay of [createSnapchatRelay({ mode: "stub" }), createPinterestRelay({ mode: "stub" })]) {
+      const built = relay.buildPayload(fixtureEvent);
+      if (built.kind !== "send") throw new Error("expected send");
+      await expect(relay.send(built.payload)).resolves.toBeUndefined();
+      await expect(relay.send({ wrong: true })).rejects.toThrow();
+    }
+  });
+
   it("stub send validates against the recorded platform schema", async () => {
     const meta = createMetaRelay({ mode: "stub" });
     const built = meta.buildPayload(fixtureEvent);
@@ -74,6 +105,8 @@ describe("relay payload mapping (GATE G3 snapshots)", () => {
       createMetaRelay({ mode: "stub" }),
       createGoogleRelay({ mode: "stub" }),
       createTikTokRelay({ mode: "stub" }),
+      createSnapchatRelay({ mode: "stub" }),
+      createPinterestRelay({ mode: "stub" }),
     ]) {
       const built = relay.buildPayload(bare);
       expect(built.kind).toBe("skip");

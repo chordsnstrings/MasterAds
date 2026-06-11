@@ -1,4 +1,4 @@
-// GATE G3 end-to-end in stub mode: POST /v1/events → relayed to all three
+// GATE G3 end-to-end in stub mode: POST /v1/events → relayed to all platform
 // adapters via pg-boss, retried on injected failure, dead-lettered after max
 // attempts, replayable by command, relay status visible per event.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -61,7 +61,7 @@ afterAll(async () => {
 });
 
 describe("relay end-to-end (GATE G3)", () => {
-  it("an ingested event is relayed to all three platforms", async () => {
+  it("an ingested event is relayed to all five platforms", async () => {
     const res = await app.inject({
       method: "POST",
       url: "/v1/events",
@@ -72,11 +72,18 @@ describe("relay end-to-end (GATE G3)", () => {
     const id = (res.json() as { id: string }).id;
     await waitFor(async () => {
       const ev = await repos.conversions.get(id);
+      // The hashed email is an attribution key on every platform: all 5 send.
       const sent = ev?.relayedTo.filter((r) => r.status === "sent") ?? [];
-      return sent.length === 3;
+      return sent.length === 5;
     });
     const ev = await repos.conversions.get(id);
-    expect(ev?.relayedTo.map((r) => r.platform).sort()).toEqual(["google", "meta", "tiktok"]);
+    expect(ev?.relayedTo.map((r) => r.platform).sort()).toEqual([
+      "google",
+      "meta",
+      "pinterest",
+      "snapchat",
+      "tiktok",
+    ]);
   }, 30_000);
 
   it("retries on injected failure then succeeds", async () => {

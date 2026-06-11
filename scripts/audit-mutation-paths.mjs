@@ -8,7 +8,8 @@
 //  2. Every write method in packages/adapters/src/platforms.ts guards with
 //     assertApproved + kill switch via the shared preWrite.
 //  3. No file outside packages/adapters/src calls platform write endpoints
-//     directly (graph.facebook.com / googleads / business-api.tiktok.com).
+//     directly (graph.facebook.com / googleads / business-api.tiktok.com /
+//     tr.snapchat.com / api.pinterest.com).
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
@@ -77,7 +78,7 @@ for (const m of writeMethods) {
 }
 
 // 3. Platform write endpoints only inside packages/adapters/src.
-const ENDPOINT_RE = /(graph\.facebook\.com|googleads\.googleapis\.com|business-api\.tiktok\.com)/;
+const ENDPOINT_RE = /(graph\.facebook\.com|googleads\.googleapis\.com|business-api\.tiktok\.com|tr\.snapchat\.com|api\.pinterest\.com)/;
 for (const root of SRC_ROOTS) {
   if (root === "packages/adapters/src") continue;
   for (const file of walk(root)) {

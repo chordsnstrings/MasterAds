@@ -62,6 +62,12 @@ services:
       - key: TIKTOK_MODE
         scope: RUN_TIME
         value: stub
+      - key: SNAPCHAT_MODE
+        scope: RUN_TIME
+        value: stub
+      - key: PINTEREST_MODE
+        scope: RUN_TIME
+        value: stub
       - key: LLM_MODE
         scope: RUN_TIME
         value: stub
@@ -115,6 +121,12 @@ workers:
         scope: RUN_TIME
         value: stub
       - key: TIKTOK_MODE
+        scope: RUN_TIME
+        value: stub
+      - key: SNAPCHAT_MODE
+        scope: RUN_TIME
+        value: stub
+      - key: PINTEREST_MODE
         scope: RUN_TIME
         value: stub
       - key: LLM_MODE
@@ -174,6 +186,26 @@ workers:
         scope: RUN_TIME
         type: SECRET
         value: PLACEHOLDER
+      - key: SNAPCHAT_ACCESS_TOKEN
+        scope: RUN_TIME
+        type: SECRET
+        value: PLACEHOLDER
+      - key: SNAPCHAT_AD_ACCOUNT_ID
+        scope: RUN_TIME
+        type: SECRET
+        value: PLACEHOLDER
+      - key: SNAPCHAT_PIXEL_ID
+        scope: RUN_TIME
+        type: SECRET
+        value: PLACEHOLDER
+      - key: PINTEREST_ACCESS_TOKEN
+        scope: RUN_TIME
+        type: SECRET
+        value: PLACEHOLDER
+      - key: PINTEREST_AD_ACCOUNT_ID
+        scope: RUN_TIME
+        type: SECRET
+        value: PLACEHOLDER
       - key: CREATIVE_API_KEY
         scope: RUN_TIME
         type: SECRET
@@ -204,6 +236,12 @@ workers:
         scope: RUN_TIME
         value: stub
       - key: TIKTOK_MODE
+        scope: RUN_TIME
+        value: stub
+      - key: SNAPCHAT_MODE
+        scope: RUN_TIME
+        value: stub
+      - key: PINTEREST_MODE
         scope: RUN_TIME
         value: stub
       - key: LLM_MODE

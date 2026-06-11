@@ -19,6 +19,8 @@ const CAMPAIGN_TYPES: Record<Platform, string> = {
   meta: "advantage_plus",
   google: "performance_max",
   tiktok: "smart_plus",
+  snapchat: "snap_automated",
+  pinterest: "performance_plus",
 };
 
 const OBJECTIVE_BY_TERMINAL: Record<string, CreateCampaignAction["payload"]["objective"]> = {

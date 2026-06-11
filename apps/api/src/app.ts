@@ -3,7 +3,7 @@ import cors from "@fastify/cors";
 import formbody from "@fastify/formbody";
 import { closeDb, createDb, createRepos, type Db, type Repos } from "@engine/db";
 import { createCreativeProvider, createLlmClient, createPlatformAdapters, type CreativeProvider, type LlmClient, type PlatformAdapter } from "@engine/adapters";
-import { seedPlaybooks } from "@engine/core";
+import { seedPlaybooks, type Platform } from "@engine/core";
 import type { JobSender } from "@engine/core";
 import { eventsRoutes } from "./routes/events.js";
 import { internalRoutes } from "./routes/internal.js";
@@ -24,7 +24,7 @@ declare module "fastify" {
     jobs: JobSender | null;
     llm: LlmClient;
     creative: CreativeProvider;
-    platforms: Record<"meta" | "google" | "tiktok", PlatformAdapter>;
+    platforms: Record<Platform, PlatformAdapter>;
   }
 }
 
@@ -32,7 +32,7 @@ export interface BuildAppOptions {
   db?: Db;
   llm?: LlmClient;
   creative?: CreativeProvider;
-  platforms?: Record<"meta" | "google" | "tiktok", PlatformAdapter>;
+  platforms?: Record<Platform, PlatformAdapter>;
   /** Queue producer for relay fan-out; null disables enqueue (unit tests). */
   jobs?: JobSender | null;
 }

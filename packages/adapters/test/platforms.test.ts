@@ -9,7 +9,9 @@ import { createPlatformAdapters } from "../src/index.js";
 let db: Db;
 let repos: Repos;
 
-const action = (platform: "meta" | "google" | "tiktok"): CreateCampaignAction => ({
+const action = (
+  platform: "meta" | "google" | "tiktok" | "snapchat" | "pinterest",
+): CreateCampaignAction => ({
   type: "create_campaign",
   platform,
   specId: "spec_fixture_1",
@@ -59,6 +61,33 @@ describe("platform create payloads (GATE G7 snapshots)", () => {
     ).toMatchInlineSnapshot(
       `"{"campaign_name":"Sofa range — tiktok","objective_type":"PRODUCT_SALES","smart_performance_campaign":true,"operation_status":"DISABLE","budget_mode":"BUDGET_MODE_DAY","budget":500,"optimization_event":"ADD_TO_CART","creative_asset_ids":["cr_1","cr_2"],"landing_page_url":"https://demo.example/sofa","product_ids":["prod_1"]}"`,
     );
+  });
+
+  it("snapchat automated payload (W4)", () => {
+    const adapters = createPlatformAdapters({ repos, mode: "stub" });
+    expect(
+      JSON.stringify(adapters.snapchat.buildCreatePayload(action("snapchat"))),
+    ).toMatchInlineSnapshot(`"{"name":"Sofa range — snapchat","status":"PAUSED","objective":"WEB_CONVERSION","auto_bid":true,"daily_budget_micro":500000000,"optimization_goal":"PIXEL_ADD_TO_CART","creative_ids":["cr_1","cr_2"],"web_view_url":"https://demo.example/sofa","item_ids":["prod_1"],"regulated_content":false}"`);
+  });
+
+  it("pinterest Performance+ payload (W4)", () => {
+    const adapters = createPlatformAdapters({ repos, mode: "stub" });
+    expect(
+      JSON.stringify(adapters.pinterest.buildCreatePayload(action("pinterest"))),
+    ).toMatchInlineSnapshot(`"{"name":"Sofa range — pinterest","status":"PAUSED","objective_type":"WEB_CONVERSION","is_performance_plus":true,"daily_spend_cap":500000000,"conversion_event":"ADD_TO_CART","creative_ids":["cr_1","cr_2"],"destination_url":"https://demo.example/sofa","content_ids":["prod_1"]}"`);
+  });
+
+  it("new-channel writes are stub-validated and guardrail-gated like the rest", async () => {
+    const adapters = createPlatformAdapters({ repos, mode: "stub" });
+    const forged = { action: action("snapchat"), decisionId: "dec_forged", approvedAt: new Date() };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await expect(adapters.snapchat.createCampaign(forged as any)).rejects.toThrow(
+      /not approved by the guardrail layer/,
+    );
+    const ok = await adapters.pinterest.createCampaign(
+      approveAction(action("pinterest"), "dec_w4"),
+    );
+    expect(ok.platformCampaignId).toMatch(/^stub_pinterest_/);
   });
 
   it("restricted specs carry the special ad category on meta", () => {

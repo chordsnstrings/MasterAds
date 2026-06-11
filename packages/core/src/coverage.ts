@@ -4,7 +4,7 @@
 import type { ConversionEvent, Repos } from "@engine/db";
 import type { Platform } from "./guardrails/approval.js";
 
-export const PLATFORMS: readonly Platform[] = ["meta", "google", "tiktok"];
+export const PLATFORMS: readonly Platform[] = ["meta", "google", "tiktok", "snapchat", "pinterest"];
 
 export interface CoverageRow {
   sourceSite: string;
@@ -23,6 +23,10 @@ function hasClickIdFor(e: ConversionEvent, platform: Platform): boolean {
       return Boolean(c.gclid ?? c.gbraid ?? c.wbraid);
     case "tiktok":
       return Boolean(c.ttclid);
+    case "snapchat":
+      return Boolean(c.sccid);
+    case "pinterest":
+      return Boolean(c.epik);
   }
 }
 

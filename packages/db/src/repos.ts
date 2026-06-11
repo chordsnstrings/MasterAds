@@ -492,7 +492,7 @@ export function createRepos(db: Db) {
 
     adAccounts: {
       async upsert(
-        platform: "meta" | "google" | "tiktok",
+        platform: "meta" | "google" | "tiktok" | "snapchat" | "pinterest",
         patch: Partial<Pick<AdAccount, "accountRef" | "tokenValid" | "billingOk" | "platformCreatedAt">>,
       ): Promise<AdAccount> {
         const existing = (
@@ -512,7 +512,7 @@ export function createRepos(db: Db) {
           .returning();
         return r!;
       },
-      async get(platform: "meta" | "google" | "tiktok"): Promise<AdAccount | undefined> {
+      async get(platform: "meta" | "google" | "tiktok" | "snapchat" | "pinterest"): Promise<AdAccount | undefined> {
         return (await db.select().from(adAccounts).where(eq(adAccounts.platform, platform)))[0];
       },
       async list(): Promise<AdAccount[]> {

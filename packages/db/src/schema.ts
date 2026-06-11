@@ -161,7 +161,7 @@ export const campaigns = pgTable(
     specId: text("spec_id")
       .notNull()
       .references(() => campaignSpecs.id),
-    platform: text("platform", { enum: ["meta", "google", "tiktok"] }).notNull(),
+    platform: text("platform", { enum: ["meta", "google", "tiktok", "snapchat", "pinterest"] }).notNull(),
     platformCampaignId: text("platform_campaign_id"),
     campaignType: text("campaign_type").notNull(),
     objective: text("objective").notNull(),
@@ -219,7 +219,7 @@ export type HashedIdentifiers = {
 export type ClientInfo = { ip?: string; user_agent?: string };
 export type ConsentSignals = { ad_user_data?: boolean; ad_personalization?: boolean };
 export type RelayRecord = {
-  platform: "meta" | "google" | "tiktok";
+  platform: "meta" | "google" | "tiktok" | "snapchat" | "pinterest";
   status: "pending" | "sent" | "failed" | "dead_letter" | "skipped";
   attempts: number;
   lastError?: string;
@@ -355,7 +355,7 @@ export const clickIdCoverage = pgTable(
   {
     id: text("id").primaryKey(),
     sourceSite: text("source_site").notNull(),
-    platform: text("platform", { enum: ["meta", "google", "tiktok"] }).notNull(),
+    platform: text("platform", { enum: ["meta", "google", "tiktok", "snapchat", "pinterest"] }).notNull(),
     coveragePct: numeric("coverage_pct", { precision: 6, scale: 2 }).notNull(),
     eventsTotal: integer("events_total").notNull(),
     eventsWithClickId: integer("events_with_click_id").notNull(),
@@ -386,7 +386,7 @@ export const promos = pgTable(
 // Ad-account health: token/billing state and platform account age (warm-up).
 export const adAccounts = pgTable("ad_accounts", {
   id: text("id").primaryKey(),
-  platform: text("platform", { enum: ["meta", "google", "tiktok"] }).notNull().unique(),
+  platform: text("platform", { enum: ["meta", "google", "tiktok", "snapchat", "pinterest"] }).notNull().unique(),
   accountRef: text("account_ref"),
   platformCreatedAt: timestamp("platform_created_at", { withTimezone: true })
     .notNull()

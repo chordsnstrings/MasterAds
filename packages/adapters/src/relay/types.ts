@@ -1,7 +1,7 @@
 // Outbound conversion relay (SW §7.2): canonical event → platform payload.
 import type { ConversionEvent } from "@engine/db";
 
-export type Platform = "meta" | "google" | "tiktok";
+export type Platform = "meta" | "google" | "tiktok" | "snapchat" | "pinterest";
 
 export type RelayBuildResult =
   | { kind: "send"; payload: Record<string, unknown> }

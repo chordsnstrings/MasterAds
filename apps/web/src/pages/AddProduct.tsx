@@ -291,7 +291,7 @@ export default function AddProduct({
             </div>
             {editLine === "platforms" && (
               <div className="mt-2 space-y-2">
-                {(["meta", "tiktok", "google"] as const).map((p) => {
+                {(["meta", "tiktok", "google", "snapchat", "pinterest"] as const).map((p) => {
                   const conn = connections.find((c) => c.platform === p);
                   const connected = conn?.connected ?? false;
                   const on = plan.platforms.includes(p);

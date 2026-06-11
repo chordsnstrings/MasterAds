@@ -323,7 +323,7 @@ export async function uiRoutes(app: FastifyInstance): Promise<void> {
   app.get("/internal/settings", async () => {
     const repos = app.repos;
     const accounts = await repos.adAccounts.list();
-    const connections = (["meta", "google", "tiktok"] as const).map((platform) => {
+    const connections = (["meta", "google", "tiktok", "snapchat", "pinterest"] as const).map((platform) => {
       const acct = accounts.find((a) => a.platform === platform);
       return {
         platform,

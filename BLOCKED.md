@@ -43,7 +43,7 @@ what to provide, where it plugs in, and what flips.
 - **Stub meanwhile:** deterministic placeholder assets with correct dimensions
   per format; CostEvents emitted.
 
-## P5 — Meta / Google / TikTok ad accounts, tokens, sandbox accounts
+## P5 — Meta / Google / TikTok / Snapchat / Pinterest ad accounts, tokens, sandbox accounts
 - **Provide (per platform, staging first with sandbox accounts):**
   - Meta: `META_ACCESS_TOKEN` (system user, ads_management/ads_read/
     business_management), `META_AD_ACCOUNT_ID`, `META_DATASET_ID`. Requires
@@ -52,8 +52,16 @@ what to provide, where it plugs in, and what flips.
     `GOOGLE_OAUTH_CLIENT_ID/SECRET`, `GOOGLE_ADS_REFRESH_TOKEN`. Note RMF
     (Required Minimum Functionality) review before broad production use.
   - TikTok: `TIKTOK_ACCESS_TOKEN`, `TIKTOK_ADVERTISER_ID`, `TIKTOK_PIXEL_CODE`.
-- **Flip:** `META_MODE/GOOGLE_MODE/TIKTOK_MODE=live` (campaigns + insights),
-  and the same flags govern the conversion relay; `BILLING_MODE=live`.
+  - Snapchat: `SNAPCHAT_ACCESS_TOKEN` (Marketing API OAuth),
+    `SNAPCHAT_AD_ACCOUNT_ID`, `SNAPCHAT_PIXEL_ID` (Conversions API relay).
+    Verify the recorded stub payload shapes against the live Marketing API /
+    CAPI docs when credentials arrive.
+  - Pinterest: `PINTEREST_ACCESS_TOKEN` (API v5 OAuth, ads scopes),
+    `PINTEREST_AD_ACCOUNT_ID` (campaigns + Conversions API relay). Same
+    payload-shape verification applies.
+- **Flip:** `META_MODE/GOOGLE_MODE/TIKTOK_MODE/SNAPCHAT_MODE/PINTEREST_MODE=live`
+  (campaigns + insights), and the same flags govern the conversion relay;
+  `BILLING_MODE=live`.
 - **Stub meanwhile:** snapshot-validated payloads, deterministic campaign ids,
   deterministic insights — the entire loop machinery runs.
 - **Note:** live `update/pause/resume/duplicate/uploadCreative` calls and the

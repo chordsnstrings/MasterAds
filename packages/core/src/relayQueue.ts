@@ -1,7 +1,7 @@
 // Relay queue names + enqueue helper, shared by api (producer) and loops
 // (consumer). Postgres-backed via pg-boss (SW §13.1); this module is
 // queue-implementation-agnostic so core carries no pg-boss dependency.
-export const RELAY_PLATFORMS = ["meta", "google", "tiktok"] as const;
+export const RELAY_PLATFORMS = ["meta", "google", "tiktok", "snapchat", "pinterest"] as const;
 export type RelayPlatform = (typeof RELAY_PLATFORMS)[number];
 
 export function relayQueueName(platform: RelayPlatform): string {
