@@ -285,6 +285,20 @@ export const STRINGS = {
     saved: "Saved",
   },
 
+  aiManager: {
+    title: "AI manager",
+    hint: "Once a day the AI reviews everything \u2014 spend, results, returns on every channel \u2014 and proposes budget changes, pauses, resumes and new rules. It can only act inside your spending limits, every move is written to Activity, and the stop-everything switch halts it like everything else.",
+    enabled: "Review the account daily",
+    auto: "Act within my limits",
+    autoOff: "Propose only \u2014 I approve in Activity",
+    runNow: "Review now",
+    running: "Reviewing\u2026",
+    ranLine: (proposed: number, executed: number, notes: number): string =>
+      `Done \u2014 ${proposed} proposal${proposed === 1 ? "" : "s"}, ${executed} applied, ${notes} note${notes === 1 ? "" : "s"}. Details are in Activity.`,
+    needsAi:
+      "Connect an AI provider above (or run in test mode) \u2014 the review uses it to reason about your account.",
+  },
+
   rules: {
     title: "Your rules",
     hint: "Your own automatic actions, checked every few minutes. They obey your spending limits and the stop-everything switch, and every action they take shows up in Activity.",

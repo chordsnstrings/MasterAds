@@ -19,6 +19,7 @@ import { leadsRoutes } from "./routes/leads.js";
 import { connectionsRoutes } from "./routes/connections.js";
 import { mediaRoutes } from "./routes/media.js";
 import { rulesRoutes } from "./routes/rules.js";
+import { aiManagerRoutes } from "./routes/aiManager.js";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -99,6 +100,7 @@ export async function buildApp(opts: BuildAppOptions = {}): Promise<FastifyInsta
   await app.register(connectionsRoutes);
   await app.register(mediaRoutes);
   await app.register(rulesRoutes);
+  await app.register(aiManagerRoutes);
 
   return app;
 }

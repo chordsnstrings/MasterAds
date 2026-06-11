@@ -355,6 +355,11 @@ export async function uiRoutes(app: FastifyInstance): Promise<void> {
         token_refreshed: "check",
         custom_rule: "status",
         custom_rule_notify: "check",
+        ai_budget_change: "budget",
+        ai_pause: "status",
+        ai_resume: "status",
+        ai_create_rule: "check",
+        ai_note: "check",
       };
       const items = [];
       for (const d of decisions) {

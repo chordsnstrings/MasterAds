@@ -19,6 +19,9 @@ export default function Settings(): JSX.Element {
   const [connectNote, setConnectNote] = useState<string | null>(null);
   const [siteType, setSiteType] = useState<"custom" | "shopify" | "wordpress">("custom");
   const [rules, setRules] = useState<RuleData[]>([]);
+  const [aiMgr, setAiMgr] = useState<{ enabled: boolean; auto: boolean } | null>(null);
+  const [aiRunning, setAiRunning] = useState(false);
+  const [aiResult, setAiResult] = useState<string | null>(null);
   const [ruleForm, setRuleForm] = useState({
     name: "",
     scope: "all",
@@ -41,6 +44,7 @@ export default function Settings(): JSX.Element {
     setAiCatalog(c.ai);
     const r = await api.rules();
     setRules(r.rules);
+    setAiMgr(await api.aiManager());
   }
   useEffect(() => {
     void reload();
@@ -455,6 +459,71 @@ export default function Settings(): JSX.Element {
           </Card>
         </Section>
 
+
+        <Section title={STRINGS.aiManager.title} hint={STRINGS.aiManager.hint}>
+          <Card className="space-y-4 p-5">
+            {(
+              [
+                ["enabled", STRINGS.aiManager.enabled, aiMgr?.enabled ?? false],
+                ["auto", STRINGS.aiManager.auto, aiMgr?.auto ?? false],
+              ] as const
+            ).map(([key, label, value]) => (
+              <div key={key} className="flex items-center justify-between gap-4 text-sm">
+                <div>
+                  <span className="font-medium">{label}</span>
+                  {key === "auto" && !value && (
+                    <p className="mt-0.5 text-xs text-ink-muted">{STRINGS.aiManager.autoOff}</p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={value}
+                  aria-label={label}
+                  data-testid={`ai-manager-${key}`}
+                  onClick={() =>
+                    void api.setAiManager({ [key]: !value }).then(setAiMgr)
+                  }
+                  className={`min-h-11 rounded-full px-4 text-xs font-medium ${
+                    value
+                      ? "bg-positive/10 text-positive-deep"
+                      : "bg-ink/5 text-ink-muted dark:bg-white/10"
+                  }`}
+                >
+                  {value ? STRINGS.rules.on : STRINGS.rules.off}
+                </button>
+              </div>
+            ))}
+            <div className="border-t border-hairline/70 pt-4 dark:border-white/10">
+              <button
+                type="button"
+                data-testid="ai-manager-run"
+                disabled={aiRunning}
+                onClick={() => {
+                  setAiRunning(true);
+                  setAiResult(null);
+                  void api
+                    .runAiManager(!(aiMgr?.auto ?? false))
+                    .then((r) =>
+                      setAiResult(
+                        STRINGS.aiManager.ranLine(r.proposed, r.executed.length, r.notes.length),
+                      ),
+                    )
+                    .finally(() => setAiRunning(false));
+                }}
+                className="min-h-11 rounded-control bg-accent px-5 text-sm font-medium text-white hover:bg-accent-deep disabled:opacity-50"
+              >
+                {aiRunning ? STRINGS.aiManager.running : STRINGS.aiManager.runNow}
+              </button>
+              {aiResult && (
+                <p className="mt-2 text-xs leading-relaxed text-positive-deep" data-testid="ai-manager-result">
+                  {aiResult}
+                </p>
+              )}
+              <p className="mt-2 text-xs leading-relaxed text-ink-muted">{STRINGS.aiManager.needsAi}</p>
+            </div>
+          </Card>
+        </Section>
 
         <Section title={STRINGS.rules.title} hint={STRINGS.rules.hint}>
           <Card>

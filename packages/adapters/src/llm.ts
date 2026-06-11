@@ -11,7 +11,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { Repos } from "@engine/db";
 import { driverMode, type DriverMode } from "./env.js";
 
-export type LlmOperation = "classification" | "narration" | "creative_copy";
+export type LlmOperation = "classification" | "narration" | "creative_copy" | "management";
 export type LlmProvider = "anthropic" | "openai" | "deepseek" | "llama";
 
 export interface LlmRequest {
@@ -165,6 +165,12 @@ function stubClassification(prompt: string): string {
 function defaultStubResponder(req: LlmRequest): string {
   if (req.operation === "classification") return stubClassification(req.prompt);
   if (req.operation === "narration") return "Plain-language summary unavailable in stub mode.";
+  if (req.operation === "management") {
+    // Deterministic stub: observe, change nothing — live mode does the reasoning.
+    return JSON.stringify({
+      actions: [{ type: "note", text: "Reviewed the account in test mode; no changes proposed." }],
+    });
+  }
   return JSON.stringify({
     variants: [
       { hook: "curiosity", headline: "The detail everyone asks about", body: "See why people keep coming back to this one.", scenes: ["Close-up on the detail nobody expects", "Pull back to reveal the whole product", "The detail everyone asks about — see it yourself"] },

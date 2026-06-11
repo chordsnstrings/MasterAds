@@ -156,3 +156,15 @@ test("custom rules: add, toggle, remove (W9)", async ({ page }) => {
   await row.locator('[data-testid="rule-delete"]').click();
   await expect(row).toHaveCount(0);
 });
+
+test("AI manager: toggle and run a review (W10, stub)", async ({ page }) => {
+  await page.goto("/settings");
+  await page.waitForSelector('[data-testid="ai-manager-enabled"]');
+  await page.locator('[data-testid="ai-manager-enabled"]').click();
+  await expect(page.locator('[data-testid="ai-manager-enabled"]')).toContainText("On");
+  await page.locator('[data-testid="ai-manager-run"]').click();
+  await expect(page.locator('[data-testid="ai-manager-result"]')).toContainText("Done", {
+    timeout: 20_000,
+  });
+  await page.locator('[data-testid="ai-manager-enabled"]').click(); // back off
+});

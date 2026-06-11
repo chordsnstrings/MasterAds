@@ -311,7 +311,7 @@ export const costEvents = pgTable(
     id: text("id").primaryKey(),
     costType: text("cost_type", { enum: ["ad_spend", "ai_inference"] }).notNull(),
     operation: text("operation", {
-      enum: ["classification", "creative_image", "creative_video", "creative_copy", "narration"],
+      enum: ["classification", "creative_image", "creative_video", "creative_copy", "narration", "management"],
     }),
     providerOrPlatform: text("provider_or_platform").notNull(),
     model: text("model"),

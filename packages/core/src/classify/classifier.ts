@@ -8,7 +8,7 @@ import type { Product } from "@engine/db";
 /** Structural interface satisfied by @engine/adapters' LlmClient. */
 export interface InferenceClient {
   complete(req: {
-    operation: "classification" | "narration" | "creative_copy";
+    operation: "classification" | "narration" | "creative_copy" | "management";
     system?: string;
     prompt: string;
     productId?: string | null;

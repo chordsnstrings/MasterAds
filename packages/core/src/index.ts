@@ -30,3 +30,4 @@ export * from "./loops/playbookPriors.js";
 export * from "./notifications.js";
 export * from "./connections.js";
 export * from "./automations/customRules.js";
+export * from "./loops/aiManager.js";

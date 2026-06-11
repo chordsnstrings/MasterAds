@@ -268,6 +268,15 @@ export const api = {
         }[];
       }[];
     }>("GET", "/internal/connections"),
+  aiManager: () => request<{ enabled: boolean; auto: boolean }>("GET", "/internal/ai-manager"),
+  setAiManager: (body: { enabled?: boolean; auto?: boolean }) =>
+    request<{ enabled: boolean; auto: boolean }>("POST", "/internal/ai-manager", body),
+  runAiManager: (dryRun: boolean) =>
+    request<{ proposed: number; executed: string[]; notes: string[] }>(
+      "POST",
+      "/internal/ai-manager/run",
+      { dry_run: dryRun },
+    ),
   rules: () => request<{ rules: RuleData[] }>("GET", "/internal/rules"),
   addRule: (rule: {
     name: string;

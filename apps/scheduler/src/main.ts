@@ -1,10 +1,10 @@
 // scheduler worker — cron-style triggers (SW §13.2): feed syncs now (G4);
 // insights pulls, billing health, medium loop added in G7/G9/G10.
 import { closeDb, createDb, createRepos } from "@engine/db";
-import { createBillingChecker, createEmailSender, createPlatformAdapters } from "@engine/adapters";
+import { createBillingChecker, createEmailSender, createLlmClient, createPlatformAdapters } from "@engine/adapters";
 import { runFeedSyncSweep } from "./jobs/feed-sync.js";
 import { runInsightsPull } from "./jobs/insights.js";
-import { applyCalendarPacing, applyStoredConnections, computeAndPersistCoverage, computeAndPersistSignalQuality, dispatchNotifications, expirePromos, processProductChanges, queueAttentionNotifications, queueWeeklyDigest, reevaluateOptimizationEvents, runBillingHealth, runFatigueSweep, runMediumLoopOnce, scoreDecisions, updatePlaybookPriors } from "@engine/core";
+import { applyCalendarPacing, applyStoredConnections, getAiManagerSettings, runAiManagerOnce, computeAndPersistCoverage, computeAndPersistSignalQuality, dispatchNotifications, expirePromos, processProductChanges, queueAttentionNotifications, queueWeeklyDigest, reevaluateOptimizationEvents, runBillingHealth, runFatigueSweep, runMediumLoopOnce, scoreDecisions, updatePlaybookPriors } from "@engine/core";
 
 function log(msg: string, extra: Record<string, unknown> = {}): void {
   console.log(
@@ -17,6 +17,7 @@ const repos = createRepos(db);
 await applyStoredConnections(repos);
 const platformAdapters = createPlatformAdapters({ repos });
 const emailSender = createEmailSender();
+const llm = createLlmClient({ repos });
 
 let running = true;
 const shutdown = (signal: string): void => {
@@ -131,6 +132,20 @@ const jobs: ScheduledJob[] = [
     run: async () => {
       const r = await applyCalendarPacing({ repos, adapters: platformAdapters });
       if (r.adjusted.length > 0) log("calendar pacing applied", { ...r });
+    },
+  },
+  {
+    name: "ai-manager",
+    intervalMs: 24 * 60 * 60_000, // daily account review; off until enabled
+    lastRun: 0,
+    run: async () => {
+      const settings = await getAiManagerSettings(repos);
+      if (!settings.enabled) return;
+      const r = await runAiManagerOnce(
+        { repos, llm, adapters: platformAdapters },
+        { dryRun: !settings.auto },
+      );
+      log("ai manager ran", { ...r, notes: r.notes.length });
     },
   },
   {
