@@ -129,6 +129,14 @@ describe("granular launch control (W8)", () => {
     const launched = after.filter((c) => c.status === "launched").map((c) => c.id);
     expect(launched.sort()).toEqual(chosen.sort());
     expect(after.filter((c) => c.status === "held").length).toBe(ready.length - chosen.length);
+
+    // W12: every launched ad is mapped to a platform ad id per channel.
+    const campaigns = await repos.campaigns.bySpec(specId);
+    for (const campaign of campaigns) {
+      const mappings = await repos.creativeAds.byCampaign(campaign.id);
+      expect(mappings.length).toBe(chosen.length);
+      expect(mappings.every((m) => m.platformAdId.startsWith("stub_ad_"))).toBe(true);
+    }
   });
 
   it("per-product brand overrides the global kit and styles the hosted page", async () => {

@@ -178,3 +178,132 @@ export async function googleInsights(
   }
   return out;
 }
+
+// --- W12: PMax asset-group delivery + per-ad-group insights ------------------
+
+export function buildGoogleAssetGroupMutate(
+  customerId: string,
+  campaignId: string,
+  payload: {
+    name: string;
+    destinationUrl: string;
+    headlines: string[];
+    descriptions: string[];
+    businessName: string;
+    images: { tempId: number; base64: string }[];
+  },
+): Record<string, unknown> {
+  const ops: Record<string, unknown>[] = [];
+  const assetRes = (n: number): string => `customers/${customerId}/assets/-${n}`;
+  let n = 1;
+  const textAssets: { res: string; fieldType: string }[] = [];
+  for (const h of payload.headlines.slice(0, 5)) {
+    const res = assetRes(n);
+    ops.push({ assetOperation: { create: { resourceName: res, textAsset: { text: h.slice(0, 30) } } } });
+    textAssets.push({ res, fieldType: "HEADLINE" });
+    n++;
+  }
+  // PMax requires a long headline and descriptions.
+  const longRes = assetRes(n);
+  ops.push({
+    assetOperation: {
+      create: { resourceName: longRes, textAsset: { text: (payload.headlines[0] ?? payload.businessName).slice(0, 90) } },
+    },
+  });
+  textAssets.push({ res: longRes, fieldType: "LONG_HEADLINE" });
+  n++;
+  for (const d of payload.descriptions.slice(0, 4)) {
+    const res = assetRes(n);
+    ops.push({ assetOperation: { create: { resourceName: res, textAsset: { text: d.slice(0, 90) } } } });
+    textAssets.push({ res, fieldType: "DESCRIPTION" });
+    n++;
+  }
+  const bizRes = assetRes(n);
+  ops.push({
+    assetOperation: {
+      create: { resourceName: bizRes, textAsset: { text: payload.businessName.slice(0, 25) } },
+    },
+  });
+  textAssets.push({ res: bizRes, fieldType: "BUSINESS_NAME" });
+  n++;
+  const imageAssets: { res: string; fieldType: string }[] = [];
+  for (const img of payload.images) {
+    const res = assetRes(n);
+    ops.push({
+      assetOperation: { create: { resourceName: res, imageAsset: { data: img.base64 } } },
+    });
+    imageAssets.push({ res, fieldType: "MARKETING_IMAGE" });
+    n++;
+  }
+  const groupRes = `customers/${customerId}/assetGroups/-${n}`;
+  ops.push({
+    assetGroupOperation: {
+      create: {
+        resourceName: groupRes,
+        campaign: `customers/${customerId}/campaigns/${campaignId}`,
+        name: `${payload.name} — assets`,
+        finalUrls: [payload.destinationUrl],
+        status: "PAUSED",
+      },
+    },
+  });
+  for (const t of [...textAssets, ...imageAssets]) {
+    ops.push({
+      assetGroupAssetOperation: {
+        create: { assetGroup: groupRes, asset: t.res, fieldType: t.fieldType },
+      },
+    });
+  }
+  return { mutateOperations: ops };
+}
+
+export async function googleDeliverAssets(
+  creds: Record<string, string>,
+  campaignId: string,
+  payload: {
+    name: string;
+    destinationUrl: string;
+    headlines: string[];
+    descriptions: string[];
+    businessName: string;
+    images: { tempId: number; base64: string }[];
+  },
+): Promise<string> {
+  const res = await adsFetch(
+    creds,
+    "/googleAds:mutate",
+    buildGoogleAssetGroupMutate(cid(creds), campaignId, payload),
+  );
+  const results = (res.mutateOperationResponses as Record<string, unknown>[]) ?? [];
+  const group = results
+    .map((r) => (r.assetGroupResult as { resourceName?: string } | undefined)?.resourceName)
+    .find(Boolean);
+  return group ?? "";
+}
+
+/** PMax has no per-ad level — asset-group performance is the closest analog. */
+export async function googleAdInsights(
+  creds: Record<string, string>,
+  campaignId: string,
+  date: string,
+): Promise<{ platformAdId: string; spend: number; impressions: number; clicks: number; conversions: number; revenue: number }[]> {
+  const res = await adsFetch(creds, "/googleAds:searchStream", {
+    query: `SELECT asset_group.resource_name, metrics.cost_micros, metrics.impressions, metrics.clicks, metrics.conversions, metrics.conversions_value FROM asset_group WHERE campaign.id = ${Number(campaignId)} AND segments.date = '${date}'`,
+  });
+  const chunks = Array.isArray(res) ? (res as Record<string, unknown>[]) : [res];
+  const out: { platformAdId: string; spend: number; impressions: number; clicks: number; conversions: number; revenue: number }[] = [];
+  for (const chunk of chunks) {
+    for (const row of (chunk.results as { assetGroup?: { resourceName?: string }; metrics?: Record<string, string> }[]) ?? []) {
+      const m = row.metrics ?? {};
+      out.push({
+        platformAdId: row.assetGroup?.resourceName ?? "asset_group",
+        spend: Number(m.costMicros ?? 0) / 1_000_000,
+        impressions: Number(m.impressions ?? 0),
+        clicks: Number(m.clicks ?? 0),
+        conversions: Number(m.conversions ?? 0),
+        revenue: Number(m.conversionsValue ?? 0),
+      });
+    }
+  }
+  return out;
+}

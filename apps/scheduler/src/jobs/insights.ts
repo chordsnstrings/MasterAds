@@ -16,6 +16,12 @@ export interface InsightsReader {
     revenue: number;
     currency: string;
   }>;
+  readAdInsights(
+    scope: { platformCampaignId: string; platformAdIds: string[] },
+    window: { date: string },
+  ): Promise<
+    { platformAdId: string; spend: number; impressions: number; clicks: number; conversions: number; revenue: number }[]
+  >;
 }
 
 export function yesterdayUtc(now = new Date()): string {
@@ -26,10 +32,11 @@ export async function runInsightsPull(
   repos: Repos,
   adapters: Record<string, InsightsReader>,
   date: string = yesterdayUtc(),
-): Promise<{ pulled: number; costEvents: number }> {
+): Promise<{ pulled: number; costEvents: number; adRows: number }> {
   const campaigns = await repos.campaigns.listActive();
   let pulled = 0;
   let costEvents = 0;
+  let adRows = 0;
   for (const campaign of campaigns) {
     if (!campaign.platformCampaignId) continue;
     const adapter = adapters[campaign.platform];
@@ -63,6 +70,35 @@ export async function runInsightsPull(
       });
       costEvents++;
     }
+
+    // W12: per-ad metrics for every mapped ad (creative → platform ad id),
+    // so "which ad wins" is measured, not inferred. No extra CostEvents —
+    // campaign-level spend already feeds the ledger.
+    const mappings = await repos.creativeAds.byCampaign(campaign.id);
+    if (mappings.length > 0) {
+      const rows = await adapter.readAdInsights(
+        {
+          platformCampaignId: campaign.platformCampaignId,
+          platformAdIds: mappings.map((m) => m.platformAdId),
+        },
+        { date },
+      );
+      const byAdId = new Map(mappings.map((m) => [m.platformAdId, m.creativeId]));
+      for (const row of rows) {
+        await repos.adInsights.insertIdempotent({
+          campaignId: campaign.id,
+          creativeId: byAdId.get(row.platformAdId) ?? null,
+          platformAdId: row.platformAdId,
+          date,
+          spend: row.spend.toFixed(4),
+          impressions: row.impressions,
+          clicks: row.clicks,
+          conversions: row.conversions,
+          revenue: row.revenue.toFixed(4),
+        });
+        adRows++;
+      }
+    }
   }
-  return { pulled, costEvents };
+  return { pulled, costEvents, adRows };
 }

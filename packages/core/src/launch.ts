@@ -12,7 +12,13 @@ import { checkLaunchGate } from "./classify/launchGate.js";
 
 /** Structural subset of the platform adapter used by launch. */
 export interface CampaignCreator {
+  readonly mode?: string;
   createCampaign(action: ApprovedAction<CreateCampaignAction>): Promise<{ platformCampaignId: string }>;
+  deliverCreatives(
+    action: ApprovedAction<CreateCampaignAction>,
+    platformCampaignId: string,
+    assets: { creativeId: string; assetType: string; assetRef: string; headline: string; body: string }[],
+  ): Promise<{ delivered: Record<string, string>; skipped: string[] }>;
 }
 
 const CAMPAIGN_TYPES: Record<Platform, string> = {
@@ -126,6 +132,15 @@ export async function launchProduct(
       },
     };
 
+    // W12: the same approved action creates the campaign AND delivers its
+    // ads — one guardrail decision covers the whole platform write.
+    const assets = launchable.map((c) => ({
+      creativeId: c.id,
+      assetType: c.assetType,
+      assetRef: c.assetRef,
+      headline: c.payload.headline ?? product.title,
+      body: c.payload.body ?? "",
+    }));
     const outcome = await guardedExecute(
       repos,
       {
@@ -133,13 +148,21 @@ export async function launchProduct(
         worker: "launcher",
         actionType: "launch_campaign",
         targetRef: `spec:${spec.id}:${platform}`,
-        rationale: `Launching ${product.title} on ${platform} optimizing toward ${spec.optimizationEvent} at ${dailyBudget} ${spec.budgetCurrency ?? "AED"}/day.`,
+        rationale: `Launching ${product.title} on ${platform} optimizing toward ${spec.optimizationEvent} at ${dailyBudget} ${spec.budgetCurrency ?? "AED"}/day with ${assets.length} ad${assets.length === 1 ? "" : "s"}.`,
         predictedOutcome: `delivery begins and learning starts within 48h`,
         productId: product.id,
         action,
         context: { globalDailyBudget },
       },
-      (approved) => adapter.createCampaign(approved),
+      async (approved) => {
+        const created = await adapter.createCampaign(approved);
+        const delivery = await adapter.deliverCreatives(
+          approved,
+          created.platformCampaignId,
+          assets,
+        );
+        return { ...created, ...delivery };
+      },
     );
 
     if (outcome.executed && outcome.result) {
@@ -155,6 +178,21 @@ export async function launchProduct(
         status: "launching",
         learningState: "pending",
       });
+      for (const [creativeId, platformAdId] of Object.entries(outcome.result.delivered ?? {})) {
+        await repos.creativeAds.record(creativeId, campaign.id, platformAdId);
+      }
+      if (
+        Object.keys(outcome.result.delivered ?? {}).length === 0 &&
+        (outcome.result.skipped?.length ?? 0) > 0
+      ) {
+        await repos.attention.raise({
+          kind: "creative_delivery",
+          severity: "warning",
+          message: `${product.title}: the ads couldn't be sent to ${platform} because they are practice assets.`,
+          fixHint: "Add your own photos or videos, or connect a creative maker, then relaunch.",
+          targetRef: `campaign:${campaign.id}`,
+        });
+      }
       launched.push(campaign);
     } else {
       blockedPlatforms.push({ platform, reasons: outcome.blockedReasons ?? ["blocked"] });

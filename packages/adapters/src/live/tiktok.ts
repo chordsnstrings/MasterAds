@@ -98,3 +98,131 @@ export async function tiktokInsights(
     revenue: Number(row.total_complete_payment ?? 0),
   };
 }
+
+// --- W12: creative delivery — assets become real (disabled) ads --------------
+
+export async function tiktokDeliverCreatives(
+  creds: Record<string, string>,
+  payload: {
+    name: string;
+    platformCampaignId: string;
+    optimizationEvent: string;
+    destinationUrl: string;
+    brandName: string;
+  },
+  assets: { creativeId: string; assetType: string; assetRef: string; headline: string; body: string }[],
+  publicBaseUrl: string,
+): Promise<Record<string, string>> {
+  const token = creds.access_token!;
+  const advertiserId = creds.advertiser_id!;
+
+  // One identity per advertiser (required for ads); idempotent by name.
+  const identities = await ttFetch(
+    `/identity/get/?advertiser_id=${advertiserId}&page_size=50`,
+    token,
+  );
+  let identityId = (
+    (identities as { identity_list?: { identity_id: string; display_name: string }[] }).identity_list ?? []
+  ).find((i) => i.display_name === payload.brandName)?.identity_id;
+  if (!identityId) {
+    const created = await ttFetch("/identity/create/", token, {
+      advertiser_id: advertiserId,
+      display_name: payload.brandName,
+    });
+    identityId = String((created as { identity_id?: unknown }).identity_id);
+  }
+
+  // One delivery ad group under the campaign (DISABLED until a human enables).
+  const adgroup = await ttFetch("/adgroup/create/", token, {
+    advertiser_id: advertiserId,
+    campaign_id: payload.platformCampaignId,
+    adgroup_name: `${payload.name} — delivery`,
+    promotion_type: "WEBSITE",
+    placement_type: "PLACEMENT_TYPE_AUTOMATIC",
+    optimization_goal: "CONVERT",
+    optimization_event: payload.optimizationEvent,
+    pixel_id: creds.pixel_code,
+    billing_event: "OCPM",
+    bid_type: "BID_TYPE_NO_BID",
+    budget_mode: "BUDGET_MODE_INFINITE",
+    schedule_type: "SCHEDULE_FROM_NOW",
+    schedule_start_time: new Date().toISOString().slice(0, 19).replace("T", " "),
+    operation_status: "DISABLE",
+  });
+  const adgroupId = String((adgroup as { adgroup_id?: unknown }).adgroup_id);
+
+  const delivered: Record<string, string> = {};
+  for (const asset of assets) {
+    const url = asset.assetRef.startsWith("http")
+      ? asset.assetRef
+      : `${publicBaseUrl}${asset.assetRef}`;
+    let creative: Record<string, unknown>;
+    if (asset.assetType === "video") {
+      const up = await ttFetch("/file/video/ad/upload/", token, {
+        advertiser_id: advertiserId,
+        upload_type: "UPLOAD_BY_URL",
+        video_url: url,
+        file_name: `${asset.creativeId}.mp4`,
+      });
+      const videoId = String((up as { video_id?: unknown }).video_id ?? "");
+      creative = { ad_format: "SINGLE_VIDEO", video_id: videoId };
+    } else {
+      const up = await ttFetch("/file/image/ad/upload/", token, {
+        advertiser_id: advertiserId,
+        upload_type: "UPLOAD_BY_URL",
+        image_url: url,
+        file_name: `${asset.creativeId}.png`,
+      });
+      creative = { ad_format: "SINGLE_IMAGE", image_ids: [String((up as { image_id?: unknown }).image_id)] };
+    }
+    const ad = await ttFetch("/ad/create/", token, {
+      advertiser_id: advertiserId,
+      adgroup_id: adgroupId,
+      creatives: [
+        {
+          ad_name: `${payload.name} — ${asset.creativeId.slice(-6)}`,
+          identity_type: "CUSTOMIZED_USER",
+          identity_id: identityId,
+          ad_text: asset.body || asset.headline,
+          call_to_action: "LEARN_MORE",
+          landing_page_url: payload.destinationUrl,
+          ...creative,
+        },
+      ],
+    });
+    const adIds = (ad as { ad_ids?: unknown[] }).ad_ids ?? [];
+    if (adIds[0]) delivered[asset.creativeId] = String(adIds[0]);
+  }
+  return delivered;
+}
+
+export async function tiktokAdInsights(
+  creds: Record<string, string>,
+  platformAdIds: string[],
+  date: string,
+): Promise<{ platformAdId: string; spend: number; impressions: number; clicks: number; conversions: number; revenue: number }[]> {
+  const params = new URLSearchParams({
+    advertiser_id: creds.advertiser_id!,
+    report_type: "BASIC",
+    data_level: "AUCTION_AD",
+    dimensions: JSON.stringify(["ad_id"]),
+    metrics: JSON.stringify(["spend", "impressions", "clicks", "conversion", "total_complete_payment"]),
+    start_date: date,
+    end_date: date,
+    filters: JSON.stringify([
+      { field_name: "ad_ids", filter_type: "IN", filter_value: JSON.stringify(platformAdIds) },
+    ]),
+    page_size: "200",
+  });
+  const data = await ttFetch(`/report/integrated/get/?${params.toString()}`, creds.access_token!);
+  return (
+    (data as { list?: { dimensions: { ad_id: string }; metrics: Record<string, string> }[] }).list ?? []
+  ).map((row) => ({
+    platformAdId: row.dimensions.ad_id,
+    spend: Number(row.metrics.spend ?? 0),
+    impressions: Number(row.metrics.impressions ?? 0),
+    clicks: Number(row.metrics.clicks ?? 0),
+    conversions: Number(row.metrics.conversion ?? 0),
+    revenue: Number(row.metrics.total_complete_payment ?? 0),
+  }));
+}

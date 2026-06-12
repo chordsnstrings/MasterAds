@@ -70,12 +70,14 @@ what to provide, where it plugs in, and what flips.
   deterministic insights — the entire loop machinery runs.
 - **Note (updated W11):** live HTTP drivers for Meta/Google/TikTok are now
   IMPLEMENTED (`packages/adapters/src/live/`): create / budget / pause /
-  resume / insights, resolving per-brand credentials at call time. Safety
-  posture: live creations land PAUSED on the platform — enable each campaign
-  once in the platform's manager before money moves (Google additionally
-  needs its asset group finished once in the UI). First sandbox run verifies
-  the snapshot-locked request bodies; Snapchat/Pinterest live calls remain
-  to be wired the same way.
+  resume / insights, resolving per-brand credentials at call time — and as
+  of W12 the ads themselves are delivered too (Meta asset-feed ads, TikTok
+  ads under a brand identity, Google PMax asset groups) with per-ad metrics
+  pulled daily. Safety posture: everything lands PAUSED/DISABLED on the
+  platform — enable once in the platform's manager before money moves. Meta
+  asset-feed ads need a `page_id` (add to the brand's connection when
+  available). First sandbox run verifies the snapshot-locked request
+  bodies; Snapchat/Pinterest live calls remain to be wired the same way.
 
 ## P6 — At least one site posting real conversion events (post-launch)
 - **Provide:** a site integrated per `docs/integration.md`; create its API key:

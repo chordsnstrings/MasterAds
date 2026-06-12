@@ -29,9 +29,9 @@ import {
 } from "@engine/core";
 import { driverMode, type DriverMode } from "./env.js";
 import { resolveCreds } from "./live/creds.js";
-import { metaCreateCampaign, metaInsights, metaSetBudget, metaSetStatus } from "./live/meta.js";
-import { googleCreateCampaign, googleInsights, googleSetBudget, googleSetStatus } from "./live/google.js";
-import { tiktokCreateCampaign, tiktokInsights, tiktokSetBudget, tiktokSetStatus } from "./live/tiktok.js";
+import { metaAdInsights, metaCreateCampaign, metaDeliverCreatives, metaInsights, metaSetBudget, metaSetStatus } from "./live/meta.js";
+import { googleAdInsights, googleCreateCampaign, googleDeliverAssets, googleInsights, googleSetBudget, googleSetStatus } from "./live/google.js";
+import { tiktokAdInsights, tiktokCreateCampaign, tiktokDeliverCreatives, tiktokInsights, tiktokSetBudget, tiktokSetStatus } from "./live/tiktok.js";
 
 export interface InsightsReport {
   date: string; // yyyy-mm-dd
@@ -52,6 +52,22 @@ export interface PlatformAdapter {
   resumeCampaign(action: ApprovedAction<PauseResumeAction>): Promise<void>;
   duplicateCampaign(action: ApprovedAction<DuplicateCampaignAction>): Promise<{ platformCampaignId: string }>;
   uploadCreative(action: ApprovedAction<UploadCreativeAction>): Promise<{ platformAssetRef: string }>;
+  /**
+   * W12: turn the campaign's chosen creatives into real platform ads.
+   * A mutation — same approval object + kill-switch gate as the create.
+   * Returns our creativeId → platform ad id mapping. Live mode delivers only
+   * assets with real URLs (uploads / generated-live); practice assets skip.
+   */
+  deliverCreatives(
+    action: ApprovedAction<CreateCampaignAction>,
+    platformCampaignId: string,
+    assets: { creativeId: string; assetType: string; assetRef: string; headline: string; body: string }[],
+  ): Promise<{ delivered: Record<string, string>; skipped: string[] }>;
+  /** Per-ad daily metrics for mapped ads. Read — no approval needed. */
+  readAdInsights(
+    scope: { platformCampaignId: string; platformAdIds: string[] },
+    window: { date: string },
+  ): Promise<{ platformAdId: string; spend: number; impressions: number; clicks: number; conversions: number; revenue: number }[]>;
   /** Reads are not mutations: no approval object required. */
   readInsights(scope: { platformCampaignId: string }, window: { date: string }): Promise<InsightsReport>;
   /** The exact outbound payload for a create action (snapshot-tested). */
@@ -214,6 +230,25 @@ const pinterestCreateSchema = z
   })
   .strict();
 
+
+/** Resolve a /media/... ref to its stored bytes for direct-upload platforms. */
+function mediaFetcher(repos: Repos) {
+  return async (assetRef: string): Promise<{ mime: string; base64: string } | undefined> => {
+    if (!assetRef.startsWith("/media/")) return undefined;
+    const asset = await repos.media.get(assetRef.slice("/media/".length));
+    return asset ? { mime: asset.mime, base64: asset.dataBase64 } : undefined;
+  };
+}
+
+function publicBaseUrl(): string {
+  return process.env.PUBLIC_BASE_URL ?? "http://localhost:3000";
+}
+
+/** Which countries this campaign targets (brand-level later; AE default). */
+function targetCountries(): string[] {
+  return (process.env.TARGET_COUNTRIES ?? "AE").split(",").map((c) => c.trim().toUpperCase());
+}
+
 function stubId(platform: Platform, seed: string): string {
   return `stub_${platform}_${createHash("sha256").update(seed).digest("hex").slice(0, 10)}`;
 }
@@ -260,6 +295,16 @@ interface LiveOps {
     conversions: number;
     revenue: number;
   }>;
+  deliver?: (
+    action: CreateCampaignAction,
+    platformCampaignId: string,
+    assets: { creativeId: string; assetType: string; assetRef: string; headline: string; body: string }[],
+  ) => Promise<Record<string, string>>;
+  adInsights?: (
+    platformCampaignId: string,
+    platformAdIds: string[],
+    date: string,
+  ) => Promise<{ platformAdId: string; spend: number; impressions: number; clicks: number; conversions: number; revenue: number }[]>;
 }
 
 function makeAdapter(
@@ -360,6 +405,54 @@ function makeAdapter(
       }
       throw new Error(`${platform} live upload requires P5 credentials (see BLOCKED.md)`);
     },
+    async deliverCreatives(approved, platformCampaignId, assets) {
+      await preWrite(approved);
+      if (mode === "stub") {
+        // Deterministic ad ids so per-ad metrics are exercisable in test mode.
+        const delivered = Object.fromEntries(
+          assets.map((a) => [a.creativeId, `stub_ad_${stubId(platform, a.creativeId).slice(-10)}`]),
+        );
+        log(platform, "stub deliver_creatives", { platformCampaignId, count: assets.length });
+        return { delivered, skipped: [] };
+      }
+      if (!liveOps.deliver) {
+        throw new Error(`${platform} live creative delivery not implemented yet (see BLOCKED.md)`);
+      }
+      // Live: only assets the platform can fetch (uploads / generated-live).
+      const real = assets.filter(
+        (a) => a.assetRef.startsWith("/media/") || a.assetRef.startsWith("http"),
+      );
+      const skipped = assets.filter((a) => !real.includes(a)).map((a) => a.creativeId);
+      const delivered = real.length > 0 ? await liveOps.deliver(approved.action, platformCampaignId, real) : {};
+      log(platform, "live deliver_creatives", { platformCampaignId, delivered: Object.keys(delivered).length, skipped: skipped.length });
+      return { delivered, skipped };
+    },
+    async readAdInsights(scope, window) {
+      if (mode === "stub") {
+        // Split the campaign's deterministic day across its ads, deterministically.
+        const day = deterministicInsights(scope.platformCampaignId, window.date);
+        const weights = scope.platformAdIds.map((id) => {
+          const h = parseInt(createHash("sha256").update(`${id}:${window.date}`).digest("hex").slice(0, 6), 16);
+          return 1 + (h % 100) / 100;
+        });
+        const total = weights.reduce((a, b) => a + b, 0) || 1;
+        return scope.platformAdIds.map((platformAdId, i) => {
+          const w = weights[i]! / total;
+          return {
+            platformAdId,
+            spend: Number((day.spend * w).toFixed(2)),
+            impressions: Math.round(day.impressions * w),
+            clicks: Math.round(day.clicks * w),
+            conversions: Math.round(day.conversions * w),
+            revenue: Number((day.revenue * w).toFixed(2)),
+          };
+        });
+      }
+      if (!liveOps.adInsights) {
+        throw new Error(`${platform} live per-ad insights not implemented yet (see BLOCKED.md)`);
+      }
+      return liveOps.adInsights(scope.platformCampaignId, scope.platformAdIds, window.date);
+    },
     async readInsights(scope, window) {
       const key = `${scope.platformCampaignId}:${window.date}`;
       if (opts.insightsFixtures?.[key]) return opts.insightsFixtures[key];
@@ -413,6 +506,27 @@ export function createMetaPlatform(opts: PlatformAdapterOptions): PlatformAdapte
         const creds = await resolveCreds(opts.repos, "meta", { platformCampaignId });
         return metaInsights(creds, platformCampaignId, date);
       },
+      deliver: async (a, platformCampaignId, assets) => {
+        const creds = await resolveCreds(opts.repos, "meta", { productId: a.payload.contentIds[0] });
+        return metaDeliverCreatives(
+          creds,
+          {
+            name: a.payload.name,
+            platformCampaignId,
+            objective: META_OBJECTIVES[a.payload.objective],
+            optimizationEvent: META_OPT_EVENTS[a.payload.optimizationEvent] ?? "PURCHASE",
+            destinationUrl: a.payload.destinationUrl,
+            countries: targetCountries(),
+          },
+          assets,
+          mediaFetcher(opts.repos),
+          publicBaseUrl(),
+        );
+      },
+      adInsights: async (platformCampaignId, platformAdIds, date) => {
+        const creds = await resolveCreds(opts.repos, "meta", { platformCampaignId });
+        return metaAdInsights(creds, platformCampaignId, platformAdIds, date);
+      },
     },
   );
 }
@@ -453,6 +567,31 @@ export function createGooglePlatform(opts: PlatformAdapterOptions): PlatformAdap
       insights: async (platformCampaignId, date) => {
         const creds = await resolveCreds(opts.repos, "google", { platformCampaignId });
         return googleInsights(creds, platformCampaignId, date);
+      },
+      deliver: async (a, platformCampaignId, assets) => {
+        const creds = await resolveCreds(opts.repos, "google", { productId: a.payload.contentIds[0] });
+        const fetcher = mediaFetcher(opts.repos);
+        const images: { tempId: number; base64: string }[] = [];
+        let temp = 1;
+        for (const asset of assets) {
+          if (asset.assetType !== "image") continue;
+          const media = await fetcher(asset.assetRef);
+          if (media) images.push({ tempId: temp++, base64: media.base64 });
+        }
+        const group = await googleDeliverAssets(creds, platformCampaignId, {
+          name: a.payload.name,
+          destinationUrl: a.payload.destinationUrl,
+          headlines: [...new Set(assets.map((x) => x.headline).filter(Boolean))],
+          descriptions: [...new Set(assets.map((x) => x.body).filter(Boolean))],
+          businessName: a.payload.name.split(" — ")[0] ?? a.payload.name,
+          images,
+        });
+        // PMax optimizes assets itself: one asset group represents all ads.
+        return Object.fromEntries(assets.map((x) => [x.creativeId, group]));
+      },
+      adInsights: async (platformCampaignId, _platformAdIds, date) => {
+        const creds = await resolveCreds(opts.repos, "google", { platformCampaignId });
+        return googleAdInsights(creds, platformCampaignId, date);
       },
     },
   );
@@ -495,6 +634,25 @@ export function createTikTokPlatform(opts: PlatformAdapterOptions): PlatformAdap
       insights: async (platformCampaignId, date) => {
         const creds = await resolveCreds(opts.repos, "tiktok", { platformCampaignId });
         return tiktokInsights(creds, platformCampaignId, date);
+      },
+      deliver: async (a, platformCampaignId, assets) => {
+        const creds = await resolveCreds(opts.repos, "tiktok", { productId: a.payload.contentIds[0] });
+        return tiktokDeliverCreatives(
+          creds,
+          {
+            name: a.payload.name,
+            platformCampaignId,
+            optimizationEvent: TIKTOK_OPT_EVENTS[a.payload.optimizationEvent] ?? "COMPLETE_PAYMENT",
+            destinationUrl: a.payload.destinationUrl,
+            brandName: a.payload.name.split(" — ")[0] ?? a.payload.name,
+          },
+          assets,
+          publicBaseUrl(),
+        );
+      },
+      adInsights: async (_platformCampaignId, platformAdIds, date) => {
+        const creds = await resolveCreds(opts.repos, "tiktok", { platformCampaignId: _platformCampaignId });
+        return tiktokAdInsights(creds, platformAdIds, date);
       },
     },
   );

@@ -25,6 +25,6 @@ export { createPlatformAdapters, createMetaPlatform, createGooglePlatform, creat
 export { createBillingChecker, type BillingChecker, type BillingHealth } from "./billing.js";
 export { createEmailSender, type EmailMessage, type EmailSender } from "./email.js";
 export { resolveCreds } from "./live/creds.js";
-export { buildMetaLiveCreateBody } from "./live/meta.js";
+export { buildMetaLiveCreateBody, buildMetaAdsetBody, buildMetaCreativeBody, metaAdInsights } from "./live/meta.js";
 export { buildTikTokLiveCreateBody } from "./live/tiktok.js";
-export { buildGoogleLiveMutate } from "./live/google.js";
+export { buildGoogleLiveMutate, buildGoogleAssetGroupMutate } from "./live/google.js";

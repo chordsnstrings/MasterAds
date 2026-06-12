@@ -209,6 +209,12 @@ export default function ProductDetail(): JSX.Element {
                       <> · {STRINGS.ads.promise(Math.round(ad.predictedScore * 100))}</>
                     )}
                   </p>
+                  {ad.spend7d !== null && (
+                    <p className="mt-0.5 font-mono text-[11px] tabular-nums" data-testid="ad-measured">
+                      {STRINGS.ads.measured(ad.spend7d.toFixed(0), ad.results7d ?? 0)}
+                      {ad.costPerResult !== null && <> · {STRINGS.ads.costEach(ad.costPerResult.toFixed(0))}</>}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>

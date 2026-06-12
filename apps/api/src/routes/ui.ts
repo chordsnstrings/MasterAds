@@ -205,9 +205,16 @@ export async function uiRoutes(app: FastifyInstance): Promise<void> {
     // winning" from playbook share-of-credit priors — never fabricated
     // per-creative platform metrics.
     const creativeRows = await repos.creatives.byProduct(product.id);
-    const ads = creativeRows
-      .filter((c) => ["launched", "held", "ready", "retired"].includes(c.status))
-      .map((c) => ({
+    const weekAgo = isoDaysAgo(7).toISOString().slice(0, 10);
+    const ads = [];
+    for (const c of creativeRows.filter((x) =>
+      ["launched", "held", "ready", "retired"].includes(x.status),
+    )) {
+      // W12: measured per-ad performance where the ad is mapped on-platform.
+      const perf = await repos.adInsights.byCreativeSince(c.id, weekAgo);
+      const spend7d = perf.reduce((s2, r) => s2 + Number(r.spend), 0);
+      const results7d = perf.reduce((s2, r) => s2 + r.conversions, 0);
+      ads.push({
         id: c.id,
         variantNo: c.variantNo,
         format: c.format,
@@ -219,7 +226,12 @@ export async function uiRoutes(app: FastifyInstance): Promise<void> {
         fatigueState: c.fatigueState,
         predictedScore: c.predictedScore !== null ? Number(c.predictedScore) : null,
         durationSeconds: c.payload.durationSeconds ?? null,
-      }));
+        spend7d: perf.length > 0 ? Number(spend7d.toFixed(2)) : null,
+        results7d: perf.length > 0 ? results7d : null,
+        costPerResult:
+          results7d > 0 ? Number((spend7d / results7d).toFixed(2)) : null,
+      });
+    }
     const playbook = spec?.playbookId ? await repos.playbooks.get(spec.playbookId) : undefined;
     const winning = Object.entries(playbook?.performancePriors ?? {})
       .filter(([k, v]) => k.startsWith("hook:") && v > 0)

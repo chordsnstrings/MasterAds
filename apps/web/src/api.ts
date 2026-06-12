@@ -82,6 +82,9 @@ export interface AdView {
   fatigueState: string;
   predictedScore: number | null;
   durationSeconds: string | null;
+  spend7d: number | null;
+  results7d: number | null;
+  costPerResult: number | null;
 }
 
 export interface ChannelView {

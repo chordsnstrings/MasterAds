@@ -19,8 +19,10 @@ import {
   experiments,
   feedSources,
   intakeJobs,
+  adInsights,
   automationRules,
   brands,
+  creativeAds,
   mediaAssets,
   notifications,
   platformConnections,
@@ -70,6 +72,9 @@ import {
   type AutomationRule,
   type NewAutomationRule,
   type Brand,
+  type CreativeAd,
+  type AdInsight,
+  type NewAdInsight,
   type Promo,
   type Product,
   type SignalSnapshot,
@@ -558,6 +563,54 @@ export function createRepos(db: Db) {
       },
       async markFired(id: string, at: Date): Promise<void> {
         await db.update(automationRules).set({ lastFiredAt: at }).where(eq(automationRules.id, id));
+      },
+    },
+
+    creativeAds: {
+      async record(creativeId: string, campaignId: string, platformAdId: string): Promise<CreativeAd> {
+        const [r] = await db
+          .insert(creativeAds)
+          .values({ id: newId("cad"), creativeId, campaignId, platformAdId })
+          .onConflictDoUpdate({
+            target: [creativeAds.campaignId, creativeAds.creativeId],
+            set: { platformAdId },
+          })
+          .returning();
+        return r!;
+      },
+      async byCampaign(campaignId: string): Promise<CreativeAd[]> {
+        return db.select().from(creativeAds).where(eq(creativeAds.campaignId, campaignId));
+      },
+    },
+
+    adInsights: {
+      async insertIdempotent(row: Omit<NewAdInsight, "id"> & { id?: string }): Promise<AdInsight> {
+        const id = row.id ?? newId("adi");
+        const [r] = await db
+          .insert(adInsights)
+          .values({ ...row, id })
+          .onConflictDoUpdate({
+            target: [adInsights.platformAdId, adInsights.date],
+            set: {
+              spend: row.spend,
+              impressions: row.impressions,
+              clicks: row.clicks,
+              conversions: row.conversions,
+              revenue: row.revenue,
+              pulledAt: new Date(),
+            },
+          })
+          .returning();
+        return r!;
+      },
+      async byCreativeSince(creativeId: string, sinceDate: string): Promise<AdInsight[]> {
+        return db
+          .select()
+          .from(adInsights)
+          .where(and(eq(adInsights.creativeId, creativeId), gte(adInsights.date, sinceDate)));
+      },
+      async byCampaign(campaignId: string): Promise<AdInsight[]> {
+        return db.select().from(adInsights).where(eq(adInsights.campaignId, campaignId));
       },
     },
 

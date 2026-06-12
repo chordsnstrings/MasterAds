@@ -178,6 +178,7 @@ try {
   const pullY = await runInsightsPull(repos, fixtureAdapters, yesterday);
   const pullT = await runInsightsPull(repos, fixtureAdapters, today);
   assert.ok(pullY.costEvents > 0, "ad_spend CostEvents written from platform-reported spend");
+  assert.ok(pullY.adRows > 0, "per-ad insights recorded for mapped ads (W12)");
   log("insights done", { pulled: pullY.pulled + pullT.pulled });
 
   // ---- 6. Fast loop acts (deterministic, no LLM) ------------------------------
@@ -203,6 +204,11 @@ try {
   assert.ok(
     (detail.funnel.find((f) => f.stage === "Purchase")?.count ?? 0) >= 5,
     "funnel reflects injected purchases",
+  );
+  const adsView = (detail as unknown as { ads: { spend7d: number | null }[] }).ads;
+  assert.ok(
+    adsView.some((a) => a.spend7d !== null && a.spend7d > 0),
+    "per-ad measured spend reaches the ads view (W12)",
   );
   assert.ok(
     detail.activity.some((a) => a.actionType === "launch_campaign") &&

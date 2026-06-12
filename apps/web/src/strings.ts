@@ -133,8 +133,11 @@ export const STRINGS = {
       fatigued: "Tired \u2014 due for a refresh",
     } as Record<string, string>,
     promise: (pct: number): string => `${pct}% promise`,
+    measured: (spend: string, results: number): string =>
+      `${spend} spent \u00b7 ${results} result${results === 1 ? "" : "s"}`,
+    costEach: (n: string): string => `${n} each`,
     honestyNote:
-      "Results are counted per product; the engine rests tiring ads and puts more behind what wins.",
+      "Numbers shown per ad are measured from each channel daily; the engine rests tiring ads and puts more behind what wins.",
   },
 
   funnelStage: {

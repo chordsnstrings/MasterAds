@@ -499,6 +499,54 @@ export const mediaAssets = pgTable(
 
 export type MediaAsset = typeof mediaAssets.$inferSelect;
 
+// W12: which platform ad each creative became, and how that ad performs.
+export const creativeAds = pgTable(
+  "creative_ads",
+  {
+    id: text("id").primaryKey(),
+    creativeId: text("creative_id")
+      .notNull()
+      .references(() => creatives.id),
+    campaignId: text("campaign_id")
+      .notNull()
+      .references(() => campaigns.id),
+    platformAdId: text("platform_ad_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("creative_ads_unique").on(t.campaignId, t.creativeId),
+    index("creative_ads_campaign_idx").on(t.campaignId),
+  ],
+);
+
+export type CreativeAd = typeof creativeAds.$inferSelect;
+
+export const adInsights = pgTable(
+  "ad_insights",
+  {
+    id: text("id").primaryKey(),
+    campaignId: text("campaign_id")
+      .notNull()
+      .references(() => campaigns.id),
+    creativeId: text("creative_id").references(() => creatives.id),
+    platformAdId: text("platform_ad_id").notNull(),
+    date: text("date").notNull(),
+    spend: numeric("spend", { precision: 14, scale: 4 }).notNull().default("0"),
+    impressions: integer("impressions").notNull().default(0),
+    clicks: integer("clicks").notNull().default(0),
+    conversions: integer("conversions").notNull().default(0),
+    revenue: numeric("revenue", { precision: 14, scale: 4 }).notNull().default("0"),
+    pulledAt: timestamp("pulled_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("ad_insights_unique").on(t.platformAdId, t.date),
+    index("ad_insights_creative_idx").on(t.creativeId, t.date),
+  ],
+);
+
+export type AdInsight = typeof adInsights.$inferSelect;
+export type NewAdInsight = typeof adInsights.$inferInsert;
+
 export type Promo = typeof promos.$inferSelect;
 export type NewPromo = typeof promos.$inferInsert;
 export type AdAccount = typeof adAccounts.$inferSelect;
