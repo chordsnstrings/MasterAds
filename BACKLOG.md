@@ -21,3 +21,9 @@ Still parked:
 - Chat-style ops agent (AdAmigo-style natural-language control) — audit 2026-06 round 2 — needs LLM tool-calling surface over the internal API; the guardrail layer already constrains what it could do.
 - Avatar/UGC-style video provider selection (Arcads/Creatify-class) — audit 2026-06 round 2 — the CreativeProvider video seam + per-second pricing is ready; pick provider at P4.
 - Object storage (DO Spaces/CDN) for uploaded media — audit 2026-06 round 2 — in-DB base64 is fine at current volume; move when uploads grow.
+- OAuth connect flows (Facebook Login for Business, TikTok OAuth, Google consent) replacing token pasting — audit round 3 — token pasting now policy-risky; needs registered platform apps.
+- Official ads MCP servers (Meta/Google/TikTok, Apr–May 2026) as the AI manager's execution path — audit round 3 — vendor-blessed OAuth, Meta creates entities paused by default.
+- Live creative delivery: Meta asset-feed/Advantage+ creative upload + ad creation; TikTok asset upload — audit round 3 — closes the "campaign shells ship empty" gap.
+- Ad-level insights ingestion (per-creative metrics) for Meta/TikTok/Google — audit round 3 — makes "best ad wins" literal in the Your-ads view.
+- Creative provider go-live picks: Ideogram 3.0 statics ($0.03/img, best text-in-image) + Kling 3.0 video (~$0.03–0.10/s) — audit round 3.
+- Per-brand/campaign currency handling (CAD for gicglobal etc.) — audit round 3.
